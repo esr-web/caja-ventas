@@ -1,89 +1,364 @@
 
+:root {
+  --negro: #151515;
+  --negro-suave: #222222;
+  --naranja: #f28c28;
+  --naranja-claro: #fff1e2;
+  --verde: #16834a;
+  --fondo: #f5f6f8;
+  --blanco: #ffffff;
+  --texto: #242424;
+  --gris: #777777;
+  --borde: #e9e9e9;
+  --sombra: 0 5px 20px rgba(0,0,0,.045);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-:root {
-  --fondo: #f3f4f6;
-  --negro: #151515;
-  --naranja: #f28c28;
-  --verde: #16834a;
-  --texto: #222222;
-  --gris: #777777;
-  --blanco: #ffffff;
-  --borde: #e5e5e5;
-}
-
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   background: var(--fondo);
   color: var(--texto);
   min-height: 100vh;
+  padding-bottom: 85px;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
 }
 
 .encabezado {
   background: var(--negro);
   color: white;
-  padding: 22px 18px;
+  padding: 17px 20px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
   box-shadow: 0 3px 12px #0002;
 }
 
-.encabezado h1 {
-  font-size: 25px;
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.marca-icono {
+  width: 40px;
+  height: 40px;
+  background: var(--naranja);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.marca h1 {
+  font-size: 23px;
   letter-spacing: 2px;
 }
 
-#estadoConexion {
-  font-size: 12px;
-  color: #77d99a;
+.marca h1 span {
+  color: var(--naranja);
+}
+
+.marca p {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #aaaaaa;
+  margin-top: 2px;
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #cccccc;
+}
+
+#puntoConexion {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #58c985;
 }
 
 main {
-  width: 100%;
-  max-width: 700px;
+  max-width: 760px;
   margin: auto;
-  padding: 18px;
+  padding: 22px 17px;
 }
 
-h2 {
-  font-size: 22px;
-  margin-bottom: 20px;
+.pantalla {
+  display: none;
+  animation: aparecer .2s ease;
 }
 
-button {
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
+.pantalla.activa {
+  display: block;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bienvenida {
+  margin: 12px 0 25px;
+}
+
+.etiqueta {
+  display: inline-block;
+  color: var(--naranja);
+  font-size: 11px;
   font-weight: bold;
-  border-radius: 10px;
-  padding: 13px 17px;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
 }
 
-button:active {
-  transform: scale(0.97);
+.bienvenida h2 {
+  font-size: 30px;
+  margin-bottom: 7px;
+  color: var(--negro);
+}
+
+.bienvenida p {
+  color: var(--gris);
+  font-size: 14px;
+}
+
+.menu-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.tarjeta-menu {
+  background: var(--blanco);
+  width: 100%;
+  min-height: 112px;
+  border-radius: 17px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 15px;
+  box-shadow: var(--sombra);
+  border: 1px solid var(--borde);
+  transition: transform .15s;
+  color: var(--texto);
+}
+
+.tarjeta-menu:active {
+  transform: scale(.98);
+}
+
+.tarjeta-caja {
+  background: var(--naranja);
+  color: white;
+  border: none;
+  min-height: 135px;
+}
+
+.icono-menu {
+  width: 55px;
+  height: 55px;
+  flex-shrink: 0;
+  background: var(--naranja-claro);
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+}
+
+.tarjeta-caja .icono-menu {
+  background: #ffffff30;
+}
+
+.texto-menu {
+  flex: 1;
+}
+
+.texto-menu h3 {
+  font-size: 17px;
+  margin-bottom: 7px;
+}
+
+.texto-menu p {
+  color: var(--gris);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tarjeta-caja .texto-menu p {
+  color: #fff5e9;
+}
+
+.flecha-menu {
+  font-size: 23px;
+  font-weight: bold;
+}
+
+.nota-inicio {
+  margin-top: 25px;
+  padding: 15px;
+  border-radius: 12px;
+  background: #eaf5ee;
+  color: #38734d;
+  font-size: 12px;
+  text-align: center;
+}
+
+.nota-inicio span {
+  color: var(--verde);
+  margin-right: 5px;
+}
+
+.navegacion-inferior {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background: white;
+  border-top: 1px solid var(--borde);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 30;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 15px #00000008;
+}
+
+.nav-item {
+  flex: 1;
+  height: 100%;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #888888;
+}
+
+.nav-item span {
+  font-size: 21px;
+}
+
+.nav-item small {
+  font-size: 10px;
+}
+
+.nav-item.activo {
+  color: var(--naranja);
+  font-weight: bold;
 }
 
 .tarjeta {
   background: white;
   border-radius: 15px;
   padding: 16px;
-  margin-bottom: 13px;
-  box-shadow: 0 3px 12px #0000000b;
+  margin-bottom: 14px;
+  border: 1px solid var(--borde);
+  box-shadow: var(--sombra);
+}
+
+h2.titulo-seccion {
+  font-size: 24px;
+  margin: 8px 0 18px;
+}
+
+h3 {
+  font-size: 16px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+input, select {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  background: white;
+  color: var(--texto);
+  margin-bottom: 15px;
+  outline: none;
+  font-size: 15px;
+}
+
+input:focus, select:focus {
+  border-color: var(--naranja);
+  box-shadow: 0 0 0 3px #f28c2820;
+}
+
+button:focus-visible {
+  outline: 3px solid #f28c2860;
+  outline-offset: 2px;
+}
+
+.btn-principal {
+  background: var(--naranja);
+  color: white;
+  width: 100%;
+  padding: 15px;
+  border-radius: 11px;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.btn-secundario {
+  background: #eeeeee;
+  color: var(--texto);
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.btn-peligro {
+  background: #fff0f0;
+  color: #c52e2e;
+  padding: 10px;
+  border-radius: 9px;
 }
 
 .producto {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
+  background: white;
+  border: 1px solid var(--borde);
+  padding: 14px;
+  border-radius: 13px;
+  margin-bottom: 10px;
 }
 
 .producto-info {
@@ -91,13 +366,14 @@ button:active {
 }
 
 .producto-info h3 {
-  font-size: 16px;
+  font-size: 15px;
   margin-bottom: 5px;
 }
 
 .precio {
   color: var(--verde);
   font-weight: bold;
+  font-size: 14px;
 }
 
 .controles-cantidad {
@@ -107,15 +383,15 @@ button:active {
 }
 
 .btn-cantidad {
-  background: #eeeeee;
+  background: #f0f0f0;
   color: #222;
-  min-width: 38px;
-  padding: 10px;
-  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 20px;
 }
 
 .cantidad {
-  font-size: 17px;
   font-weight: bold;
   min-width: 20px;
   text-align: center;
@@ -125,19 +401,19 @@ button:active {
   background: var(--negro);
   color: white;
   padding: 20px;
-  border-radius: 15px;
-  margin-top: 20px;
+  border-radius: 16px;
+  margin-top: 18px;
 }
 
 .total {
-  font-size: 29px;
+  font-size: 28px;
   font-weight: bold;
-  margin: 12px 0;
+  margin: 10px 0;
 }
 
 .salario {
   color: #75df9a;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: bold;
 }
 
@@ -145,36 +421,53 @@ button:active {
   background: var(--verde);
   color: white;
   width: 100%;
-  padding: 17px;
+  padding: 16px;
   margin-top: 18px;
-  font-size: 17px;
-}
-
-input, select {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid var(--borde);
-  border-radius: 9px;
+  border-radius: 11px;
   font-size: 16px;
-  background: white;
-  margin: 7px 0 14px;
-}
-
-label {
   font-weight: bold;
-  font-size: 14px;
 }
 
-@media (max-width: 400px) {
+.texto-vacio {
+  color: var(--gris);
+  text-align: center;
+  padding: 25px 12px;
+  font-size: 13px;
+}
+
+@media (min-width: 600px) {
   main {
-    padding: 12px;
+    padding: 30px;
   }
 
+  .menu-principal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tarjeta-caja {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 380px) {
   .encabezado {
-    padding: 18px 13px;
+    padding: 14px;
   }
 
-  .producto-info h3 {
-    font-size: 14px;
+  .marca h1 {
+    font-size: 20px;
+  }
+
+  .estado {
+    font-size: 9px;
+  }
+
+  main {
+    padding: 17px 12px;
+  }
+
+  .tarjeta-menu {
+    padding: 15px;
   }
 }
