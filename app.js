@@ -1,6 +1,7 @@
 
 // ==========================================
 // CAJA DE VENTAS - APLICACIÓN PRINCIPAL
+// USD + CUP | OFFLINE | INDEXEDDB
 // ==========================================
 
 let productos = [];
@@ -10,6 +11,7 @@ let productoEnEdicion = null;
 
 let porcentajeSalario = 5;
 let pantallaActual = "inicio";
+let monedaVenta = "CUP";
 
 const formato = valor =>
   Number(valor || 0).toLocaleString("es-ES", {
@@ -38,10 +40,19 @@ function fechaLocal() {
 function fechaParaComparar(fecha) {
   const d = new Date(fecha);
   if (Number.isNaN(d.getTime())) return "";
+
   const zona = new Date(
     d.getTime() - d.getTimezoneOffset() * 60000
   );
+
   return zona.toISOString().slice(0, 10);
+}
+
+function mesLocal() {
+  const ahora = new Date();
+  return `${ahora.getFullYear()}-${String(
+    ahora.getMonth() + 1
+  ).padStart(2, "0")}`;
 }
 
 function mostrarFecha(fecha) {
@@ -57,6 +68,85 @@ function mostrarFecha(fecha) {
   });
 }
 
+function precioProducto(producto, moneda) {
+  if (moneda === "USD") {
+    return Number(producto.precioUSD ?? 0);
+  }
+
+  return Number(producto.precioCUP ?? producto.precio ?? 0);
+}
+
+function simboloMoneda(moneda) {
+  return moneda === "USD" ? "USD" : "CUP";
+}
+
+// ==========================================
+// COMPATIBILIDAD CON DATOS ANTERIORES
+// ==========================================
+
+function adaptarProducto(producto) {
+  // Los productos antiguos tenían un único precio:
+  // se conserva interpretándolo como precio en CUP.
+  if (producto.precioCUP === undefined) {
+    producto.precioCUP = Number(producto.precio || 0);
+  }
+
+  if (producto.precioUSD === undefined) {
+    producto.precioUSD = 0;
+  }
+
+  return producto;
+}
+
+function adaptarVenta(venta) {
+  // Las ventas antiguas se interpretan como CUP.
+  if (!venta.moneda) {
+    venta.moneda = "CUP";
+  }
+
+  venta.productos = (venta.productos || []).map(item => {
+    const precioAntiguo = Number(item.precio || 0);
+
+    return {
+      ...item,
+      precioCUP: Number(
+        item.precioCUP ??
+        (venta.moneda === "CUP" ? precioAntiguo : 0)
+      ),
+      precioUSD: Number(
+        item.precioUSD ??
+        (venta.moneda === "USD" ? precioAntiguo : 0)
+      )
+    };
+  });
+
+  if (venta.totalCUP === undefined) {
+    venta.totalCUP = venta.moneda === "CUP"
+      ? Number(venta.total || 0)
+      : 0;
+  }
+
+  if (venta.totalUSD === undefined) {
+    venta.totalUSD = venta.moneda === "USD"
+      ? Number(venta.total || 0)
+      : 0;
+  }
+
+  if (venta.salarioCUP === undefined) {
+    venta.salarioCUP = venta.moneda === "CUP"
+      ? Number(venta.salario || 0)
+      : 0;
+  }
+
+  if (venta.salarioUSD === undefined) {
+    venta.salarioUSD = venta.moneda === "USD"
+      ? Number(venta.salario || 0)
+      : 0;
+  }
+
+  return venta;
+}
+
 // ==========================================
 // INICIO Y BASE DE DATOS
 // ==========================================
@@ -65,15 +155,41 @@ async function iniciarAplicacion() {
   try {
     await abrirBaseDatos();
 
-    productos = await obtenerTodos("productos");
-    ventas = await obtenerTodos("ventas");
+    productos = (await obtenerTodos("productos"))
+      .map(adaptarProducto);
+
+    ventas = (await obtenerTodos("ventas"))
+      .map(adaptarVenta);
+
+    // Guardar la adaptación de los productos antiguos.
+    for (const producto of productos) {
+      await guardarDato("productos", producto);
+    }
+
+    // Guardar la adaptación de las ventas antiguas.
+    for (const venta of ventas) {
+      await guardarDato("ventas", venta);
+    }
 
     actualizarConexion();
     navegar("inicio");
 
+    // Solicitar almacenamiento persistente cuando sea posible.
+    solicitarAlmacenamientoPersistente();
+
   } catch (error) {
     alert("No se pudo abrir la base de datos del teléfono.");
     console.error(error);
+  }
+}
+
+async function solicitarAlmacenamientoPersistente() {
+  if (navigator.storage && navigator.storage.persist) {
+    try {
+      await navigator.storage.persist();
+    } catch (error) {
+      console.warn("No se pudo solicitar almacenamiento persistente.", error);
+    }
   }
 }
 
@@ -111,6 +227,7 @@ function navegar(destino) {
 
   Object.entries(pantallas).forEach(([nombre, id]) => {
     const elemento = document.getElementById(id);
+
     if (elemento) {
       elemento.classList.toggle("activa", nombre === destino);
     }
@@ -125,6 +242,7 @@ function navegar(destino) {
 
   Object.entries(botones).forEach(([nombre, id]) => {
     const elemento = document.getElementById(id);
+
     if (elemento) {
       elemento.classList.toggle("activo", nombre === destino);
     }
@@ -144,13 +262,17 @@ function navegar(destino) {
 function mostrarProductos() {
   const pantalla = document.getElementById("pantallaProductos");
 
+  const productoActual = productoEnEdicion !== null
+    ? productos.find(p => p.id === productoEnEdicion)
+    : null;
+
   pantalla.innerHTML = `
     <span class="etiqueta">CATÁLOGO</span>
     <h2 class="titulo-seccion">Productos</h2>
 
     <div class="tarjeta">
       <h3 style="margin-bottom:15px">
-        ${productoEnEdicion === null ? "Agregar producto" : "Editar producto"}
+        ${productoActual ? "Editar producto" : "Agregar producto"}
       </h3>
 
       <label for="nombreProducto">Nombre del producto</label>
@@ -158,33 +280,40 @@ function mostrarProductos() {
         id="nombreProducto"
         type="text"
         placeholder="Ej. Arroz"
-        value="${
-          productoEnEdicion !== null
-            ? escapar(productos.find(p => p.id === productoEnEdicion)?.nombre || "")
-            : ""
-        }"
+        value="${escapar(productoActual?.nombre || "")}"
       >
 
-      <label for="precioProducto">Precio unitario (CUP)</label>
+      <label for="precioProductoUSD">Precio unitario (USD)</label>
       <input
-        id="precioProducto"
+        id="precioProductoUSD"
         type="number"
-        min="0.01"
+        min="0"
         step="0.01"
         placeholder="0.00"
-        value="${
-          productoEnEdicion !== null
-            ? productos.find(p => p.id === productoEnEdicion)?.precio || ""
-            : ""
-        }"
+        value="${productoActual?.precioUSD || ""}"
       >
 
+      <label for="precioProductoCUP">Precio unitario (CUP)</label>
+      <input
+        id="precioProductoCUP"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="0.00"
+        value="${productoActual?.precioCUP || ""}"
+      >
+
+      <p style="font-size:12px;color:#777;margin:-5px 0 14px">
+        Puedes registrar un precio en una sola moneda o en ambas.
+        Al menos uno debe ser mayor que cero.
+      </p>
+
       <button class="btn-principal" onclick="guardarProducto()">
-        ${productoEnEdicion === null ? "+ AGREGAR PRODUCTO" : "GUARDAR CAMBIOS"}
+        ${productoActual ? "GUARDAR CAMBIOS" : "+ AGREGAR PRODUCTO"}
       </button>
 
       ${
-        productoEnEdicion !== null
+        productoActual
           ? `<button class="btn-secundario"
               style="width:100%;margin-top:10px"
               onclick="cancelarEdicion()">Cancelar edición</button>`
@@ -221,7 +350,12 @@ function dibujarCatalogo() {
     <div class="producto">
       <div class="producto-info">
         <h3>${escapar(producto.nombre)}</h3>
-        <div class="precio">${formato(producto.precio)} CUP</div>
+        <div class="precio">
+          ${formato(producto.precioUSD)} USD
+        </div>
+        <div class="precio">
+          ${formato(producto.precioCUP)} CUP
+        </div>
       </div>
 
       <button class="btn-secundario"
@@ -237,34 +371,53 @@ function dibujarCatalogo() {
 
 async function guardarProducto() {
   const nombre = document.getElementById("nombreProducto").value.trim();
-  const precio = Number(document.getElementById("precioProducto").value);
+
+  const precioUSD = Number(
+    document.getElementById("precioProductoUSD").value || 0
+  );
+
+  const precioCUP = Number(
+    document.getElementById("precioProductoCUP").value || 0
+  );
 
   if (!nombre) {
     alert("Escribe el nombre del producto.");
     return;
   }
 
-  if (!Number.isFinite(precio) || precio <= 0) {
-    alert("Introduce un precio válido mayor que cero.");
+  if (
+    !Number.isFinite(precioUSD) ||
+    !Number.isFinite(precioCUP) ||
+    precioUSD < 0 ||
+    precioCUP < 0 ||
+    (precioUSD === 0 && precioCUP === 0)
+  ) {
+    alert("Introduce al menos un precio válido mayor que cero.");
     return;
   }
 
   try {
     if (productoEnEdicion !== null) {
-      const producto = productos.find(p => p.id === productoEnEdicion);
+      const producto = productos.find(
+        p => p.id === productoEnEdicion
+      );
+
       if (!producto) return;
 
       producto.nombre = nombre;
-      producto.precio = precio;
+      producto.precioUSD = precioUSD;
+      producto.precioCUP = precioCUP;
+
+      // Se conserva el campo antiguo para compatibilidad.
+      producto.precio = precioCUP;
 
       await guardarDato("productos", producto);
 
-      // Actualizar los precios y nombres del producto
-      // en el carrito si todavía no se ha registrado la venta.
+      // Actualizar el carrito si el producto todavía no se ha vendido.
       carrito.forEach(item => {
         if (item.productoId === producto.id) {
           item.nombre = nombre;
-          item.precio = precio;
+          item.precio = precioProducto(producto, monedaVenta);
         }
       });
 
@@ -272,7 +425,13 @@ async function guardarProducto() {
       alert("Producto actualizado correctamente.");
 
     } else {
-      const nuevo = { nombre, precio };
+      const nuevo = {
+        nombre,
+        precioUSD,
+        precioCUP,
+        precio: precioCUP
+      };
+
       nuevo.id = await guardarDato("productos", nuevo);
       productos.push(nuevo);
 
@@ -293,6 +452,7 @@ function editarProducto(id) {
 
   productoEnEdicion = id;
   mostrarProductos();
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -305,9 +465,10 @@ async function eliminarProducto(id) {
   const producto = productos.find(p => p.id === id);
   if (!producto) return;
 
-  if (!confirm(`¿Eliminar el producto "${producto.nombre}" del catálogo?`)) {
-    return;
-  }
+  if (!confirm(
+    `¿Eliminar "${producto.nombre}" del catálogo?\n\n` +
+    "Las ventas anteriores no se eliminarán."
+  )) return;
 
   try {
     await eliminarDato("productos", id);
@@ -315,7 +476,9 @@ async function eliminarProducto(id) {
     productos = productos.filter(p => p.id !== id);
     carrito = carrito.filter(p => p.productoId !== id);
 
-    if (productoEnEdicion === id) productoEnEdicion = null;
+    if (productoEnEdicion === id) {
+      productoEnEdicion = null;
+    }
 
     mostrarProductos();
 
@@ -335,6 +498,21 @@ function mostrarCaja() {
   pantalla.innerHTML = `
     <span class="etiqueta">NUEVA OPERACIÓN</span>
     <h2 class="titulo-seccion">Caja de ventas</h2>
+
+    <div class="tarjeta">
+      <h3 style="margin-bottom:12px">Moneda de la venta</h3>
+
+      <label for="monedaSeleccionada">Seleccionar moneda</label>
+      <select id="monedaSeleccionada"
+        onchange="cambiarMonedaVenta(this.value)">
+        <option value="CUP" ${monedaVenta === "CUP" ? "selected" : ""}>CUP</option>
+        <option value="USD" ${monedaVenta === "USD" ? "selected" : ""}>USD</option>
+      </select>
+
+      <p style="font-size:12px;color:#777">
+        Se utilizará el precio del producto correspondiente a esta moneda.
+      </p>
+    </div>
 
     <div class="tarjeta">
       <h3 style="margin-bottom:12px">Seleccionar productos</h3>
@@ -358,12 +536,41 @@ function mostrarCaja() {
 
       <label for="porcentajeVenta">Porcentaje de salario (%)</label>
       <input id="porcentajeVenta" type="number"
-        min="0" max="100" step="0.01" value="${porcentajeSalario}"
+        min="0" max="100" step="0.01"
+        value="${porcentajeSalario}"
         oninput="actualizarResumen()">
     </div>
 
     <div id="resumenVenta" class="resumen"></div>
   `;
+
+  dibujarProductosCaja();
+  actualizarResumen();
+}
+
+function cambiarMonedaVenta(moneda) {
+  if (moneda !== "USD" && moneda !== "CUP") return;
+
+  monedaVenta = moneda;
+
+  // Actualizar los precios del carrito según la moneda elegida.
+  carrito = carrito.map(item => {
+    const producto = productos.find(
+      p => p.id === item.productoId
+    );
+
+    if (!producto) return null;
+
+    const precio = precioProducto(producto, moneda);
+
+    if (precio <= 0) return null;
+
+    return {
+      ...item,
+      nombre: producto.nombre,
+      precio
+    };
+  }).filter(Boolean);
 
   dibujarProductosCaja();
   actualizarResumen();
@@ -391,7 +598,8 @@ function dibujarProductosCaja() {
   }
 
   if (disponibles.length === 0) {
-    lista.innerHTML = `<p class="texto-vacio">No se encontraron productos.</p>`;
+    lista.innerHTML = `
+      <p class="texto-vacio">No se encontraron productos.</p>`;
     return;
   }
 
@@ -400,21 +608,33 @@ function dibujarProductosCaja() {
       item => item.productoId === producto.id
     )?.cantidad || 0;
 
+    const precio = precioProducto(producto, monedaVenta);
+    const sinPrecio = precio <= 0;
+
     return `
       <div class="producto">
         <div class="producto-info">
           <h3>${escapar(producto.nombre)}</h3>
-          <div class="precio">${formato(producto.precio)} CUP</div>
+          <div class="precio">
+            ${formato(precio)} ${monedaVenta}
+          </div>
+          ${
+            sinPrecio
+              ? `<small style="color:#c52e2e">Sin precio en ${monedaVenta}</small>`
+              : ""
+          }
         </div>
 
         <div class="controles-cantidad">
           <button class="btn-cantidad"
-            onclick="cambiarCantidad(${producto.id},-1)">−</button>
+            onclick="cambiarCantidad(${producto.id},-1)"
+            ${cantidad === 0 ? "disabled" : ""}>−</button>
 
           <span class="cantidad">${cantidad}</span>
 
           <button class="btn-cantidad"
-            onclick="cambiarCantidad(${producto.id},1)">+</button>
+            onclick="cambiarCantidad(${producto.id},1)"
+            ${sinPrecio ? "disabled" : ""}>+</button>
         </div>
       </div>
     `;
@@ -425,15 +645,23 @@ function cambiarCantidad(id, cambio) {
   const producto = productos.find(p => p.id === id);
   if (!producto) return;
 
+  const precio = precioProducto(producto, monedaVenta);
+
+  if (cambio > 0 && precio <= 0) {
+    alert(`Este producto no tiene precio en ${monedaVenta}.`);
+    return;
+  }
+
   let item = carrito.find(p => p.productoId === id);
 
   if (!item && cambio > 0) {
     item = {
       productoId: id,
       nombre: producto.nombre,
-      precio: producto.precio,
+      precio,
       cantidad: 0
     };
+
     carrito.push(item);
   }
 
@@ -451,12 +679,14 @@ function cambiarCantidad(id, cambio) {
 
 function calcularVenta() {
   const total = carrito.reduce(
-    (suma, item) => suma + item.precio * item.cantidad,
+    (suma, item) =>
+      suma + Number(item.precio || 0) * Number(item.cantidad || 0),
     0
   );
 
   const porcentaje = Number(
-    document.getElementById("porcentajeVenta")?.value ?? porcentajeSalario
+    document.getElementById("porcentajeVenta")?.value ??
+    porcentajeSalario
   );
 
   const salario = total * porcentaje / 100;
@@ -473,18 +703,33 @@ function actualizarResumen() {
   resumen.innerHTML = `
     <h3>Resumen de venta</h3>
 
-    <p style="margin-top:15px;color:#cccccc">Productos seleccionados</p>
+    <p style="margin-top:15px;color:#cccccc">
+      Productos seleccionados
+    </p>
+
     <p style="font-size:16px;font-weight:bold;margin-top:5px">
       ${carrito.reduce((s, p) => s + p.cantidad, 0)} unidades
     </p>
 
-    <p style="margin-top:15px;color:#cccccc">Total de la venta</p>
-    <div class="total">${formato(calculo.total)} CUP</div>
+    <p style="margin-top:15px;color:#cccccc">
+      Total de la venta
+    </p>
 
-    <p style="margin-top:15px">Comisión: ${formato(calculo.porcentaje)} %</p>
+    <div class="total">
+      ${formato(calculo.total)} ${monedaVenta}
+    </div>
 
-    <p style="margin-top:15px;color:#cccccc">Salario generado</p>
-    <div class="salario">${formato(calculo.salario)} CUP</div>
+    <p style="margin-top:15px">
+      Comisión: ${formato(calculo.porcentaje)} %
+    </p>
+
+    <p style="margin-top:15px;color:#cccccc">
+      Salario generado
+    </p>
+
+    <div class="salario">
+      ${formato(calculo.salario)} ${monedaVenta}
+    </div>
 
     <button class="btn-vendido"
       onclick="registrarVenta()">
@@ -523,16 +768,32 @@ async function registrarVenta() {
     return;
   }
 
-  if (!confirm(
-    `¿Confirmar venta por ${formato(calculo.total)} CUP?`
-  )) return;
+  const confirmacion =
+    `¿Confirmar venta por ${formato(calculo.total)} ${monedaVenta}?\n\n` +
+    `Salario: ${formato(calculo.salario)} ${monedaVenta}`;
+
+  if (!confirm(confirmacion)) return;
+
+  const lineas = carrito.map(item => ({
+    productoId: item.productoId,
+    nombre: item.nombre,
+    precio: item.precio,
+    cantidad: item.cantidad,
+    precioUSD: monedaVenta === "USD" ? item.precio : 0,
+    precioCUP: monedaVenta === "CUP" ? item.precio : 0
+  }));
 
   const venta = {
     fecha: new Date(fecha).toISOString(),
-    productos: carrito.map(item => ({ ...item })),
+    moneda: monedaVenta,
+    productos: lineas,
     total: calculo.total,
+    salario: calculo.salario,
     porcentaje: calculo.porcentaje,
-    salario: calculo.salario
+    totalUSD: monedaVenta === "USD" ? calculo.total : 0,
+    totalCUP: monedaVenta === "CUP" ? calculo.total : 0,
+    salarioUSD: monedaVenta === "USD" ? calculo.salario : 0,
+    salarioCUP: monedaVenta === "CUP" ? calculo.salario : 0
   };
 
   try {
@@ -544,8 +805,8 @@ async function registrarVenta() {
 
     alert(
       "¡Venta registrada correctamente!\n\n" +
-      "Total: " + formato(venta.total) + " CUP\n" +
-      "Salario: " + formato(venta.salario) + " CUP"
+      "Total: " + formato(venta.total) + " " + venta.moneda + "\n" +
+      "Salario: " + formato(venta.salario) + " " + venta.moneda
     );
 
     mostrarCaja();
@@ -577,7 +838,8 @@ function mostrarRegistro() {
       <h3 style="margin-bottom:15px">Filtrar registros</h3>
 
       <label for="filtroPeriodo">Período de consulta</label>
-      <select id="filtroPeriodo" onchange="actualizarVisibilidadFiltros();actualizarRegistro()">
+      <select id="filtroPeriodo"
+        onchange="actualizarVisibilidadFiltros();actualizarRegistro()">
         <option value="todo">Todas las ventas</option>
         <option value="dia">Por día</option>
         <option value="mes">Por mes</option>
@@ -595,7 +857,7 @@ function mostrarRegistro() {
       <div id="filtroMes" style="display:none">
         <label for="mesFiltro">Seleccionar mes</label>
         <input id="mesFiltro" type="month"
-          value="${new Date().toISOString().slice(0,7)}"
+          value="${mesLocal()}"
           onchange="actualizarRegistro()">
       </div>
 
@@ -623,12 +885,19 @@ function mostrarRegistro() {
         ${opcionesProductos}
       </select>
 
-      <label for="precioMinimo">Importe mínimo de la venta (CUP)</label>
+      <label for="filtroMoneda">Moneda</label>
+      <select id="filtroMoneda" onchange="actualizarRegistro()">
+        <option value="">Todas las monedas</option>
+        <option value="USD">USD</option>
+        <option value="CUP">CUP</option>
+      </select>
+
+      <label for="precioMinimo">Importe mínimo de la venta</label>
       <input id="precioMinimo" type="number"
         min="0" step="0.01" placeholder="Sin mínimo"
         oninput="actualizarRegistro()">
 
-      <label for="precioMaximo">Importe máximo de la venta (CUP)</label>
+      <label for="precioMaximo">Importe máximo de la venta</label>
       <input id="precioMaximo" type="number"
         min="0" step="0.01" placeholder="Sin máximo"
         oninput="actualizarRegistro()">
@@ -648,7 +917,8 @@ function mostrarRegistro() {
 }
 
 function actualizarVisibilidadFiltros() {
-  const periodo = document.getElementById("filtroPeriodo")?.value || "todo";
+  const periodo =
+    document.getElementById("filtroPeriodo")?.value || "todo";
 
   const controles = {
     dia: "filtroDia",
@@ -659,8 +929,10 @@ function actualizarVisibilidadFiltros() {
 
   Object.entries(controles).forEach(([tipo, id]) => {
     const elemento = document.getElementById(id);
+
     if (elemento) {
-      elemento.style.display = periodo === tipo ? "block" : "none";
+      elemento.style.display =
+        periodo === tipo ? "block" : "none";
     }
   });
 }
@@ -668,11 +940,14 @@ function actualizarVisibilidadFiltros() {
 function limpiarFiltrosRegistro() {
   document.getElementById("filtroPeriodo").value = "todo";
   document.getElementById("filtroProducto").value = "";
+  document.getElementById("filtroMoneda").value = "";
   document.getElementById("precioMinimo").value = "";
   document.getElementById("precioMaximo").value = "";
-  document.getElementById("fechaFiltro").value = fechaParaComparar(new Date());
-  document.getElementById("mesFiltro").value = new Date().toISOString().slice(0, 7);
-  document.getElementById("anioFiltro").value = new Date().getFullYear();
+  document.getElementById("fechaFiltro").value =
+    fechaParaComparar(new Date());
+  document.getElementById("mesFiltro").value = mesLocal();
+  document.getElementById("anioFiltro").value =
+    new Date().getFullYear();
   document.getElementById("fechaDesde").value = "";
   document.getElementById("fechaHasta").value = "";
 
@@ -684,16 +959,35 @@ function actualizarRegistro() {
   const contenedor = document.getElementById("resultadosRegistro");
   if (!contenedor) return;
 
-  const periodo = document.getElementById("filtroPeriodo")?.value || "todo";
-  const fechaDia = document.getElementById("fechaFiltro")?.value || "";
-  const mes = document.getElementById("mesFiltro")?.value || "";
-  const anio = document.getElementById("anioFiltro")?.value || "";
-  const desde = document.getElementById("fechaDesde")?.value || "";
-  const hasta = document.getElementById("fechaHasta")?.value || "";
+  const periodo =
+    document.getElementById("filtroPeriodo")?.value || "todo";
 
-  const productoId = document.getElementById("filtroProducto")?.value || "";
-  const minimoTexto = document.getElementById("precioMinimo")?.value ?? "";
-  const maximoTexto = document.getElementById("precioMaximo")?.value ?? "";
+  const fechaDia =
+    document.getElementById("fechaFiltro")?.value || "";
+
+  const mes =
+    document.getElementById("mesFiltro")?.value || "";
+
+  const anio =
+    document.getElementById("anioFiltro")?.value || "";
+
+  const desde =
+    document.getElementById("fechaDesde")?.value || "";
+
+  const hasta =
+    document.getElementById("fechaHasta")?.value || "";
+
+  const productoId =
+    document.getElementById("filtroProducto")?.value || "";
+
+  const monedaFiltro =
+    document.getElementById("filtroMoneda")?.value || "";
+
+  const minimoTexto =
+    document.getElementById("precioMinimo")?.value ?? "";
+
+  const maximoTexto =
+    document.getElementById("precioMaximo")?.value ?? "";
 
   const minimo = minimoTexto === "" ? null : Number(minimoTexto);
   const maximo = maximoTexto === "" ? null : Number(maximoTexto);
@@ -711,22 +1005,26 @@ function actualizarRegistro() {
   }
 
   if (periodo === "dia" && !fechaDia) {
-    contenedor.innerHTML = `<div class="tarjeta texto-vacio">Selecciona un día.</div>`;
+    contenedor.innerHTML =
+      `<div class="tarjeta texto-vacio">Selecciona un día.</div>`;
     return;
   }
 
   if (periodo === "mes" && !mes) {
-    contenedor.innerHTML = `<div class="tarjeta texto-vacio">Selecciona un mes.</div>`;
+    contenedor.innerHTML =
+      `<div class="tarjeta texto-vacio">Selecciona un mes.</div>`;
     return;
   }
 
   if (periodo === "anio" && !anio) {
-    contenedor.innerHTML = `<div class="tarjeta texto-vacio">Selecciona un año.</div>`;
+    contenedor.innerHTML =
+      `<div class="tarjeta texto-vacio">Selecciona un año.</div>`;
     return;
   }
 
   if (periodo === "rango" && desde && hasta && desde > hasta) {
-    contenedor.innerHTML = `<div class="tarjeta texto-vacio">La fecha inicial no puede ser posterior a la final.</div>`;
+    contenedor.innerHTML =
+      `<div class="tarjeta texto-vacio">La fecha inicial no puede ser posterior a la final.</div>`;
     return;
   }
 
@@ -734,7 +1032,6 @@ function actualizarRegistro() {
 
   ventas.forEach(venta => {
     const fecha = fechaParaComparar(venta.fecha);
-
     if (!fecha) return;
 
     if (periodo === "dia" && fecha !== fechaDia) return;
@@ -743,16 +1040,28 @@ function actualizarRegistro() {
     if (periodo === "rango" && desde && fecha < desde) return;
     if (periodo === "rango" && hasta && fecha > hasta) return;
 
+    const moneda = venta.moneda || "CUP";
+
+    if (monedaFiltro && moneda !== monedaFiltro) return;
+
     const totalVenta = Number(venta.total || 0);
 
-    // El rango de precios se aplica al total de cada operación.
+    // Los filtros de importe se comparan solamente
+    // con ventas de la misma moneda.
     if (minimo !== null && totalVenta < minimo) return;
     if (maximo !== null && totalVenta > maximo) return;
 
-    let lineas = (venta.productos || []).map(item => ({
-      ...item,
-      subtotal: Number(item.precio || 0) * Number(item.cantidad || 0)
-    }));
+    let lineas = (venta.productos || []).map(item => {
+      const precio = moneda === "USD"
+        ? Number(item.precioUSD ?? item.precio ?? 0)
+        : Number(item.precioCUP ?? item.precio ?? 0);
+
+      return {
+        ...item,
+        precio,
+        subtotal: precio * Number(item.cantidad || 0)
+      };
+    });
 
     if (productoId !== "") {
       lineas = lineas.filter(item =>
@@ -773,6 +1082,7 @@ function actualizarRegistro() {
 
     resultados.push({
       ...venta,
+      moneda,
       lineasVisibles: lineas,
       totalVisible,
       salarioVisible
@@ -783,14 +1093,23 @@ function actualizarRegistro() {
     new Date(b.fecha) - new Date(a.fecha)
   );
 
-  const totalVendido = resultados.reduce(
-    (suma, venta) => suma + venta.totalVisible,
-    0
+  const ventasUSD = resultados.filter(v => v.moneda === "USD");
+  const ventasCUP = resultados.filter(v => v.moneda === "CUP");
+
+  const totalUSD = ventasUSD.reduce(
+    (suma, venta) => suma + venta.totalVisible, 0
   );
 
-  const totalSalario = resultados.reduce(
-    (suma, venta) => suma + venta.salarioVisible,
-    0
+  const totalCUP = ventasCUP.reduce(
+    (suma, venta) => suma + venta.totalVisible, 0
+  );
+
+  const salarioUSD = ventasUSD.reduce(
+    (suma, venta) => suma + venta.salarioVisible, 0
+  );
+
+  const salarioCUP = ventasCUP.reduce(
+    (suma, venta) => suma + venta.salarioVisible, 0
   );
 
   const unidades = resultados.reduce(
@@ -815,19 +1134,37 @@ function actualizarRegistro() {
       </span>
 
       <div style="margin-top:18px;color:#cccccc;font-size:12px">
-        TOTAL VENDIDO
+        TOTAL VENDIDO EN USD
       </div>
 
-      <div style="font-size:27px;font-weight:bold;margin:6px 0 17px">
-        ${formato(totalVendido)} CUP
+      <div style="font-size:25px;font-weight:bold;margin:6px 0 15px">
+        ${formato(totalUSD)} USD
       </div>
 
       <div style="color:#cccccc;font-size:12px">
-        SALARIO GENERADO
+        SALARIO GENERADO EN USD
       </div>
 
-      <div style="font-size:23px;font-weight:bold;color:#75df9a;margin:6px 0 17px">
-        ${formato(totalSalario)} CUP
+      <div style="font-size:21px;font-weight:bold;color:#75df9a;margin:6px 0 18px">
+        ${formato(salarioUSD)} USD
+      </div>
+
+      <div style="border-top:1px solid #444;padding-top:15px">
+        <div style="color:#cccccc;font-size:12px">
+          TOTAL VENDIDO EN CUP
+        </div>
+
+        <div style="font-size:25px;font-weight:bold;margin:6px 0 15px">
+          ${formato(totalCUP)} CUP
+        </div>
+
+        <div style="color:#cccccc;font-size:12px">
+          SALARIO GENERADO EN CUP
+        </div>
+
+        <div style="font-size:21px;font-weight:bold;color:#75df9a;margin:6px 0 18px">
+          ${formato(salarioCUP)} CUP
+        </div>
       </div>
 
       <div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid #444;padding-top:14px">
@@ -855,20 +1192,23 @@ function actualizarRegistro() {
             </div>`
           : resultados.map(venta => `
               <div class="tarjeta">
-                <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+                <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
                   <div>
                     <strong>Venta #${venta.id}</strong>
                     <div style="font-size:11px;color:#777;margin-top:5px">
                       ${mostrarFecha(venta.fecha)}
                     </div>
+                    <div style="font-size:11px;color:#f28c28;font-weight:bold;margin-top:5px">
+                      Moneda: ${venta.moneda}
+                    </div>
                   </div>
 
                   <div style="text-align:right">
                     <strong style="color:#16834a">
-                      ${formato(venta.totalVisible)} CUP
+                      ${formato(venta.totalVisible)} ${venta.moneda}
                     </strong>
                     <div style="font-size:11px;color:#777;margin-top:5px">
-                      ${formato(venta.salarioVisible)} CUP salario
+                      ${formato(venta.salarioVisible)} ${venta.moneda} salario
                     </div>
                   </div>
                 </div>
@@ -884,10 +1224,10 @@ function actualizarRegistro() {
                         <div>
                           <strong>${escapar(item.nombre)}</strong>
                           <div style="color:#777;margin-top:4px">
-                            ${item.cantidad} × ${formato(item.precio)} CUP
+                            ${item.cantidad} × ${formato(item.precio)} ${venta.moneda}
                           </div>
                         </div>
-                        <strong>${formato(item.subtotal)} CUP</strong>
+                        <strong>${formato(item.subtotal)} ${venta.moneda}</strong>
                       </div>
                     `).join("")}
 
@@ -896,15 +1236,53 @@ function actualizarRegistro() {
                     </div>
 
                     <div style="font-weight:bold;margin-top:5px">
-                      Salario: ${formato(venta.salarioVisible)} CUP
+                      Salario: ${formato(venta.salarioVisible)} ${venta.moneda}
                     </div>
                   </div>
                 </details>
+
+                <button class="btn-peligro"
+                  style="width:100%;margin-top:14px"
+                  onclick="eliminarVenta(${venta.id})">
+                  🗑 ELIMINAR ESTA VENTA
+                </button>
               </div>
             `).join("")
       }
     </div>
   `;
+}
+
+// ==========================================
+// ELIMINAR VENTAS DEL REGISTRO
+// ==========================================
+
+async function eliminarVenta(id) {
+  const venta = ventas.find(v => v.id === id);
+  if (!venta) return;
+
+  const seguro = confirm(
+    `¿Eliminar definitivamente la venta #${id}?\n\n` +
+    `Importe: ${formato(venta.total)} ${venta.moneda || "CUP"}\n` +
+    `Fecha: ${mostrarFecha(venta.fecha)}\n\n` +
+    "Esta operación no se puede deshacer."
+  );
+
+  if (!seguro) return;
+
+  try {
+    await eliminarDato("ventas", id);
+
+    ventas = ventas.filter(v => v.id !== id);
+
+    alert(`La venta #${id} fue eliminada correctamente.`);
+
+    actualizarRegistro();
+
+  } catch (error) {
+    alert("No se pudo eliminar la venta.");
+    console.error(error);
+  }
 }
 
 // ==========================================
