@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "caja-ventas-v2";
+const CACHE_NAME = "caja-ventas-v3";
 
 const ARCHIVOS = [
   "./",
@@ -11,6 +11,7 @@ const ARCHIVOS = [
   "./icono.png"
 ];
 
+// INSTALACIÓN
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -21,12 +22,16 @@ self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
+// ACTIVACIÓN
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(nombres => {
       return Promise.all(
         nombres
-          .filter(nombre => nombre.startsWith("caja-ventas-") && nombre !== CACHE_NAME)
+          .filter(nombre =>
+            nombre.startsWith("caja-ventas-") &&
+            nombre !== CACHE_NAME
+          )
           .map(nombre => caches.delete(nombre))
       );
     })
@@ -35,6 +40,7 @@ self.addEventListener("activate", event => {
   self.clients.claim();
 });
 
+// FUNCIONAMIENTO SIN INTERNET
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
@@ -58,14 +64,16 @@ self.addEventListener("fetch", event => {
         });
 
         return respuestaRed;
+
       }).catch(() => {
         if (event.request.mode === "navigate") {
           return caches.match("./index.html");
         }
 
-        return new Response("Recurso no disponible sin conexión", {
-          status: 503
-        });
+        return new Response(
+          "Recurso no disponible sin conexión",
+          { status: 503 }
+        );
       });
     })
   );
