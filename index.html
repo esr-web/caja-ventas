@@ -5,11 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#151515">
-  <meta name="description" content="Sistema personal de caja y registro de ventas offline">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Sistema de caja y control de ventas offline">
 
-  <title>Caja de Ventas</title>
+  <title>CAJA | Gestión de ventas</title>
 
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icono.png" type="image/png">
@@ -19,20 +17,112 @@
 
 <body>
 
-  <div id="app">
-    <header class="encabezado">
-      <h1>CAJA</h1>
-      <span id="estadoConexion">● Preparando aplicación</span>
-    </header>
+  <header class="encabezado">
+    <div class="marca">
+      <div class="marca-icono">C</div>
+      <div>
+        <h1>CAJA<span>.</span></h1>
+        <p>GESTIÓN DE VENTAS</p>
+      </div>
+    </div>
 
-    <main>
-      <section id="pantallaCaja">
-        <h2>Nueva venta</h2>
-        <div id="productosVenta"></div>
-        <div id="resumenVenta"></div>
-      </section>
-    </main>
-  </div>
+    <div class="estado">
+      <span id="puntoConexion"></span>
+      <span id="estadoConexion">Preparando</span>
+    </div>
+  </header>
+
+  <main id="contenido">
+
+    <section id="pantallaInicio" class="pantalla activa">
+
+      <div class="bienvenida">
+        <span class="etiqueta">PANEL PRINCIPAL</span>
+        <h2>Bienvenido</h2>
+        <p>¿Qué deseas hacer hoy?</p>
+      </div>
+
+      <div class="menu-principal">
+
+        <button class="tarjeta-menu tarjeta-caja"
+          onclick="navegar('caja')">
+
+          <div class="icono-menu">🛒</div>
+
+          <div class="texto-menu">
+            <h3>Caja de ventas</h3>
+            <p>Seleccionar productos y registrar ventas.</p>
+          </div>
+
+          <span class="flecha-menu">↗</span>
+        </button>
+
+        <button class="tarjeta-menu"
+          onclick="navegar('productos')">
+
+          <div class="icono-menu">📦</div>
+
+          <div class="texto-menu">
+            <h3>Productos</h3>
+            <p>Administrar catálogo, precios y productos.</p>
+          </div>
+
+          <span class="flecha-menu">↗</span>
+        </button>
+
+        <button class="tarjeta-menu"
+          onclick="navegar('registro')">
+
+          <div class="icono-menu">📋</div>
+
+          <div class="texto-menu">
+            <h3>Registro de ventas</h3>
+            <p>Consultar operaciones, salarios y estadísticas.</p>
+          </div>
+
+          <span class="flecha-menu">↗</span>
+        </button>
+
+      </div>
+
+      <div class="nota-inicio">
+        <span>●</span>
+        Tus datos se guardan en este dispositivo.
+      </div>
+
+    </section>
+
+    <section id="pantallaCaja" class="pantalla"></section>
+
+    <section id="pantallaProductos" class="pantalla"></section>
+
+    <section id="pantallaRegistro" class="pantalla"></section>
+
+  </main>
+
+  <nav class="navegacion-inferior">
+
+    <button onclick="navegar('inicio')" class="nav-item activo" id="navInicio">
+      <span>⌂</span>
+      <small>Inicio</small>
+    </button>
+
+    <button onclick="navegar('caja')" class="nav-item" id="navCaja">
+      <span>🛒</span>
+      <small>Caja</small>
+    </button>
+
+    <button onclick="navegar('productos')" class="nav-item" id="navProductos">
+      <span>▦</span>
+      <small>Productos</small>
+    </button>
+
+    <button onclick="navegar('registro')" class="nav-item" id="navRegistro">
+      <span>▤</span>
+      <small>Registro</small>
+    </button>
+
+  </nav>
 
   <script src="./database.js"></script>
   <script src="./app.js"></script>
@@ -41,11 +131,8 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function() {
         navigator.serviceWorker.register("./service-worker.js")
-          .then(function() {
-            console.log("Aplicación preparada para funcionar offline.");
-          })
           .catch(function(error) {
-            console.error("Error al registrar el Service Worker:", error);
+            console.error("Error del Service Worker:", error);
           });
       });
     }
