@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "caja-ventas-v1";
+const CACHE_NAME = "caja-ventas-v2";
 
 const ARCHIVOS = [
   "./",
@@ -11,7 +11,6 @@ const ARCHIVOS = [
   "./icono.png"
 ];
 
-// Instalar y guardar los archivos de la aplicación
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -22,13 +21,12 @@ self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
-// Activar y eliminar versiones antiguas
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(nombres => {
       return Promise.all(
         nombres
-          .filter(nombre => nombre !== CACHE_NAME)
+          .filter(nombre => nombre.startsWith("caja-ventas-") && nombre !== CACHE_NAME)
           .map(nombre => caches.delete(nombre))
       );
     })
@@ -37,7 +35,6 @@ self.addEventListener("activate", event => {
   self.clients.claim();
 });
 
-// Responder desde la caché cuando no hay Internet
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
