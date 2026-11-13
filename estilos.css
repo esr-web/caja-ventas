@@ -1,0 +1,180 @@
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --fondo: #f3f4f6;
+  --negro: #151515;
+  --naranja: #f28c28;
+  --verde: #16834a;
+  --texto: #222222;
+  --gris: #777777;
+  --blanco: #ffffff;
+  --borde: #e5e5e5;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  min-height: 100vh;
+}
+
+.encabezado {
+  background: var(--negro);
+  color: white;
+  padding: 22px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 3px 12px #0002;
+}
+
+.encabezado h1 {
+  font-size: 25px;
+  letter-spacing: 2px;
+}
+
+#estadoConexion {
+  font-size: 12px;
+  color: #77d99a;
+}
+
+main {
+  width: 100%;
+  max-width: 700px;
+  margin: auto;
+  padding: 18px;
+}
+
+h2 {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
+  border-radius: 10px;
+  padding: 13px 17px;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+.tarjeta {
+  background: white;
+  border-radius: 15px;
+  padding: 16px;
+  margin-bottom: 13px;
+  box-shadow: 0 3px 12px #0000000b;
+}
+
+.producto {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.producto-info {
+  flex: 1;
+}
+
+.producto-info h3 {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.precio {
+  color: var(--verde);
+  font-weight: bold;
+}
+
+.controles-cantidad {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.btn-cantidad {
+  background: #eeeeee;
+  color: #222;
+  min-width: 38px;
+  padding: 10px;
+  font-size: 18px;
+}
+
+.cantidad {
+  font-size: 17px;
+  font-weight: bold;
+  min-width: 20px;
+  text-align: center;
+}
+
+.resumen {
+  background: var(--negro);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-top: 20px;
+}
+
+.total {
+  font-size: 29px;
+  font-weight: bold;
+  margin: 12px 0;
+}
+
+.salario {
+  color: #75df9a;
+  font-size: 19px;
+  font-weight: bold;
+}
+
+.btn-vendido {
+  background: var(--verde);
+  color: white;
+  width: 100%;
+  padding: 17px;
+  margin-top: 18px;
+  font-size: 17px;
+}
+
+input, select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: 9px;
+  font-size: 16px;
+  background: white;
+  margin: 7px 0 14px;
+}
+
+label {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+@media (max-width: 400px) {
+  main {
+    padding: 12px;
+  }
+
+  .encabezado {
+    padding: 18px 13px;
+  }
+
+  .producto-info h3 {
+    font-size: 14px;
+  }
+}
