@@ -2,6 +2,7 @@
 // ==========================================
 // CAJA DE VENTAS - APLICACIÓN PRINCIPAL
 // USD + CUP | OFFLINE | INDEXEDDB
+// SALARIO SIEMPRE CALCULADO SOBRE CUP
 // ==========================================
 
 let productos = [];
@@ -76,6 +77,10 @@ function precioProducto(producto, moneda) {
   return Number(producto.precioCUP ?? producto.precio ?? 0);
 }
 
+function precioCUPProducto(producto) {
+  return Number(producto?.precioCUP ?? producto?.precio ?? 0);
+}
+
 function simboloMoneda(moneda) {
   return moneda === "USD" ? "USD" : "CUP";
 }
@@ -85,8 +90,6 @@ function simboloMoneda(moneda) {
 // ==========================================
 
 function adaptarProducto(producto) {
-  // Los productos antiguos tenían un único precio:
-  // se conserva interpretándolo como precio en CUP.
   if (producto.precioCUP === undefined) {
     producto.precioCUP = Number(producto.precio || 0);
   }
@@ -99,24 +102,39 @@ function adaptarProducto(producto) {
 }
 
 function adaptarVenta(venta) {
-  // Las ventas antiguas se interpretan como CUP.
   if (!venta.moneda) {
     venta.moneda = "CUP";
   }
 
   venta.productos = (venta.productos || []).map(item => {
     const precioAntiguo = Number(item.precio || 0);
+    const productoCatalogo = productos.find(
+      p => String(p.id) === String(item.productoId)
+    );
+
+    let precioCUP = Number(item.precioCUP || 0);
+
+    // En ventas USD antiguas puede no existir una
+    // fotografía histórica del precio CUP.
+    // En ese caso se utiliza el precio CUP actual
+    // del catálogo como referencia aproximada.
+    if (precioCUP <= 0 && venta.moneda === "USD") {
+      precioCUP = precioCUPProducto(productoCatalogo);
+    }
+
+    if (precioCUP <= 0 && venta.moneda === "CUP") {
+      precioCUP = precioAntiguo;
+    }
+
+    const precioUSD = Number(
+      item.precioUSD ??
+      (venta.moneda === "USD" ? precioAntiguo : 0)
+    );
 
     return {
       ...item,
-      precioCUP: Number(
-        item.precioCUP ??
-        (venta.moneda === "CUP" ? precioAntiguo : 0)
-      ),
-      precioUSD: Number(
-        item.precioUSD ??
-        (venta.moneda === "USD" ? precioAntiguo : 0)
-      )
+      precioCUP,
+      precioUSD
     };
   });
 
@@ -132,19 +150,36 @@ function adaptarVenta(venta) {
       : 0;
   }
 
-  if (venta.salarioCUP === undefined) {
-    venta.salarioCUP = venta.moneda === "CUP"
-      ? Number(venta.salario || 0)
-      : 0;
-  }
+  // Recalcular el salario siempre en CUP.
+  const porcentaje = Number(venta.porcentaje || 0);
 
-  if (venta.salarioUSD === undefined) {
-    venta.salarioUSD = venta.moneda === "USD"
-      ? Number(venta.salario || 0)
-      : 0;
-  }
+  const salarioCalculadoCUP = venta.productos.reduce(
+    (suma, item) =>
+      suma +
+      Number(item.precioCUP || 0) *
+      Number(item.cantidad || 0) *
+      porcentaje / 100,
+    0
+  );
+
+  venta.salarioCUP = salarioCalculadoCUP;
+  venta.salarioUSD = 0;
+  venta.salario = salarioCalculadoCUP;
 
   return venta;
+}
+
+// ==========================================
+// CÁLCULO DEL SALARIO EN CUP
+// ==========================================
+
+function calcularSalarioLineasCUP(lineas, porcentaje) {
+  return lineas.reduce((suma, item) => {
+    const precioCUP = Number(item.precioCUP || 0);
+    const cantidad = Number(item.cantidad || 0);
+
+    return suma + precioCUP * cantidad * porcentaje / 100;
+  }, 0);
 }
 
 // ==========================================
@@ -161,12 +196,10 @@ async function iniciarAplicacion() {
     ventas = (await obtenerTodos("ventas"))
       .map(adaptarVenta);
 
-    // Guardar la adaptación de los productos antiguos.
     for (const producto of productos) {
       await guardarDato("productos", producto);
     }
 
-    // Guardar la adaptación de las ventas antiguas.
     for (const venta of ventas) {
       await guardarDato("ventas", venta);
     }
@@ -174,7 +207,6 @@ async function iniciarAplicacion() {
     actualizarConexion();
     navegar("inicio");
 
-    // Solicitar almacenamiento persistente cuando sea posible.
     solicitarAlmacenamientoPersistente();
 
   } catch (error) {
@@ -407,17 +439,15 @@ async function guardarProducto() {
       producto.nombre = nombre;
       producto.precioUSD = precioUSD;
       producto.precioCUP = precioCUP;
-
-      // Se conserva el campo antiguo para compatibilidad.
       producto.precio = precioCUP;
 
       await guardarDato("productos", producto);
 
-      // Actualizar el carrito si el producto todavía no se ha vendido.
       carrito.forEach(item => {
         if (item.productoId === producto.id) {
           item.nombre = nombre;
           item.precio = precioProducto(producto, monedaVenta);
+          item.precioCUP = precioCUP;
         }
       });
 
@@ -511,6 +541,7 @@ function mostrarCaja() {
 
       <p style="font-size:12px;color:#777">
         Se utilizará el precio del producto correspondiente a esta moneda.
+        El salario siempre se calcula utilizando el precio CUP.
       </p>
     </div>
 
@@ -553,7 +584,6 @@ function cambiarMonedaVenta(moneda) {
 
   monedaVenta = moneda;
 
-  // Actualizar los precios del carrito según la moneda elegida.
   carrito = carrito.map(item => {
     const producto = productos.find(
       p => p.id === item.productoId
@@ -568,7 +598,8 @@ function cambiarMonedaVenta(moneda) {
     return {
       ...item,
       nombre: producto.nombre,
-      precio
+      precio,
+      precioCUP: precioCUPProducto(producto)
     };
   }).filter(Boolean);
 
@@ -659,6 +690,7 @@ function cambiarCantidad(id, cambio) {
       productoId: id,
       nombre: producto.nombre,
       precio,
+      precioCUP: precioCUPProducto(producto),
       cantidad: 0
     };
 
@@ -677,6 +709,10 @@ function cambiarCantidad(id, cambio) {
   actualizarResumen();
 }
 
+// ==========================================
+// CÁLCULO DE LA VENTA Y DEL SALARIO
+// ==========================================
+
 function calcularVenta() {
   const total = carrito.reduce(
     (suma, item) =>
@@ -689,9 +725,19 @@ function calcularVenta() {
     porcentajeSalario
   );
 
-  const salario = total * porcentaje / 100;
+  // IMPORTANTE:
+  // El salario se calcula siempre sobre los precios CUP,
+  // aunque el cliente pague la venta en USD.
+  const salarioCUP = calcularSalarioLineasCUP(
+    carrito,
+    porcentaje
+  );
 
-  return { total, porcentaje, salario };
+  return {
+    total,
+    porcentaje,
+    salarioCUP
+  };
 }
 
 function actualizarResumen() {
@@ -724,11 +770,11 @@ function actualizarResumen() {
     </p>
 
     <p style="margin-top:15px;color:#cccccc">
-      Salario generado
+      Salario generado (calculado sobre precios CUP)
     </p>
 
     <div class="salario">
-      ${formato(calculo.salario)} ${monedaVenta}
+      ${formato(calculo.salarioCUP)} CUP
     </div>
 
     <button class="btn-vendido"
@@ -737,6 +783,10 @@ function actualizarResumen() {
     </button>
   `;
 }
+
+// ==========================================
+// REGISTRAR VENTA
+// ==========================================
 
 async function registrarVenta() {
   if (carrito.length === 0) {
@@ -770,30 +820,36 @@ async function registrarVenta() {
 
   const confirmacion =
     `¿Confirmar venta por ${formato(calculo.total)} ${monedaVenta}?\n\n` +
-    `Salario: ${formato(calculo.salario)} ${monedaVenta}`;
+    `Salario generado: ${formato(calculo.salarioCUP)} CUP`;
 
   if (!confirm(confirmacion)) return;
 
-  const lineas = carrito.map(item => ({
-    productoId: item.productoId,
-    nombre: item.nombre,
-    precio: item.precio,
-    cantidad: item.cantidad,
-    precioUSD: monedaVenta === "USD" ? item.precio : 0,
-    precioCUP: monedaVenta === "CUP" ? item.precio : 0
-  }));
+  const lineas = carrito.map(item => {
+    const producto = productos.find(
+      p => p.id === item.productoId
+    );
+
+    return {
+      productoId: item.productoId,
+      nombre: item.nombre,
+      precio: item.precio,
+      precioUSD: monedaVenta === "USD" ? item.precio : 0,
+      precioCUP: precioCUPProducto(producto),
+      cantidad: item.cantidad
+    };
+  });
 
   const venta = {
     fecha: new Date(fecha).toISOString(),
     moneda: monedaVenta,
     productos: lineas,
     total: calculo.total,
-    salario: calculo.salario,
+    salario: calculo.salarioCUP,
     porcentaje: calculo.porcentaje,
     totalUSD: monedaVenta === "USD" ? calculo.total : 0,
     totalCUP: monedaVenta === "CUP" ? calculo.total : 0,
-    salarioUSD: monedaVenta === "USD" ? calculo.salario : 0,
-    salarioCUP: monedaVenta === "CUP" ? calculo.salario : 0
+    salarioUSD: 0,
+    salarioCUP: calculo.salarioCUP
   };
 
   try {
@@ -806,7 +862,7 @@ async function registrarVenta() {
     alert(
       "¡Venta registrada correctamente!\n\n" +
       "Total: " + formato(venta.total) + " " + venta.moneda + "\n" +
-      "Salario: " + formato(venta.salario) + " " + venta.moneda
+      "Salario: " + formato(venta.salarioCUP) + " CUP"
     );
 
     mostrarCaja();
@@ -1046,20 +1102,26 @@ function actualizarRegistro() {
 
     const totalVenta = Number(venta.total || 0);
 
-    // Los filtros de importe se comparan solamente
-    // con ventas de la misma moneda.
+    // Los importes se comparan en la moneda de cada venta.
     if (minimo !== null && totalVenta < minimo) return;
     if (maximo !== null && totalVenta > maximo) return;
 
     let lineas = (venta.productos || []).map(item => {
-      const precio = moneda === "USD"
+      const precioVenta = moneda === "USD"
         ? Number(item.precioUSD ?? item.precio ?? 0)
         : Number(item.precioCUP ?? item.precio ?? 0);
 
+      const precioCUP = Number(item.precioCUP || 0);
+      const cantidad = Number(item.cantidad || 0);
+
       return {
         ...item,
-        precio,
-        subtotal: precio * Number(item.cantidad || 0)
+        precio: precioVenta,
+        precioCUP,
+        cantidad,
+        subtotal: precioVenta * cantidad,
+        salarioCUP: precioCUP * cantidad *
+          Number(venta.porcentaje || 0) / 100
       };
     });
 
@@ -1076,16 +1138,19 @@ function actualizarRegistro() {
       0
     );
 
-    const salarioVisible = productoId !== ""
-      ? totalVisible * Number(venta.porcentaje || 0) / 100
-      : Number(venta.salario || 0);
+    // Si se filtra por producto, solo se suma el salario
+    // correspondiente a las unidades de ese producto.
+    const salarioVisibleCUP = lineas.reduce(
+      (suma, item) => suma + item.salarioCUP,
+      0
+    );
 
     resultados.push({
       ...venta,
       moneda,
       lineasVisibles: lineas,
       totalVisible,
-      salarioVisible
+      salarioVisibleCUP
     });
   });
 
@@ -1104,12 +1169,9 @@ function actualizarRegistro() {
     (suma, venta) => suma + venta.totalVisible, 0
   );
 
-  const salarioUSD = ventasUSD.reduce(
-    (suma, venta) => suma + venta.salarioVisible, 0
-  );
-
-  const salarioCUP = ventasCUP.reduce(
-    (suma, venta) => suma + venta.salarioVisible, 0
+  // El salario de TODAS las ventas se acumula en CUP.
+  const salarioCUP = resultados.reduce(
+    (suma, venta) => suma + venta.salarioVisibleCUP, 0
   );
 
   const unidades = resultados.reduce(
@@ -1137,16 +1199,8 @@ function actualizarRegistro() {
         TOTAL VENDIDO EN USD
       </div>
 
-      <div style="font-size:25px;font-weight:bold;margin:6px 0 15px">
+      <div style="font-size:25px;font-weight:bold;margin:6px 0 18px">
         ${formato(totalUSD)} USD
-      </div>
-
-      <div style="color:#cccccc;font-size:12px">
-        SALARIO GENERADO EN USD
-      </div>
-
-      <div style="font-size:21px;font-weight:bold;color:#75df9a;margin:6px 0 18px">
-        ${formato(salarioUSD)} USD
       </div>
 
       <div style="border-top:1px solid #444;padding-top:15px">
@@ -1154,15 +1208,17 @@ function actualizarRegistro() {
           TOTAL VENDIDO EN CUP
         </div>
 
-        <div style="font-size:25px;font-weight:bold;margin:6px 0 15px">
+        <div style="font-size:25px;font-weight:bold;margin:6px 0 18px">
           ${formato(totalCUP)} CUP
         </div>
+      </div>
 
+      <div style="border-top:1px solid #444;padding-top:15px">
         <div style="color:#cccccc;font-size:12px">
-          SALARIO GENERADO EN CUP
+          SALARIO GENERADO (TODAS LAS VENTAS)
         </div>
 
-        <div style="font-size:21px;font-weight:bold;color:#75df9a;margin:6px 0 18px">
+        <div style="font-size:23px;font-weight:bold;color:#75df9a;margin:6px 0 18px">
           ${formato(salarioCUP)} CUP
         </div>
       </div>
@@ -1208,7 +1264,7 @@ function actualizarRegistro() {
                       ${formato(venta.totalVisible)} ${venta.moneda}
                     </strong>
                     <div style="font-size:11px;color:#777;margin-top:5px">
-                      ${formato(venta.salarioVisible)} ${venta.moneda} salario
+                      ${formato(venta.salarioVisibleCUP)} CUP salario
                     </div>
                   </div>
                 </div>
@@ -1226,6 +1282,9 @@ function actualizarRegistro() {
                           <div style="color:#777;margin-top:4px">
                             ${item.cantidad} × ${formato(item.precio)} ${venta.moneda}
                           </div>
+                          <div style="color:#777;margin-top:3px">
+                            Base salarial: ${formato(item.precioCUP)} CUP por unidad
+                          </div>
                         </div>
                         <strong>${formato(item.subtotal)} ${venta.moneda}</strong>
                       </div>
@@ -1236,7 +1295,7 @@ function actualizarRegistro() {
                     </div>
 
                     <div style="font-weight:bold;margin-top:5px">
-                      Salario: ${formato(venta.salarioVisible)} ${venta.moneda}
+                      Salario: ${formato(venta.salarioVisibleCUP)} CUP
                     </div>
                   </div>
                 </details>
@@ -1289,4 +1348,4 @@ async function eliminarVenta(id) {
 // ARRANQUE
 // ==========================================
 
-document.addEventListener("DOMContentLoaded", iniciarAplicacion);
+document.addEventListener("DOMContentLoaded", iniciarAplicacion");
