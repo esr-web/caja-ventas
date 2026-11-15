@@ -882,6 +882,12 @@ function mostrarRegistro() {
     <span class="etiqueta">CONTROL Y ESTADÍSTICAS</span>
     <h2 class="titulo-seccion">Registro de ventas</h2>
 
+    <button class="btn-principal"
+      style="width:100%;margin-bottom:16px"
+      onclick="mostrarResumenVentas()">
+      ☷ RESUMEN DE VENTAS
+    </button>
+
     <div class="tarjeta">
       <h3 style="margin-bottom:15px">Filtrar registros</h3>
 
@@ -963,6 +969,248 @@ function mostrarRegistro() {
   actualizarVisibilidadFiltros();
   actualizarRegistro();
 }
+
+// ==========================================
+// NUEVO: RESUMEN GENERAL DE VENTAS
+// ==========================================
+
+function mostrarResumenVentas() {
+  const contenedor = document.getElementById("pantallaRegistro");
+  if (!contenedor) return;
+
+  const ordenadas = [...ventas].sort(
+    (a, b) => new Date(b.fecha) - new Date(a.fecha)
+  );
+
+  const ventasUSD = ordenadas.filter(
+    venta => (venta.moneda || "CUP") === "USD"
+  );
+
+  const ventasCUP = ordenadas.filter(
+    venta => (venta.moneda || "CUP") === "CUP"
+  );
+
+  const totalUSD = ventasUSD.reduce(
+    (suma, venta) => suma + Number(venta.total || 0),
+    0
+  );
+
+  const totalCUP = ventasCUP.reduce(
+    (suma, venta) => suma + Number(venta.total || 0),
+    0
+  );
+
+  const totalUnidades = ordenadas.reduce(
+    (suma, venta) =>
+      suma + (venta.productos || []).reduce(
+        (s, item) => s + Number(item.cantidad || 0),
+        0
+      ),
+    0
+  );
+
+  const unidadesUSD = ventasUSD.reduce(
+    (suma, venta) =>
+      suma + (venta.productos || []).reduce(
+        (s, item) => s + Number(item.cantidad || 0),
+        0
+      ),
+    0
+  );
+
+  const unidadesCUP = ventasCUP.reduce(
+    (suma, venta) =>
+      suma + (venta.productos || []).reduce(
+        (s, item) => s + Number(item.cantidad || 0),
+        0
+      ),
+    0
+  );
+
+  contenedor.innerHTML = `
+    <span class="etiqueta">INFORME GENERAL</span>
+    <h2 class="titulo-seccion">Resumen de ventas</h2>
+
+    <button class="btn-secundario"
+      style="width:100%;margin-bottom:16px"
+      onclick="mostrarRegistro()">
+      ← VOLVER AL REGISTRO
+    </button>
+
+    <div class="tarjeta" style="background:#151515;color:white">
+      <div style="font-size:11px;color:#f28c28;font-weight:bold;letter-spacing:1px">
+        RESUMEN DE TODAS LAS OPERACIONES
+      </div>
+
+      <div style="margin-top:18px;color:#cccccc;font-size:12px">
+        TOTAL VENDIDO EN USD
+      </div>
+
+      <div style="font-size:25px;font-weight:bold;margin:6px 0 18px">
+        ${formato(totalUSD)} USD
+      </div>
+
+      <div style="border-top:1px solid #444;padding-top:15px">
+        <div style="color:#cccccc;font-size:12px">
+          TOTAL VENDIDO EN CUP
+        </div>
+
+        <div style="font-size:25px;font-weight:bold;margin:6px 0 18px">
+          ${formato(totalCUP)} CUP
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #444;padding-top:15px;display:flex;justify-content:space-between;gap:10px">
+        <div>
+          <strong>${ordenadas.length}</strong>
+          <div style="font-size:11px;color:#bbbbbb">Operaciones</div>
+        </div>
+
+        <div>
+          <strong>${totalUnidades}</strong>
+          <div style="font-size:11px;color:#bbbbbb">Unidades vendidas</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin:22px 0 13px">
+      Todas las operaciones (${ordenadas.length})
+    </h3>
+
+    ${
+      ordenadas.length === 0
+        ? `<div class="tarjeta texto-vacio">
+            Todavía no hay ventas registradas.
+          </div>`
+        : ordenadas.map(venta => {
+            const moneda = venta.moneda || "CUP";
+            const lineas = venta.productos || [];
+
+            const unidadesVenta = lineas.reduce(
+              (suma, item) => suma + Number(item.cantidad || 0),
+              0
+            );
+
+            const totalCalculado = lineas.reduce(
+              (suma, item) => {
+                const precio = moneda === "USD"
+                  ? Number(item.precioUSD ?? item.precio ?? 0)
+                  : Number(item.precioCUP ?? item.precio ?? 0);
+
+                return suma + precio * Number(item.cantidad || 0);
+              },
+              0
+            );
+
+            return `
+              <div class="tarjeta">
+                <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+                  <div>
+                    <strong>Venta #${venta.id}</strong>
+                    <div style="font-size:11px;color:#777;margin-top:5px">
+                      ${mostrarFecha(venta.fecha)}
+                    </div>
+                    <div style="font-size:11px;color:#f28c28;font-weight:bold;margin-top:5px">
+                      Moneda: ${moneda}
+                    </div>
+                  </div>
+
+                  <div style="text-align:right">
+                    <strong style="color:#16834a">
+                      ${formato(venta.total ?? totalCalculado)} ${moneda}
+                    </strong>
+                    <div style="font-size:11px;color:#777;margin-top:5px">
+                      ${unidadesVenta} unidades
+                    </div>
+                  </div>
+                </div>
+
+                <div style="border-top:1px solid #eeeeee;margin-top:14px;padding-top:10px">
+                  ${lineas.map(item => {
+                    const precio = moneda === "USD"
+                      ? Number(item.precioUSD ?? item.precio ?? 0)
+                      : Number(item.precioCUP ?? item.precio ?? 0);
+
+                    const cantidad = Number(item.cantidad || 0);
+                    const importe = precio * cantidad;
+
+                    return `
+                      <div style="padding:10px 0;border-bottom:1px solid #eeeeee">
+                        <strong style="font-size:13px">
+                          ${escapar(item.nombre || "Producto")}
+                        </strong>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;font-size:12px">
+                          <div>
+                            <span style="color:#777">Cantidad</span>
+                            <div style="font-weight:bold">${cantidad} unidades</div>
+                          </div>
+
+                          <div>
+                            <span style="color:#777">Precio unitario</span>
+                            <div style="font-weight:bold">${formato(precio)} ${moneda}</div>
+                          </div>
+
+                          <div style="grid-column:1 / -1">
+                            <span style="color:#777">Importe del producto</span>
+                            <div style="font-weight:bold;color:#16834a">
+                              ${formato(importe)} ${moneda}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+
+                <div style="display:flex;justify-content:space-between;gap:10px;margin-top:13px;font-weight:bold">
+                  <span>Total de la operación</span>
+                  <span>${formato(venta.total ?? totalCalculado)} ${moneda}</span>
+                </div>
+              </div>
+            `;
+          }).join("")
+    }
+
+    <div class="tarjeta">
+      <h3 style="margin-bottom:12px">Totales por moneda</h3>
+
+      <div style="display:flex;justify-content:space-between;padding:8px 0">
+        <span>Ventas en USD</span>
+        <strong>${formato(totalUSD)} USD</strong>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;padding:8px 0">
+        <span>Unidades vendidas en USD</span>
+        <strong>${unidadesUSD}</strong>
+      </div>
+
+      <div style="border-top:1px solid #eee;margin:8px 0"></div>
+
+      <div style="display:flex;justify-content:space-between;padding:8px 0">
+        <span>Ventas en CUP</span>
+        <strong>${formato(totalCUP)} CUP</strong>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;padding:8px 0">
+        <span>Unidades vendidas en CUP</span>
+        <strong>${unidadesCUP}</strong>
+      </div>
+    </div>
+
+    <button class="btn-secundario"
+      style="width:100%;margin-bottom:20px"
+      onclick="mostrarRegistro()">
+      ← VOLVER AL REGISTRO
+    </button>
+  `;
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ==========================================
+// FILTROS DEL REGISTRO
+// ==========================================
 
 function actualizarVisibilidadFiltros() {
   const periodo =
@@ -1134,8 +1382,6 @@ function actualizarRegistro() {
       0
     );
 
-    // Cantidad total de unidades de esta operación
-    // considerando los productos visibles según el filtro.
     const unidadesVisibles = lineas.reduce(
       (suma, item) => suma + Number(item.cantidad || 0),
       0
