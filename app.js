@@ -114,10 +114,6 @@ function adaptarVenta(venta) {
 
     let precioCUP = Number(item.precioCUP || 0);
 
-    // En ventas USD antiguas puede no existir una
-    // fotografía histórica del precio CUP.
-    // En ese caso se utiliza el precio CUP actual
-    // del catálogo como referencia aproximada.
     if (precioCUP <= 0 && venta.moneda === "USD") {
       precioCUP = precioCUPProducto(productoCatalogo);
     }
@@ -150,7 +146,6 @@ function adaptarVenta(venta) {
       : 0;
   }
 
-  // Recalcular el salario siempre en CUP.
   const porcentaje = Number(venta.porcentaje || 0);
 
   const salarioCalculadoCUP = venta.productos.reduce(
@@ -725,9 +720,6 @@ function calcularVenta() {
     porcentajeSalario
   );
 
-  // IMPORTANTE:
-  // El salario se calcula siempre sobre los precios CUP,
-  // aunque el cliente pague la venta en USD.
   const salarioCUP = calcularSalarioLineasCUP(
     carrito,
     porcentaje
@@ -1102,7 +1094,6 @@ function actualizarRegistro() {
 
     const totalVenta = Number(venta.total || 0);
 
-    // Los importes se comparan en la moneda de cada venta.
     if (minimo !== null && totalVenta < minimo) return;
     if (maximo !== null && totalVenta > maximo) return;
 
@@ -1138,10 +1129,15 @@ function actualizarRegistro() {
       0
     );
 
-    // Si se filtra por producto, solo se suma el salario
-    // correspondiente a las unidades de ese producto.
     const salarioVisibleCUP = lineas.reduce(
       (suma, item) => suma + item.salarioCUP,
+      0
+    );
+
+    // Cantidad total de unidades de esta operación
+    // considerando los productos visibles según el filtro.
+    const unidadesVisibles = lineas.reduce(
+      (suma, item) => suma + Number(item.cantidad || 0),
       0
     );
 
@@ -1150,7 +1146,8 @@ function actualizarRegistro() {
       moneda,
       lineasVisibles: lineas,
       totalVisible,
-      salarioVisibleCUP
+      salarioVisibleCUP,
+      unidadesVisibles
     });
   });
 
@@ -1169,15 +1166,12 @@ function actualizarRegistro() {
     (suma, venta) => suma + venta.totalVisible, 0
   );
 
-  // El salario de TODAS las ventas se acumula en CUP.
   const salarioCUP = resultados.reduce(
     (suma, venta) => suma + venta.salarioVisibleCUP, 0
   );
 
   const unidades = resultados.reduce(
-    (suma, venta) => suma + venta.lineasVisibles.reduce(
-      (s, item) => s + Number(item.cantidad || 0), 0
-    ),
+    (suma, venta) => suma + venta.unidadesVisibles,
     0
   );
 
@@ -1257,6 +1251,9 @@ function actualizarRegistro() {
                     <div style="font-size:11px;color:#f28c28;font-weight:bold;margin-top:5px">
                       Moneda: ${venta.moneda}
                     </div>
+                    <div style="font-size:12px;color:#555;margin-top:6px;font-weight:bold">
+                      Cantidad vendida: ${venta.unidadesVisibles} unidades
+                    </div>
                   </div>
 
                   <div style="text-align:right">
@@ -1280,7 +1277,10 @@ function actualizarRegistro() {
                         <div>
                           <strong>${escapar(item.nombre)}</strong>
                           <div style="color:#777;margin-top:4px">
-                            ${item.cantidad} × ${formato(item.precio)} ${venta.moneda}
+                            Precio unitario: ${formato(item.precio)} ${venta.moneda}
+                          </div>
+                          <div style="color:#f28c28;font-weight:bold;margin-top:4px">
+                            Cantidad vendida: ${item.cantidad} unidades
                           </div>
                           <div style="color:#777;margin-top:3px">
                             Base salarial: ${formato(item.precioCUP)} CUP por unidad
@@ -1348,4 +1348,4 @@ async function eliminarVenta(id) {
 // ARRANQUE
 // ==========================================
 
-document.addEventListener("DOMContentLoaded", iniciarAplicacion");
+document.addEventListener("DOMContentLoaded", iniciarAplicacion);
