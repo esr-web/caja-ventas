@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "caja-ventas-v5";
+const CACHE_NAME = "caja-ventas-v6";
 
 const ARCHIVOS = [
   "./",
@@ -7,6 +7,7 @@ const ARCHIVOS = [
   "./estilos.css",
   "./database.js",
   "./app.js",
+  "./respaldo.js",
   "./manifest.json",
   "./icono.png"
 ];
@@ -20,7 +21,7 @@ self.addEventListener("install", event => {
   );
 });
 
-// ACTIVACIÓN Y LIMPIEZA DE CACHÉS ANTIGUAS
+// ACTIVACIÓN
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
