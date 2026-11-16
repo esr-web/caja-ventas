@@ -1875,4 +1875,4 @@ async function eliminarVenta(id) {
 // ARRANQUE
 // ==========================================
 
-document.addEventListener("DOMContentLoaded", iniciarAplicacion);
+document.addEventListener("DOMContentLoaded", iniciarAplicacion); 
