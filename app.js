@@ -14,6 +14,275 @@ let porcentajeSalario = 5;
 let pantallaActual = "inicio";
 let monedaVenta = "CUP";
 
+// ==========================================
+// CONTEO DE EFECTIVO
+// ==========================================
+
+const DENOMINACIONES = [
+  5, 10, 20, 50, 100, 200,
+  500, 1000, 2000, 5000, 10000, 20000
+];
+
+const CLAVE_CONTEO_EFECTIVO = "caja_conteo_efectivo_v1";
+
+let conteoEfectivo = cargarConteoEfectivo();
+
+function cargarConteoEfectivo() {
+  try {
+    const guardado = localStorage.getItem(CLAVE_CONTEO_EFECTIVO);
+    const datos = guardado ? JSON.parse(guardado) : {};
+
+    const resultado = {};
+
+    DENOMINACIONES.forEach(denominacion => {
+      const cantidad = Number(datos[denominacion] || 0);
+
+      resultado[denominacion] =
+        Number.isFinite(cantidad) && cantidad >= 0
+          ? Math.floor(cantidad)
+          : 0;
+    });
+
+    return resultado;
+
+  } catch (error) {
+    console.error("Error al recuperar el conteo:", error);
+
+    return Object.fromEntries(
+      DENOMINACIONES.map(d => [d, 0])
+    );
+  }
+}
+
+function guardarConteoEfectivo() {
+  try {
+    localStorage.setItem(
+      CLAVE_CONTEO_EFECTIVO,
+      JSON.stringify(conteoEfectivo)
+    );
+  } catch (error) {
+    alert("No se pudo guardar el conteo de efectivo.");
+    console.error(error);
+  }
+}
+
+function calcularTotalEfectivo() {
+  return DENOMINACIONES.reduce((total, denominacion) => {
+    return total +
+      denominacion * Number(conteoEfectivo[denominacion] || 0);
+  }, 0);
+}
+
+function actualizarCantidadBilletes(denominacion, valor) {
+  const cantidad = Number(valor);
+
+  if (
+    !Number.isFinite(cantidad) ||
+    cantidad < 0 ||
+    !Number.isInteger(cantidad)
+  ) {
+    return;
+  }
+
+  conteoEfectivo[denominacion] = cantidad;
+
+  guardarConteoEfectivo();
+
+  const importe = denominacion * cantidad;
+
+  const resultado = document.getElementById(
+    `importeBillete${denominacion}`
+  );
+
+  if (resultado) {
+    resultado.textContent = formato(importe) + " CUP";
+  }
+
+  const total = document.getElementById("totalConteoEfectivo");
+
+  if (total) {
+    total.textContent = formato(calcularTotalEfectivo()) + " CUP";
+  }
+}
+
+function limpiarConteoEfectivo() {
+  if (!confirm(
+    "¿Deseas borrar todas las cantidades del conteo de efectivo?\n\n" +
+    "Esta acción no se puede deshacer."
+  )) {
+    return;
+  }
+
+  DENOMINACIONES.forEach(denominacion => {
+    conteoEfectivo[denominacion] = 0;
+  });
+
+  guardarConteoEfectivo();
+  mostrarConteoEfectivo();
+
+  alert("El conteo de efectivo ha sido limpiado.");
+}
+
+function mostrarConteoEfectivo() {
+  const pantalla = document.getElementById("pantallaEfectivo");
+  if (!pantalla) return;
+
+  const filas = DENOMINACIONES.map(denominacion => {
+    const cantidad = conteoEfectivo[denominacion] || 0;
+    const importe = denominacion * cantidad;
+
+    return `
+      <div class="tarjeta" style="
+        display:grid;
+        grid-template-columns:1fr 100px;
+        gap:12px;
+        align-items:center;
+        margin-bottom:10px;
+      ">
+
+        <div>
+          <strong style="font-size:17px">
+            ${formato(denominacion)} CUP
+          </strong>
+
+          <div style="
+            font-size:12px;
+            color:#777;
+            margin-top:7px;
+          ">
+            Importe:
+          </div>
+
+          <strong
+            id="importeBillete${denominacion}"
+            style="color:#16834a;font-size:14px"
+          >
+            ${formato(importe)} CUP
+          </strong>
+        </div>
+
+        <div>
+          <label
+            for="billete${denominacion}"
+            style="font-size:11px"
+          >
+            Cantidad
+          </label>
+
+          <input
+            id="billete${denominacion}"
+            type="number"
+            min="0"
+            step="1"
+            inputmode="numeric"
+            value="${cantidad}"
+            oninput="actualizarCantidadBilletes(${denominacion},this.value)"
+            style="
+              width:100%;
+              text-align:center;
+              font-size:18px;
+              font-weight:bold;
+            "
+          >
+        </div>
+
+      </div>
+    `;
+  }).join("");
+
+  pantalla.innerHTML = `
+    <span class="etiqueta">CONTROL DE DINERO</span>
+
+    <h2 class="titulo-seccion">Conteo de efectivo</h2>
+
+    <div class="tarjeta" style="
+      background:#151515;
+      color:white;
+      margin-bottom:18px;
+    ">
+      <div style="
+        color:#f28c28;
+        font-size:11px;
+        font-weight:bold;
+        letter-spacing:1px;
+      ">
+        TOTAL DE EFECTIVO
+      </div>
+
+      <div
+        id="totalConteoEfectivo"
+        style="
+          font-size:30px;
+          font-weight:bold;
+          margin-top:12px;
+        "
+      >
+        ${formato(calcularTotalEfectivo())} CUP
+      </div>
+
+      <p style="
+        color:#bbb;
+        font-size:12px;
+        margin-top:8px;
+      ">
+        Suma de todos los billetes contabilizados.
+      </p>
+    </div>
+
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin:20px 0 13px;
+    ">
+      <h3>Denominación de billetes</h3>
+      <span style="font-size:11px;color:#777">
+        CUP
+      </span>
+    </div>
+
+    ${filas}
+
+    <div class="tarjeta" style="
+      background:#151515;
+      color:white;
+      margin-top:18px;
+    ">
+      <div style="
+        color:#f28c28;
+        font-size:11px;
+        font-weight:bold;
+        letter-spacing:1px;
+      ">
+        TOTAL GENERAL
+      </div>
+
+      <div
+        id="totalConteoEfectivo"
+        style="
+          font-size:30px;
+          font-weight:bold;
+          margin-top:10px;
+        "
+      >
+        ${formato(calcularTotalEfectivo())} CUP
+      </div>
+    </div>
+
+    <button
+      class="btn-peligro"
+      style="width:100%;margin:15px 0 25px"
+      onclick="limpiarConteoEfectivo()"
+    >
+      🗑 LIMPIAR CONTEO
+    </button>
+  `;
+}
+
+// ==========================================
+// FORMATO Y UTILIDADES
+// ==========================================
+
 const formato = valor =>
   Number(valor || 0).toLocaleString("es-ES", {
     minimumFractionDigits: 2,
@@ -249,7 +518,8 @@ function navegar(destino) {
     inicio: "pantallaInicio",
     caja: "pantallaCaja",
     productos: "pantallaProductos",
-    registro: "pantallaRegistro"
+    registro: "pantallaRegistro",
+    efectivo: "pantallaEfectivo"
   };
 
   Object.entries(pantallas).forEach(([nombre, id]) => {
@@ -264,7 +534,8 @@ function navegar(destino) {
     inicio: "navInicio",
     caja: "navCaja",
     productos: "navProductos",
-    registro: "navRegistro"
+    registro: "navRegistro",
+    efectivo: "navEfectivo"
   };
 
   Object.entries(botones).forEach(([nombre, id]) => {
@@ -278,6 +549,7 @@ function navegar(destino) {
   if (destino === "caja") mostrarCaja();
   if (destino === "productos") mostrarProductos();
   if (destino === "registro") mostrarRegistro();
+  if (destino === "efectivo") mostrarConteoEfectivo();
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -377,12 +649,8 @@ function dibujarCatalogo() {
     <div class="producto">
       <div class="producto-info">
         <h3>${escapar(producto.nombre)}</h3>
-        <div class="precio">
-          ${formato(producto.precioUSD)} USD
-        </div>
-        <div class="precio">
-          ${formato(producto.precioCUP)} CUP
-        </div>
+        <div class="precio">${formato(producto.precioUSD)} USD</div>
+        <div class="precio">${formato(producto.precioCUP)} CUP</div>
       </div>
 
       <button class="btn-secundario"
@@ -641,9 +909,7 @@ function dibujarProductosCaja() {
       <div class="producto">
         <div class="producto-info">
           <h3>${escapar(producto.nombre)}</h3>
-          <div class="precio">
-            ${formato(precio)} ${monedaVenta}
-          </div>
+          <div class="precio">${formato(precio)} ${monedaVenta}</div>
           ${
             sinPrecio
               ? `<small style="color:#c52e2e">Sin precio en ${monedaVenta}</small>`
@@ -971,7 +1237,7 @@ function mostrarRegistro() {
 }
 
 // ==========================================
-// NUEVO: RESUMEN GENERAL DE VENTAS
+// RESUMEN GENERAL DE VENTAS
 // ==========================================
 
 function mostrarResumenVentas() {
@@ -1417,8 +1683,7 @@ function actualizarRegistro() {
   );
 
   const unidades = resultados.reduce(
-    (suma, venta) => suma + venta.unidadesVisibles,
-    0
+    (suma, venta) => suma + venta.unidadesVisibles, 0
   );
 
   const etiquetaPeriodo = {
