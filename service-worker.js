@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "caja-ventas-v4";
+const CACHE_NAME = "caja-ventas-v5";
 
 const ARCHIVOS = [
   "./",
@@ -20,7 +20,7 @@ self.addEventListener("install", event => {
   );
 });
 
-// ACTIVACIÓN
+// ACTIVACIÓN Y LIMPIEZA DE CACHÉS ANTIGUAS
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
@@ -36,7 +36,7 @@ self.addEventListener("activate", event => {
   );
 });
 
-// FUNCIONAMIENTO OFFLINE
+// FUNCIONAMIENTO ONLINE Y OFFLINE
 self.addEventListener("fetch", event => {
   const solicitud = event.request;
 
@@ -47,30 +47,29 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(solicitud)
-      .then(respuestaGuardada => {
-        if (respuestaGuardada) {
-          return respuestaGuardada;
+    fetch(solicitud)
+      .then(respuesta => {
+        if (
+          respuesta &&
+          respuesta.status === 200 &&
+          respuesta.type === "basic"
+        ) {
+          const copia = respuesta.clone();
+
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(solicitud, copia);
+          });
         }
 
-        return fetch(solicitud)
-          .then(respuesta => {
-            if (
-              !respuesta ||
-              respuesta.status !== 200 ||
-              respuesta.type !== "basic"
-            ) {
-              return respuesta;
+        return respuesta;
+      })
+      .catch(() => {
+        return caches.match(solicitud)
+          .then(respuestaGuardada => {
+            if (respuestaGuardada) {
+              return respuestaGuardada;
             }
 
-            const copia = respuesta.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => cache.put(solicitud, copia));
-
-            return respuesta;
-          })
-          .catch(() => {
             if (solicitud.mode === "navigate") {
               return caches.match("./index.html");
             }
