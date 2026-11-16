@@ -74,6 +74,11 @@ function calcularTotalEfectivo() {
 }
 
 function actualizarCantidadBilletes(denominacion, valor) {
+  // Permitir que la casilla quede vacía mientras se escribe.
+  if (String(valor).trim() === "") {
+    return;
+  }
+
   const cantidad = Number(valor);
 
   if (
@@ -98,11 +103,18 @@ function actualizarCantidadBilletes(denominacion, valor) {
     resultado.textContent = formato(importe) + " CUP";
   }
 
-  const total = document.getElementById("totalConteoEfectivo");
+  const total = formato(calcularTotalEfectivo()) + " CUP";
 
-  if (total) {
-    total.textContent = formato(calcularTotalEfectivo()) + " CUP";
-  }
+  const totalSuperior = document.getElementById(
+    "totalConteoEfectivoSuperior"
+  );
+
+  const totalInferior = document.getElementById(
+    "totalConteoEfectivoInferior"
+  );
+
+  if (totalSuperior) totalSuperior.textContent = total;
+  if (totalInferior) totalInferior.textContent = total;
 }
 
 function limpiarConteoEfectivo() {
@@ -176,7 +188,9 @@ function mostrarConteoEfectivo() {
             step="1"
             inputmode="numeric"
             value="${cantidad}"
+            onfocus="if(this.value==='0')this.value=''"
             oninput="actualizarCantidadBilletes(${denominacion},this.value)"
+            onblur="if(this.value.trim()===''){this.value='0';actualizarCantidadBilletes(${denominacion},0)}"
             style="
               width:100%;
               text-align:center;
@@ -189,6 +203,8 @@ function mostrarConteoEfectivo() {
       </div>
     `;
   }).join("");
+
+  const totalActual = formato(calcularTotalEfectivo()) + " CUP";
 
   pantalla.innerHTML = `
     <span class="etiqueta">CONTROL DE DINERO</span>
@@ -210,14 +226,14 @@ function mostrarConteoEfectivo() {
       </div>
 
       <div
-        id="totalConteoEfectivo"
+        id="totalConteoEfectivoSuperior"
         style="
           font-size:30px;
           font-weight:bold;
           margin-top:12px;
         "
       >
-        ${formato(calcularTotalEfectivo())} CUP
+        ${totalActual}
       </div>
 
       <p style="
@@ -258,14 +274,14 @@ function mostrarConteoEfectivo() {
       </div>
 
       <div
-        id="totalConteoEfectivo"
+        id="totalConteoEfectivoInferior"
         style="
           font-size:30px;
           font-weight:bold;
           margin-top:10px;
         "
       >
-        ${formato(calcularTotalEfectivo())} CUP
+        ${totalActual}
       </div>
     </div>
 
