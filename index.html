@@ -83,6 +83,19 @@
           <span class="flecha-menu">↗</span>
         </button>
 
+        <button class="tarjeta-menu"
+          onclick="navegar('efectivo')">
+
+          <div class="icono-menu">💵</div>
+
+          <div class="texto-menu">
+            <h3>Conteo de efectivo</h3>
+            <p>Contar billetes y calcular el efectivo disponible.</p>
+          </div>
+
+          <span class="flecha-menu">↗</span>
+        </button>
+
       </div>
 
       <div class="nota-inicio">
@@ -97,6 +110,8 @@
     <section id="pantallaProductos" class="pantalla"></section>
 
     <section id="pantallaRegistro" class="pantalla"></section>
+
+    <section id="pantallaEfectivo" class="pantalla"></section>
 
   </main>
 
@@ -120,6 +135,11 @@
     <button onclick="navegar('registro')" class="nav-item" id="navRegistro">
       <span>▤</span>
       <small>Registro</small>
+    </button>
+
+    <button onclick="navegar('efectivo')" class="nav-item" id="navEfectivo">
+      <span>💵</span>
+      <small>Efectivo</small>
     </button>
 
   </nav>
