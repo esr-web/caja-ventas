@@ -4,6 +4,10 @@ const DB_VERSION = 1;
 
 let db;
 
+// ==========================================
+// ABRIR BASE DE DATOS
+// ==========================================
+
 function abrirBaseDatos() {
   return new Promise((resolve, reject) => {
     const solicitud = indexedDB.open(DB_NAME, DB_VERSION);
@@ -38,8 +42,16 @@ function abrirBaseDatos() {
     solicitud.onerror = function() {
       reject(solicitud.error);
     };
+
+    solicitud.onblocked = function() {
+      reject(new Error("La base de datos está bloqueada."));
+    };
   });
 }
+
+// ==========================================
+// GUARDAR REGISTRO
+// ==========================================
 
 function guardarDato(tabla, dato) {
   return new Promise((resolve, reject) => {
@@ -51,6 +63,10 @@ function guardarDato(tabla, dato) {
   });
 }
 
+// ==========================================
+// OBTENER TODOS LOS REGISTROS
+// ==========================================
+
 function obtenerTodos(tabla) {
   return new Promise((resolve, reject) => {
     const transaccion = db.transaction(tabla, "readonly");
@@ -61,6 +77,10 @@ function obtenerTodos(tabla) {
   });
 }
 
+// ==========================================
+// ELIMINAR REGISTRO
+// ==========================================
+
 function eliminarDato(tabla, id) {
   return new Promise((resolve, reject) => {
     const transaccion = db.transaction(tabla, "readwrite");
@@ -68,5 +88,50 @@ function eliminarDato(tabla, id) {
 
     solicitud.onsuccess = () => resolve(true);
     solicitud.onerror = () => reject(solicitud.error);
+  });
+}
+
+// ==========================================
+// RESTAURAR REGISTROS DE UNA COPIA
+// ==========================================
+
+function reemplazarTodos(tabla, registros) {
+  return new Promise((resolve, reject) => {
+
+    if (!db) {
+      reject(new Error("La base de datos no está abierta."));
+      return;
+    }
+
+    if (!Array.isArray(registros)) {
+      reject(new Error("Los datos recibidos no son válidos."));
+      return;
+    }
+
+    try {
+      const transaccion = db.transaction(tabla, "readwrite");
+      const almacen = transaccion.objectStore(tabla);
+
+      almacen.clear();
+
+      registros.forEach(registro => {
+        almacen.put(registro);
+      });
+
+      transaccion.oncomplete = function() {
+        resolve(true);
+      };
+
+      transaccion.onerror = function() {
+        reject(transaccion.error);
+      };
+
+      transaccion.onabort = function() {
+        reject(transaccion.error || new Error("Restauración cancelada."));
+      };
+
+    } catch (error) {
+      reject(error);
+    }
   });
 }
