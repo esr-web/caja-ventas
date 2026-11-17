@@ -29,28 +29,23 @@ let conteoEfectivo = cargarConteoEfectivo();
 
 function cargarConteoEfectivo() {
   try {
-    const guardado = localStorage.getItem(CLAVE_CONTEO_EFECTIVO);
-    const datos = guardado ? JSON.parse(guardado) : {};
+    const datos = JSON.parse(
+      localStorage.getItem(CLAVE_CONTEO_EFECTIVO) || "{}"
+    );
 
     const resultado = {};
 
-    DENOMINACIONES.forEach(denominacion => {
-      const cantidad = Number(datos[denominacion] || 0);
-
-      resultado[denominacion] =
-        Number.isFinite(cantidad) && cantidad >= 0
-          ? Math.floor(cantidad)
-          : 0;
+    DENOMINACIONES.forEach(d => {
+      const cantidad = Number(datos[d] || 0);
+      resultado[d] = Number.isFinite(cantidad) && cantidad >= 0
+        ? Math.floor(cantidad)
+        : 0;
     });
 
     return resultado;
-
   } catch (error) {
-    console.error("Error al recuperar el conteo:", error);
-
-    return Object.fromEntries(
-      DENOMINACIONES.map(d => [d, 0])
-    );
+    console.error(error);
+    return Object.fromEntries(DENOMINACIONES.map(d => [d, 0]));
   }
 }
 
@@ -67,17 +62,14 @@ function guardarConteoEfectivo() {
 }
 
 function calcularTotalEfectivo() {
-  return DENOMINACIONES.reduce((total, denominacion) => {
-    return total +
-      denominacion * Number(conteoEfectivo[denominacion] || 0);
-  }, 0);
+  return DENOMINACIONES.reduce(
+    (total, d) => total + d * Number(conteoEfectivo[d] || 0),
+    0
+  );
 }
 
 function actualizarCantidadBilletes(denominacion, valor) {
-  // Permitir que la casilla quede vacía mientras se escribe.
-  if (String(valor).trim() === "") {
-    return;
-  }
+  if (String(valor).trim() === "") return;
 
   const cantidad = Number(valor);
 
@@ -85,49 +77,40 @@ function actualizarCantidadBilletes(denominacion, valor) {
     !Number.isFinite(cantidad) ||
     cantidad < 0 ||
     !Number.isInteger(cantidad)
-  ) {
-    return;
-  }
+  ) return;
 
   conteoEfectivo[denominacion] = cantidad;
-
   guardarConteoEfectivo();
 
-  const importe = denominacion * cantidad;
-
-  const resultado = document.getElementById(
+  const importe = document.getElementById(
     `importeBillete${denominacion}`
   );
 
-  if (resultado) {
-    resultado.textContent = formato(importe) + " CUP";
+  if (importe) {
+    importe.textContent = formato(denominacion * cantidad) + " CUP";
   }
 
   const total = formato(calcularTotalEfectivo()) + " CUP";
 
-  const totalSuperior = document.getElementById(
+  const superior = document.getElementById(
     "totalConteoEfectivoSuperior"
   );
 
-  const totalInferior = document.getElementById(
+  const inferior = document.getElementById(
     "totalConteoEfectivoInferior"
   );
 
-  if (totalSuperior) totalSuperior.textContent = total;
-  if (totalInferior) totalInferior.textContent = total;
+  if (superior) superior.textContent = total;
+  if (inferior) inferior.textContent = total;
 }
 
 function limpiarConteoEfectivo() {
   if (!confirm(
     "¿Deseas borrar todas las cantidades del conteo de efectivo?\n\n" +
     "Esta acción no se puede deshacer."
-  )) {
-    return;
-  }
+  )) return;
 
-  DENOMINACIONES.forEach(denominacion => {
-    conteoEfectivo[denominacion] = 0;
-  });
+  DENOMINACIONES.forEach(d => conteoEfectivo[d] = 0);
 
   guardarConteoEfectivo();
   mostrarConteoEfectivo();
@@ -139,9 +122,9 @@ function mostrarConteoEfectivo() {
   const pantalla = document.getElementById("pantallaEfectivo");
   if (!pantalla) return;
 
-  const filas = DENOMINACIONES.map(denominacion => {
-    const cantidad = conteoEfectivo[denominacion] || 0;
-    const importe = denominacion * cantidad;
+  const filas = DENOMINACIONES.map(d => {
+    const cantidad = conteoEfectivo[d] || 0;
+    const importe = d * cantidad;
 
     return `
       <div class="tarjeta" style="
@@ -151,145 +134,77 @@ function mostrarConteoEfectivo() {
         align-items:center;
         margin-bottom:10px;
       ">
-
         <div>
-          <strong style="font-size:17px">
-            ${formato(denominacion)} CUP
-          </strong>
-
-          <div style="
-            font-size:12px;
-            color:#777;
-            margin-top:7px;
-          ">
+          <strong style="font-size:17px">${formato(d)} CUP</strong>
+          <div style="font-size:12px;color:#777;margin-top:7px">
             Importe:
           </div>
-
-          <strong
-            id="importeBillete${denominacion}"
-            style="color:#16834a;font-size:14px"
-          >
+          <strong id="importeBillete${d}"
+            style="color:#16834a;font-size:14px">
             ${formato(importe)} CUP
           </strong>
         </div>
 
         <div>
-          <label
-            for="billete${denominacion}"
-            style="font-size:11px"
-          >
+          <label for="billete${d}" style="font-size:11px">
             Cantidad
           </label>
-
           <input
-            id="billete${denominacion}"
+            id="billete${d}"
             type="number"
             min="0"
             step="1"
             inputmode="numeric"
             value="${cantidad}"
             onfocus="if(this.value==='0')this.value=''"
-            oninput="actualizarCantidadBilletes(${denominacion},this.value)"
-            onblur="if(this.value.trim()===''){this.value='0';actualizarCantidadBilletes(${denominacion},0)}"
-            style="
-              width:100%;
-              text-align:center;
-              font-size:18px;
-              font-weight:bold;
-            "
+            oninput="actualizarCantidadBilletes(${d},this.value)"
+            onblur="if(this.value.trim()===''){this.value='0';actualizarCantidadBilletes(${d},0)}"
+            style="width:100%;text-align:center;font-size:18px;font-weight:bold"
           >
         </div>
-
       </div>
     `;
   }).join("");
 
-  const totalActual = formato(calcularTotalEfectivo()) + " CUP";
+  const total = formato(calcularTotalEfectivo()) + " CUP";
 
   pantalla.innerHTML = `
     <span class="etiqueta">CONTROL DE DINERO</span>
-
     <h2 class="titulo-seccion">Conteo de efectivo</h2>
 
-    <div class="tarjeta" style="
-      background:#151515;
-      color:white;
-      margin-bottom:18px;
-    ">
-      <div style="
-        color:#f28c28;
-        font-size:11px;
-        font-weight:bold;
-        letter-spacing:1px;
-      ">
+    <div class="tarjeta" style="background:#151515;color:white;margin-bottom:18px">
+      <div style="color:#f28c28;font-size:11px;font-weight:bold;letter-spacing:1px">
         TOTAL DE EFECTIVO
       </div>
-
-      <div
-        id="totalConteoEfectivoSuperior"
-        style="
-          font-size:30px;
-          font-weight:bold;
-          margin-top:12px;
-        "
-      >
-        ${totalActual}
+      <div id="totalConteoEfectivoSuperior"
+        style="font-size:30px;font-weight:bold;margin-top:12px">
+        ${total}
       </div>
-
-      <p style="
-        color:#bbb;
-        font-size:12px;
-        margin-top:8px;
-      ">
+      <p style="color:#bbb;font-size:12px;margin-top:8px">
         Suma de todos los billetes contabilizados.
       </p>
     </div>
 
-    <div style="
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin:20px 0 13px;
-    ">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 13px">
       <h3>Denominación de billetes</h3>
-      <span style="font-size:11px;color:#777">
-        CUP
-      </span>
+      <span style="font-size:11px;color:#777">CUP</span>
     </div>
 
     ${filas}
 
-    <div class="tarjeta" style="
-      background:#151515;
-      color:white;
-      margin-top:18px;
-    ">
-      <div style="
-        color:#f28c28;
-        font-size:11px;
-        font-weight:bold;
-        letter-spacing:1px;
-      ">
+    <div class="tarjeta" style="background:#151515;color:white;margin-top:18px">
+      <div style="color:#f28c28;font-size:11px;font-weight:bold;letter-spacing:1px">
         TOTAL GENERAL
       </div>
-
-      <div
-        id="totalConteoEfectivoInferior"
-        style="
-          font-size:30px;
-          font-weight:bold;
-          margin-top:10px;
-        "
-      >
-        ${totalActual}
+      <div id="totalConteoEfectivoInferior"
+        style="font-size:30px;font-weight:bold;margin-top:10px">
+        ${total}
       </div>
     </div>
 
-    <button
-      class="btn-peligro"
+    <button class="btn-peligro"
       style="width:100%;margin:15px 0 25px"
-      onclick="limpiarConteoEfectivo()"
-    >
+      onclick="limpiarConteoEfectivo()">
       🗑 LIMPIAR CONTEO
     </button>
   `;
@@ -355,19 +270,12 @@ function mostrarFecha(fecha) {
 }
 
 function precioProducto(producto, moneda) {
-  if (moneda === "USD") {
-    return Number(producto.precioUSD ?? 0);
-  }
-
+  if (moneda === "USD") return Number(producto.precioUSD ?? 0);
   return Number(producto.precioCUP ?? producto.precio ?? 0);
 }
 
 function precioCUPProducto(producto) {
   return Number(producto?.precioCUP ?? producto?.precio ?? 0);
-}
-
-function simboloMoneda(moneda) {
-  return moneda === "USD" ? "USD" : "CUP";
 }
 
 // ==========================================
@@ -387,20 +295,19 @@ function adaptarProducto(producto) {
 }
 
 function adaptarVenta(venta) {
-  if (!venta.moneda) {
-    venta.moneda = "CUP";
-  }
+  if (!venta.moneda) venta.moneda = "CUP";
 
   venta.productos = (venta.productos || []).map(item => {
     const precioAntiguo = Number(item.precio || 0);
-    const productoCatalogo = productos.find(
+
+    const catalogo = productos.find(
       p => String(p.id) === String(item.productoId)
     );
 
     let precioCUP = Number(item.precioCUP || 0);
 
     if (precioCUP <= 0 && venta.moneda === "USD") {
-      precioCUP = precioCUPProducto(productoCatalogo);
+      precioCUP = precioCUPProducto(catalogo);
     }
 
     if (precioCUP <= 0 && venta.moneda === "CUP") {
@@ -412,11 +319,7 @@ function adaptarVenta(venta) {
       (venta.moneda === "USD" ? precioAntiguo : 0)
     );
 
-    return {
-      ...item,
-      precioCUP,
-      precioUSD
-    };
+    return { ...item, precioCUP, precioUSD };
   });
 
   if (venta.totalCUP === undefined) {
@@ -433,7 +336,7 @@ function adaptarVenta(venta) {
 
   const porcentaje = Number(venta.porcentaje || 0);
 
-  const salarioCalculadoCUP = venta.productos.reduce(
+  venta.salarioCUP = venta.productos.reduce(
     (suma, item) =>
       suma +
       Number(item.precioCUP || 0) *
@@ -442,9 +345,8 @@ function adaptarVenta(venta) {
     0
   );
 
-  venta.salarioCUP = salarioCalculadoCUP;
   venta.salarioUSD = 0;
-  venta.salario = salarioCalculadoCUP;
+  venta.salario = venta.salarioCUP;
 
   return venta;
 }
@@ -455,10 +357,10 @@ function adaptarVenta(venta) {
 
 function calcularSalarioLineasCUP(lineas, porcentaje) {
   return lineas.reduce((suma, item) => {
-    const precioCUP = Number(item.precioCUP || 0);
-    const cantidad = Number(item.cantidad || 0);
-
-    return suma + precioCUP * cantidad * porcentaje / 100;
+    return suma +
+      Number(item.precioCUP || 0) *
+      Number(item.cantidad || 0) *
+      porcentaje / 100;
   }, 0);
 }
 
@@ -486,7 +388,6 @@ async function iniciarAplicacion() {
 
     actualizarConexion();
     navegar("inicio");
-
     solicitarAlmacenamientoPersistente();
 
   } catch (error) {
@@ -500,7 +401,7 @@ async function solicitarAlmacenamientoPersistente() {
     try {
       await navigator.storage.persist();
     } catch (error) {
-      console.warn("No se pudo solicitar almacenamiento persistente.", error);
+      console.warn(error);
     }
   }
 }
@@ -540,10 +441,7 @@ function navegar(destino) {
 
   Object.entries(pantallas).forEach(([nombre, id]) => {
     const elemento = document.getElementById(id);
-
-    if (elemento) {
-      elemento.classList.toggle("activa", nombre === destino);
-    }
+    if (elemento) elemento.classList.toggle("activa", nombre === destino);
   });
 
   const botones = {
@@ -556,10 +454,7 @@ function navegar(destino) {
 
   Object.entries(botones).forEach(([nombre, id]) => {
     const elemento = document.getElementById(id);
-
-    if (elemento) {
-      elemento.classList.toggle("activo", nombre === destino);
-    }
+    if (elemento) elemento.classList.toggle("activo", nombre === destino);
   });
 
   if (destino === "caja") mostrarCaja();
@@ -577,7 +472,7 @@ function navegar(destino) {
 function mostrarProductos() {
   const pantalla = document.getElementById("pantallaProductos");
 
-  const productoActual = productoEnEdicion !== null
+  const actual = productoEnEdicion !== null
     ? productos.find(p => p.id === productoEnEdicion)
     : null;
 
@@ -587,36 +482,25 @@ function mostrarProductos() {
 
     <div class="tarjeta">
       <h3 style="margin-bottom:15px">
-        ${productoActual ? "Editar producto" : "Agregar producto"}
+        ${actual ? "Editar producto" : "Agregar producto"}
       </h3>
 
       <label for="nombreProducto">Nombre del producto</label>
-      <input
-        id="nombreProducto"
-        type="text"
+      <input id="nombreProducto" type="text"
         placeholder="Ej. Arroz"
-        value="${escapar(productoActual?.nombre || "")}"
-      >
+        value="${escapar(actual?.nombre || "")}">
 
       <label for="precioProductoUSD">Precio unitario (USD)</label>
-      <input
-        id="precioProductoUSD"
-        type="number"
-        min="0"
-        step="0.01"
+      <input id="precioProductoUSD" type="number"
+        min="0" step="0.01"
         placeholder="0.00"
-        value="${productoActual?.precioUSD || ""}"
-      >
+        value="${actual?.precioUSD || ""}">
 
       <label for="precioProductoCUP">Precio unitario (CUP)</label>
-      <input
-        id="precioProductoCUP"
-        type="number"
-        min="0"
-        step="0.01"
+      <input id="precioProductoCUP" type="number"
+        min="0" step="0.01"
         placeholder="0.00"
-        value="${productoActual?.precioCUP || ""}"
-      >
+        value="${actual?.precioCUP || ""}">
 
       <p style="font-size:12px;color:#777;margin:-5px 0 14px">
         Puedes registrar un precio en una sola moneda o en ambas.
@@ -624,16 +508,14 @@ function mostrarProductos() {
       </p>
 
       <button class="btn-principal" onclick="guardarProducto()">
-        ${productoActual ? "GUARDAR CAMBIOS" : "+ AGREGAR PRODUCTO"}
+        ${actual ? "GUARDAR CAMBIOS" : "+ AGREGAR PRODUCTO"}
       </button>
 
-      ${
-        productoActual
-          ? `<button class="btn-secundario"
-              style="width:100%;margin-top:10px"
-              onclick="cancelarEdicion()">Cancelar edición</button>`
-          : ""
-      }
+      ${actual ? `
+        <button class="btn-secundario"
+          style="width:100%;margin-top:10px"
+          onclick="cancelarEdicion()">Cancelar edición</button>
+      ` : ""}
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin:22px 0 13px">
@@ -661,20 +543,20 @@ function dibujarCatalogo() {
     return;
   }
 
-  lista.innerHTML = productos.map(producto => `
+  lista.innerHTML = productos.map(p => `
     <div class="producto">
       <div class="producto-info">
-        <h3>${escapar(producto.nombre)}</h3>
-        <div class="precio">${formato(producto.precioUSD)} USD</div>
-        <div class="precio">${formato(producto.precioCUP)} CUP</div>
+        <h3>${escapar(p.nombre)}</h3>
+        <div class="precio">${formato(p.precioUSD)} USD</div>
+        <div class="precio">${formato(p.precioCUP)} CUP</div>
       </div>
 
       <button class="btn-secundario"
-        onclick="editarProducto(${producto.id})"
+        onclick="editarProducto(${p.id})"
         aria-label="Editar producto">✎</button>
 
       <button class="btn-peligro"
-        onclick="eliminarProducto(${producto.id})"
+        onclick="eliminarProducto(${p.id})"
         aria-label="Eliminar producto">×</button>
     </div>
   `).join("");
@@ -761,7 +643,6 @@ function editarProducto(id) {
 
   productoEnEdicion = id;
   mostrarProductos();
-
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -785,9 +666,7 @@ async function eliminarProducto(id) {
     productos = productos.filter(p => p.id !== id);
     carrito = carrito.filter(p => p.productoId !== id);
 
-    if (productoEnEdicion === id) {
-      productoEnEdicion = null;
-    }
+    if (productoEnEdicion === id) productoEnEdicion = null;
 
     mostrarProductos();
 
@@ -826,14 +705,9 @@ function mostrarCaja() {
 
     <div class="tarjeta">
       <h3 style="margin-bottom:12px">Seleccionar productos</h3>
-
-      <input
-        id="buscarProductoCaja"
-        type="search"
+      <input id="buscarProductoCaja" type="search"
         placeholder="Buscar producto..."
-        oninput="dibujarProductosCaja()"
-      >
-
+        oninput="dibujarProductosCaja()">
       <div id="listaProductosCaja"></div>
     </div>
 
@@ -871,7 +745,6 @@ function cambiarMonedaVenta(moneda) {
     if (!producto) return null;
 
     const precio = precioProducto(producto, moneda);
-
     if (precio <= 0) return null;
 
     return {
@@ -913,35 +786,33 @@ function dibujarProductosCaja() {
     return;
   }
 
-  lista.innerHTML = disponibles.map(producto => {
+  lista.innerHTML = disponibles.map(p => {
     const cantidad = carrito.find(
-      item => item.productoId === producto.id
+      item => item.productoId === p.id
     )?.cantidad || 0;
 
-    const precio = precioProducto(producto, monedaVenta);
+    const precio = precioProducto(p, monedaVenta);
     const sinPrecio = precio <= 0;
 
     return `
       <div class="producto">
         <div class="producto-info">
-          <h3>${escapar(producto.nombre)}</h3>
+          <h3>${escapar(p.nombre)}</h3>
           <div class="precio">${formato(precio)} ${monedaVenta}</div>
-          ${
-            sinPrecio
-              ? `<small style="color:#c52e2e">Sin precio en ${monedaVenta}</small>`
-              : ""
-          }
+          ${sinPrecio
+            ? `<small style="color:#c52e2e">Sin precio en ${monedaVenta}</small>`
+            : ""}
         </div>
 
         <div class="controles-cantidad">
           <button class="btn-cantidad"
-            onclick="cambiarCantidad(${producto.id},-1)"
+            onclick="cambiarCantidad(${p.id},-1)"
             ${cantidad === 0 ? "disabled" : ""}>−</button>
 
           <span class="cantidad">${cantidad}</span>
 
           <button class="btn-cantidad"
-            onclick="cambiarCantidad(${producto.id},1)"
+            onclick="cambiarCantidad(${p.id},1)"
             ${sinPrecio ? "disabled" : ""}>+</button>
         </div>
       </div>
@@ -1007,11 +878,7 @@ function calcularVenta() {
     porcentaje
   );
 
-  return {
-    total,
-    porcentaje,
-    salarioCUP
-  };
+  return { total, porcentaje, salarioCUP };
 }
 
 function actualizarResumen() {
@@ -1023,36 +890,23 @@ function actualizarResumen() {
   resumen.innerHTML = `
     <h3>Resumen de venta</h3>
 
-    <p style="margin-top:15px;color:#cccccc">
-      Productos seleccionados
-    </p>
-
+    <p style="margin-top:15px;color:#cccccc">Productos seleccionados</p>
     <p style="font-size:16px;font-weight:bold;margin-top:5px">
       ${carrito.reduce((s, p) => s + p.cantidad, 0)} unidades
     </p>
 
-    <p style="margin-top:15px;color:#cccccc">
-      Total de la venta
-    </p>
+    <p style="margin-top:15px;color:#cccccc">Total de la venta</p>
+    <div class="total">${formato(calculo.total)} ${monedaVenta}</div>
 
-    <div class="total">
-      ${formato(calculo.total)} ${monedaVenta}
-    </div>
-
-    <p style="margin-top:15px">
-      Comisión: ${formato(calculo.porcentaje)} %
-    </p>
+    <p style="margin-top:15px">Comisión: ${formato(calculo.porcentaje)} %</p>
 
     <p style="margin-top:15px;color:#cccccc">
       Salario generado (calculado sobre precios CUP)
     </p>
 
-    <div class="salario">
-      ${formato(calculo.salarioCUP)} CUP
-    </div>
+    <div class="salario">${formato(calculo.salarioCUP)} CUP</div>
 
-    <button class="btn-vendido"
-      onclick="registrarVenta()">
+    <button class="btn-vendido" onclick="registrarVenta()">
       ✓ CONFIRMAR VENTA
     </button>
   `;
@@ -1068,8 +922,7 @@ async function registrarVenta() {
     return;
   }
 
-  const campoFecha = document.getElementById("fechaVenta");
-  const fecha = campoFecha?.value;
+  const fecha = document.getElementById("fechaVenta")?.value;
 
   if (!fecha || Number.isNaN(new Date(fecha).getTime())) {
     alert("Introduce una fecha y hora válidas.");
@@ -1092,11 +945,10 @@ async function registrarVenta() {
     return;
   }
 
-  const confirmacion =
+  if (!confirm(
     `¿Confirmar venta por ${formato(calculo.total)} ${monedaVenta}?\n\n` +
-    `Salario generado: ${formato(calculo.salarioCUP)} CUP`;
-
-  if (!confirm(confirmacion)) return;
+    `Salario generado: ${formato(calculo.salarioCUP)} CUP`
+  )) return;
 
   const lineas = carrito.map(item => {
     const producto = productos.find(
@@ -1265,47 +1117,39 @@ function mostrarResumenVentas() {
   );
 
   const ventasUSD = ordenadas.filter(
-    venta => (venta.moneda || "CUP") === "USD"
+    v => (v.moneda || "CUP") === "USD"
   );
 
   const ventasCUP = ordenadas.filter(
-    venta => (venta.moneda || "CUP") === "CUP"
+    v => (v.moneda || "CUP") === "CUP"
   );
 
   const totalUSD = ventasUSD.reduce(
-    (suma, venta) => suma + Number(venta.total || 0),
-    0
+    (s, v) => s + Number(v.total || 0), 0
   );
 
   const totalCUP = ventasCUP.reduce(
-    (suma, venta) => suma + Number(venta.total || 0),
-    0
+    (s, v) => s + Number(v.total || 0), 0
   );
 
   const totalUnidades = ordenadas.reduce(
-    (suma, venta) =>
-      suma + (venta.productos || []).reduce(
-        (s, item) => s + Number(item.cantidad || 0),
-        0
-      ),
+    (s, v) => s + (v.productos || []).reduce(
+      (t, item) => t + Number(item.cantidad || 0), 0
+    ),
     0
   );
 
   const unidadesUSD = ventasUSD.reduce(
-    (suma, venta) =>
-      suma + (venta.productos || []).reduce(
-        (s, item) => s + Number(item.cantidad || 0),
-        0
-      ),
+    (s, v) => s + (v.productos || []).reduce(
+      (t, item) => t + Number(item.cantidad || 0), 0
+    ),
     0
   );
 
   const unidadesCUP = ventasCUP.reduce(
-    (suma, venta) =>
-      suma + (venta.productos || []).reduce(
-        (s, item) => s + Number(item.cantidad || 0),
-        0
-      ),
+    (s, v) => s + (v.productos || []).reduce(
+      (t, item) => t + Number(item.cantidad || 0), 0
+    ),
     0
   );
 
@@ -1324,19 +1168,15 @@ function mostrarResumenVentas() {
         RESUMEN DE TODAS LAS OPERACIONES
       </div>
 
-      <div style="margin-top:18px;color:#cccccc;font-size:12px">
+      <div style="margin-top:18px;color:#ccc;font-size:12px">
         TOTAL VENDIDO EN USD
       </div>
-
       <div style="font-size:25px;font-weight:bold;margin:6px 0 18px">
         ${formato(totalUSD)} USD
       </div>
 
       <div style="border-top:1px solid #444;padding-top:15px">
-        <div style="color:#cccccc;font-size:12px">
-          TOTAL VENDIDO EN CUP
-        </div>
-
+        <div style="color:#ccc;font-size:12px">TOTAL VENDIDO EN CUP</div>
         <div style="font-size:25px;font-weight:bold;margin:6px 0 18px">
           ${formato(totalCUP)} CUP
         </div>
@@ -1345,12 +1185,11 @@ function mostrarResumenVentas() {
       <div style="border-top:1px solid #444;padding-top:15px;display:flex;justify-content:space-between;gap:10px">
         <div>
           <strong>${ordenadas.length}</strong>
-          <div style="font-size:11px;color:#bbbbbb">Operaciones</div>
+          <div style="font-size:11px;color:#bbb">Operaciones</div>
         </div>
-
         <div>
           <strong>${totalUnidades}</strong>
-          <div style="font-size:11px;color:#bbbbbb">Unidades vendidas</div>
+          <div style="font-size:11px;color:#bbb">Unidades vendidas</div>
         </div>
       </div>
     </div>
@@ -1361,28 +1200,22 @@ function mostrarResumenVentas() {
 
     ${
       ordenadas.length === 0
-        ? `<div class="tarjeta texto-vacio">
-            Todavía no hay ventas registradas.
-          </div>`
+        ? `<div class="tarjeta texto-vacio">Todavía no hay ventas registradas.</div>`
         : ordenadas.map(venta => {
             const moneda = venta.moneda || "CUP";
             const lineas = venta.productos || [];
 
-            const unidadesVenta = lineas.reduce(
-              (suma, item) => suma + Number(item.cantidad || 0),
-              0
+            const unidades = lineas.reduce(
+              (s, item) => s + Number(item.cantidad || 0), 0
             );
 
-            const totalCalculado = lineas.reduce(
-              (suma, item) => {
-                const precio = moneda === "USD"
-                  ? Number(item.precioUSD ?? item.precio ?? 0)
-                  : Number(item.precioCUP ?? item.precio ?? 0);
+            const totalCalculado = lineas.reduce((s, item) => {
+              const precio = moneda === "USD"
+                ? Number(item.precioUSD ?? item.precio ?? 0)
+                : Number(item.precioCUP ?? item.precio ?? 0);
 
-                return suma + precio * Number(item.cantidad || 0);
-              },
-              0
-            );
+              return s + precio * Number(item.cantidad || 0);
+            }, 0);
 
             return `
               <div class="tarjeta">
@@ -1396,18 +1229,17 @@ function mostrarResumenVentas() {
                       Moneda: ${moneda}
                     </div>
                   </div>
-
                   <div style="text-align:right">
                     <strong style="color:#16834a">
                       ${formato(venta.total ?? totalCalculado)} ${moneda}
                     </strong>
                     <div style="font-size:11px;color:#777;margin-top:5px">
-                      ${unidadesVenta} unidades
+                      ${unidades} unidades
                     </div>
                   </div>
                 </div>
 
-                <div style="border-top:1px solid #eeeeee;margin-top:14px;padding-top:10px">
+                <div style="border-top:1px solid #eee;margin-top:14px;padding-top:10px">
                   ${lineas.map(item => {
                     const precio = moneda === "USD"
                       ? Number(item.precioUSD ?? item.precio ?? 0)
@@ -1417,22 +1249,19 @@ function mostrarResumenVentas() {
                     const importe = precio * cantidad;
 
                     return `
-                      <div style="padding:10px 0;border-bottom:1px solid #eeeeee">
+                      <div style="padding:10px 0;border-bottom:1px solid #eee">
                         <strong style="font-size:13px">
                           ${escapar(item.nombre || "Producto")}
                         </strong>
-
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;font-size:12px">
                           <div>
                             <span style="color:#777">Cantidad</span>
                             <div style="font-weight:bold">${cantidad} unidades</div>
                           </div>
-
                           <div>
                             <span style="color:#777">Precio unitario</span>
                             <div style="font-weight:bold">${formato(precio)} ${moneda}</div>
                           </div>
-
                           <div style="grid-column:1 / -1">
                             <span style="color:#777">Importe del producto</span>
                             <div style="font-weight:bold;color:#16834a">
@@ -1461,7 +1290,6 @@ function mostrarResumenVentas() {
         <span>Ventas en USD</span>
         <strong>${formato(totalUSD)} USD</strong>
       </div>
-
       <div style="display:flex;justify-content:space-between;padding:8px 0">
         <span>Unidades vendidas en USD</span>
         <strong>${unidadesUSD}</strong>
@@ -1473,7 +1301,6 @@ function mostrarResumenVentas() {
         <span>Ventas en CUP</span>
         <strong>${formato(totalCUP)} CUP</strong>
       </div>
-
       <div style="display:flex;justify-content:space-between;padding:8px 0">
         <span>Unidades vendidas en CUP</span>
         <strong>${unidadesCUP}</strong>
@@ -1509,8 +1336,7 @@ function actualizarVisibilidadFiltros() {
     const elemento = document.getElementById(id);
 
     if (elemento) {
-      elemento.style.display =
-        periodo === tipo ? "block" : "none";
+      elemento.style.display = periodo === tipo ? "block" : "none";
     }
   });
 }
@@ -1532,6 +1358,10 @@ function limpiarFiltrosRegistro() {
   actualizarVisibilidadFiltros();
   actualizarRegistro();
 }
+
+// ==========================================
+// ACTUALIZAR REGISTRO Y APLICAR FILTROS
+// ==========================================
 
 function actualizarRegistro() {
   const contenedor = document.getElementById("resultadosRegistro");
@@ -1655,18 +1485,15 @@ function actualizarRegistro() {
     }
 
     const totalVisible = lineas.reduce(
-      (suma, item) => suma + item.subtotal,
-      0
+      (s, item) => s + item.subtotal, 0
     );
 
     const salarioVisibleCUP = lineas.reduce(
-      (suma, item) => suma + item.salarioCUP,
-      0
+      (s, item) => s + item.salarioCUP, 0
     );
 
     const unidadesVisibles = lineas.reduce(
-      (suma, item) => suma + Number(item.cantidad || 0),
-      0
+      (s, item) => s + Number(item.cantidad || 0), 0
     );
 
     resultados.push({
@@ -1687,19 +1514,19 @@ function actualizarRegistro() {
   const ventasCUP = resultados.filter(v => v.moneda === "CUP");
 
   const totalUSD = ventasUSD.reduce(
-    (suma, venta) => suma + venta.totalVisible, 0
+    (s, v) => s + v.totalVisible, 0
   );
 
   const totalCUP = ventasCUP.reduce(
-    (suma, venta) => suma + venta.totalVisible, 0
+    (s, v) => s + v.totalVisible, 0
   );
 
   const salarioCUP = resultados.reduce(
-    (suma, venta) => suma + venta.salarioVisibleCUP, 0
+    (s, v) => s + v.salarioVisibleCUP, 0
   );
 
   const unidades = resultados.reduce(
-    (suma, venta) => suma + venta.unidadesVisibles, 0
+    (s, v) => s + v.unidadesVisibles, 0
   );
 
   const etiquetaPeriodo = {
@@ -1711,34 +1538,35 @@ function actualizarRegistro() {
   }[periodo];
 
   contenedor.innerHTML = `
+    <button class="btn-principal no-imprimir"
+      style="width:100%;margin:16px 0"
+      onclick="exportarRegistroPDF()">
+      ↓ EXPORTAR REGISTRO EN PDF
+    </button>
+
     <div class="tarjeta" style="background:#151515;color:white">
       <span style="font-size:11px;color:#f28c28;font-weight:bold;letter-spacing:1px">
         RESUMEN · ${etiquetaPeriodo.toUpperCase()}
       </span>
 
-      <div style="margin-top:18px;color:#cccccc;font-size:12px">
+      <div style="margin-top:18px;color:#ccc;font-size:12px">
         TOTAL VENDIDO EN USD
       </div>
-
       <div style="font-size:25px;font-weight:bold;margin:6px 0 18px">
         ${formato(totalUSD)} USD
       </div>
 
       <div style="border-top:1px solid #444;padding-top:15px">
-        <div style="color:#cccccc;font-size:12px">
-          TOTAL VENDIDO EN CUP
-        </div>
-
+        <div style="color:#ccc;font-size:12px">TOTAL VENDIDO EN CUP</div>
         <div style="font-size:25px;font-weight:bold;margin:6px 0 18px">
           ${formato(totalCUP)} CUP
         </div>
       </div>
 
       <div style="border-top:1px solid #444;padding-top:15px">
-        <div style="color:#cccccc;font-size:12px">
+        <div style="color:#ccc;font-size:12px">
           SALARIO GENERADO (TODAS LAS VENTAS)
         </div>
-
         <div style="font-size:23px;font-weight:bold;color:#75df9a;margin:6px 0 18px">
           ${formato(salarioCUP)} CUP
         </div>
@@ -1747,12 +1575,11 @@ function actualizarRegistro() {
       <div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid #444;padding-top:14px">
         <div>
           <strong>${resultados.length}</strong>
-          <div style="font-size:11px;color:#bbbbbb">Operaciones</div>
+          <div style="font-size:11px;color:#bbb">Operaciones</div>
         </div>
-
         <div>
           <strong>${unidades}</strong>
-          <div style="font-size:11px;color:#bbbbbb">Unidades</div>
+          <div style="font-size:11px;color:#bbb">Unidades</div>
         </div>
       </div>
     </div>
@@ -1793,14 +1620,14 @@ function actualizarRegistro() {
                   </div>
                 </div>
 
-                <details style="margin-top:14px;border-top:1px solid #eeeeee;padding-top:12px">
+                <details style="margin-top:14px;border-top:1px solid #eee;padding-top:12px">
                   <summary style="font-size:13px;font-weight:bold;cursor:pointer">
                     Ver detalle de productos
                   </summary>
 
                   <div style="margin-top:12px">
                     ${venta.lineasVisibles.map(item => `
-                      <div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eeeeee;font-size:12px">
+                      <div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eee;font-size:12px">
                         <div>
                           <strong>${escapar(item.nombre)}</strong>
                           <div style="color:#777;margin-top:4px">
@@ -1820,14 +1647,13 @@ function actualizarRegistro() {
                     <div style="font-size:12px;margin-top:12px">
                       Comisión: ${formato(venta.porcentaje)} %
                     </div>
-
                     <div style="font-weight:bold;margin-top:5px">
                       Salario: ${formato(venta.salarioVisibleCUP)} CUP
                     </div>
                   </div>
                 </details>
 
-                <button class="btn-peligro"
+                <button class="btn-peligro no-imprimir"
                   style="width:100%;margin-top:14px"
                   onclick="eliminarVenta(${venta.id})">
                   🗑 ELIMINAR ESTA VENTA
@@ -1837,6 +1663,182 @@ function actualizarRegistro() {
       }
     </div>
   `;
+}
+
+// ==========================================
+// EXPORTAR REGISTRO VISIBLE A PDF
+// ==========================================
+
+function exportarRegistroPDF() {
+  const resultados = document.getElementById("resultadosRegistro");
+
+  if (!resultados) {
+    alert("No se encontraron resultados para exportar.");
+    return;
+  }
+
+  const lista = resultados.querySelector("#listaVentas");
+
+  if (!lista || !lista.children.length ||
+      lista.querySelector(".texto-vacio")) {
+    alert("No hay ventas para exportar con los filtros actuales.");
+    return;
+  }
+
+  // Abrir la ventana directamente desde el botón para evitar
+  // que el navegador bloquee la ventana emergente.
+  const ventana = window.open("", "_blank");
+
+  if (!ventana) {
+    alert(
+      "El navegador bloqueó la ventana de impresión.\n\n" +
+      "Permite las ventanas emergentes para esta aplicación e inténtalo nuevamente."
+    );
+    return;
+  }
+
+  const contenido = resultados.innerHTML;
+  const fechaGeneracion = new Date().toLocaleString("es-ES");
+
+  ventana.document.open();
+
+  ventana.document.write(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Registro de ventas - CAJA</title>
+
+      <style>
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+          padding: 20px;
+          color: #222;
+          background: #fff;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 12px;
+        }
+
+        h1 {
+          margin: 0;
+          font-size: 23px;
+          letter-spacing: 2px;
+        }
+
+        h2 {
+          margin: 5px 0 20px;
+          font-size: 17px;
+          font-weight: normal;
+          color: #555;
+        }
+
+        .encabezado {
+          border-bottom: 2px solid #222;
+          padding-bottom: 12px;
+          margin-bottom: 18px;
+        }
+
+        .fecha-informe {
+          color: #666;
+          font-size: 10px;
+          margin-top: 8px;
+        }
+
+        .tarjeta {
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 13px;
+          margin: 0 0 12px;
+          background: #fff !important;
+          color: #222 !important;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        .tarjeta[style*="background:#151515"] {
+          background: #f2f2f2 !important;
+          color: #222 !important;
+        }
+
+        .tarjeta[style*="background:#151515"] span,
+        .tarjeta[style*="background:#151515"] div {
+          color: #222 !important;
+        }
+
+        strong {
+          font-weight: bold;
+        }
+
+        h3 {
+          font-size: 14px;
+        }
+
+        .no-imprimir,
+        button {
+          display: none !important;
+        }
+
+        details {
+          display: block !important;
+        }
+
+        details > summary {
+          display: none !important;
+        }
+
+        details > div {
+          display: block !important;
+        }
+
+        .texto-vacio {
+          color: #555;
+        }
+
+        @page {
+          size: A4;
+          margin: 12mm;
+        }
+
+        @media print {
+          body {
+            padding: 0;
+          }
+
+          .tarjeta {
+            box-shadow: none !important;
+          }
+        }
+      </style>
+    </head>
+
+    <body>
+      <div class="encabezado">
+        <h1>CAJA.</h1>
+        <h2>Registro de ventas</h2>
+        <div class="fecha-informe">
+          Informe generado: ${fechaGeneracion}
+        </div>
+      </div>
+
+      ${contenido}
+
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 400);
+        };
+      <\/script>
+    </body>
+    </html>
+  `);
+
+  ventana.document.close();
 }
 
 // ==========================================
@@ -1875,4 +1877,4 @@ async function eliminarVenta(id) {
 // ARRANQUE
 // ==========================================
 
-document.addEventListener("DOMContentLoaded", iniciarAplicacion); 
+document.addEventListener("DOMContentLoaded", iniciarAplicacion);
