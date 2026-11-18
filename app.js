@@ -37,6 +37,7 @@ function cargarConteoEfectivo() {
 
     DENOMINACIONES.forEach(d => {
       const cantidad = Number(datos[d] || 0);
+
       resultado[d] = Number.isFinite(cantidad) && cantidad >= 0
         ? Math.floor(cantidad)
         : 0;
@@ -45,7 +46,10 @@ function cargarConteoEfectivo() {
     return resultado;
   } catch (error) {
     console.error(error);
-    return Object.fromEntries(DENOMINACIONES.map(d => [d, 0]));
+
+    return Object.fromEntries(
+      DENOMINACIONES.map(d => [d, 0])
+    );
   }
 }
 
@@ -87,7 +91,8 @@ function actualizarCantidadBilletes(denominacion, valor) {
   );
 
   if (importe) {
-    importe.textContent = formato(denominacion * cantidad) + " CUP";
+    importe.textContent =
+      formato(denominacion * cantidad) + " CUP";
   }
 
   const total = formato(calcularTotalEfectivo()) + " CUP";
@@ -110,7 +115,9 @@ function limpiarConteoEfectivo() {
     "Esta acción no se puede deshacer."
   )) return;
 
-  DENOMINACIONES.forEach(d => conteoEfectivo[d] = 0);
+  DENOMINACIONES.forEach(d => {
+    conteoEfectivo[d] = 0;
+  });
 
   guardarConteoEfectivo();
   mostrarConteoEfectivo();
@@ -136,9 +143,11 @@ function mostrarConteoEfectivo() {
       ">
         <div>
           <strong style="font-size:17px">${formato(d)} CUP</strong>
+
           <div style="font-size:12px;color:#777;margin-top:7px">
             Importe:
           </div>
+
           <strong id="importeBillete${d}"
             style="color:#16834a;font-size:14px">
             ${formato(importe)} CUP
@@ -149,6 +158,7 @@ function mostrarConteoEfectivo() {
           <label for="billete${d}" style="font-size:11px">
             Cantidad
           </label>
+
           <input
             id="billete${d}"
             type="number"
@@ -170,16 +180,19 @@ function mostrarConteoEfectivo() {
 
   pantalla.innerHTML = `
     <span class="etiqueta">CONTROL DE DINERO</span>
+
     <h2 class="titulo-seccion">Conteo de efectivo</h2>
 
     <div class="tarjeta" style="background:#151515;color:white;margin-bottom:18px">
       <div style="color:#f28c28;font-size:11px;font-weight:bold;letter-spacing:1px">
         TOTAL DE EFECTIVO
       </div>
+
       <div id="totalConteoEfectivoSuperior"
         style="font-size:30px;font-weight:bold;margin-top:12px">
         ${total}
       </div>
+
       <p style="color:#bbb;font-size:12px;margin-top:8px">
         Suma de todos los billetes contabilizados.
       </p>
@@ -196,6 +209,7 @@ function mostrarConteoEfectivo() {
       <div style="color:#f28c28;font-size:11px;font-weight:bold;letter-spacing:1px">
         TOTAL GENERAL
       </div>
+
       <div id="totalConteoEfectivoInferior"
         style="font-size:30px;font-weight:bold;margin-top:10px">
         ${total}
@@ -221,7 +235,7 @@ const formato = valor =>
   });
 
 function escapar(texto) {
-  return String(texto).replace(/[&<>"']/g, letra => ({
+  return String(texto ?? "").replace(/[&<>"']/g, letra => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -230,16 +244,23 @@ function escapar(texto) {
   })[letra]);
 }
 
-function fechaLocal() {
-  const ahora = new Date();
+// CORREGIDO: acepta una fecha opcional.
+// Si no recibe fecha, utiliza la fecha actual.
+function fechaLocal(fecha = new Date()) {
+  const ahora = new Date(fecha);
+
+  if (Number.isNaN(ahora.getTime())) return "";
+
   const zona = new Date(
     ahora.getTime() - ahora.getTimezoneOffset() * 60000
   );
+
   return zona.toISOString().slice(0, 16);
 }
 
 function fechaParaComparar(fecha) {
   const d = new Date(fecha);
+
   if (Number.isNaN(d.getTime())) return "";
 
   const zona = new Date(
@@ -249,8 +270,12 @@ function fechaParaComparar(fecha) {
   return zona.toISOString().slice(0, 10);
 }
 
-function mesLocal() {
-  const ahora = new Date();
+// CORREGIDO: utiliza la fecha recibida para obtener su mes.
+function mesLocal(fecha = new Date()) {
+  const ahora = new Date(fecha);
+
+  if (Number.isNaN(ahora.getTime())) return "";
+
   return `${ahora.getFullYear()}-${String(
     ahora.getMonth() + 1
   ).padStart(2, "0")}`;
@@ -258,7 +283,10 @@ function mesLocal() {
 
 function mostrarFecha(fecha) {
   const d = new Date(fecha);
-  if (Number.isNaN(d.getTime())) return "Fecha no disponible";
+
+  if (Number.isNaN(d.getTime())) {
+    return "Fecha no disponible";
+  }
 
   return d.toLocaleString("es-ES", {
     day: "2-digit",
@@ -270,12 +298,17 @@ function mostrarFecha(fecha) {
 }
 
 function precioProducto(producto, moneda) {
-  if (moneda === "USD") return Number(producto.precioUSD ?? 0);
+  if (moneda === "USD") {
+    return Number(producto.precioUSD ?? 0);
+  }
+
   return Number(producto.precioCUP ?? producto.precio ?? 0);
 }
 
 function precioCUPProducto(producto) {
-  return Number(producto?.precioCUP ?? producto?.precio ?? 0);
+  return Number(
+    producto?.precioCUP ?? producto?.precio ?? 0
+  );
 }
 
 // ==========================================
@@ -295,9 +328,15 @@ function adaptarProducto(producto) {
 }
 
 function adaptarVenta(venta) {
-  if (!venta.moneda) venta.moneda = "CUP";
+  if (!venta.moneda) {
+    venta.moneda = "CUP";
+  }
 
-  const lugaresValidos = ["Almacén", "Tienda", "Casa"];
+  const lugaresValidos = [
+    "Almacén",
+    "Tienda",
+    "Casa"
+  ];
 
   if (!lugaresValidos.includes(venta.lugarVenta)) {
     venta.lugarVenta = "Sin especificar";
@@ -307,7 +346,7 @@ function adaptarVenta(venta) {
     const precioAntiguo = Number(item.precio || 0);
 
     const catalogo = productos.find(
-      p => String(p.id) === String(item.productoId)
+      p => String(p.id) === String(item.productoId || item.id)
     );
 
     let precioCUP = Number(item.precioCUP || 0);
@@ -325,7 +364,11 @@ function adaptarVenta(venta) {
       (venta.moneda === "USD" ? precioAntiguo : 0)
     );
 
-    return { ...item, precioCUP, precioUSD };
+    return {
+      ...item,
+      precioCUP,
+      precioUSD
+    };
   });
 
   if (venta.totalCUP === undefined) {
@@ -384,6 +427,8 @@ async function iniciarAplicacion() {
     ventas = (await obtenerTodos("ventas"))
       .map(adaptarVenta);
 
+    // Actualiza los datos antiguos sin cambiar la estructura
+    // ni la versión de IndexedDB.
     for (const producto of productos) {
       await guardarDato("productos", producto);
     }
@@ -448,7 +493,10 @@ function navegar(destino) {
 
   Object.entries(pantallas).forEach(([nombre, id]) => {
     const elemento = document.getElementById(id);
-    if (elemento) elemento.classList.toggle("activa", nombre === destino);
+
+    if (elemento) {
+      elemento.classList.toggle("activa", nombre === destino);
+    }
   });
 
   const botones = {
@@ -461,7 +509,10 @@ function navegar(destino) {
 
   Object.entries(botones).forEach(([nombre, id]) => {
     const elemento = document.getElementById(id);
-    if (elemento) elemento.classList.toggle("activo", nombre === destino);
+
+    if (elemento) {
+      elemento.classList.toggle("activo", nombre === destino);
+    }
   });
 
   if (destino === "caja") mostrarCaja();
@@ -470,7 +521,10 @@ function navegar(destino) {
   if (destino === "efectivo") mostrarConteoEfectivo();
   if (destino === "estadisticas") mostrarEstadisticas();
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 }
 
 // ==========================================
@@ -482,10 +536,8 @@ function mostrarProductos() {
   if (!pantalla) return;
 
   pantalla.innerHTML = `
-    <div class="encabezado-pantalla">
-      <h2>Productos</h2>
-      <p>Administra el catálogo de productos.</p>
-    </div>
+    <span class="etiqueta">INVENTARIO</span>
+    <h2 class="titulo-seccion">Productos</h2>
 
     <div class="tarjeta">
       <h3 id="tituloFormularioProducto">Agregar producto</h3>
@@ -493,25 +545,50 @@ function mostrarProductos() {
       <input type="hidden" id="productoId">
 
       <label for="nombreProducto">Nombre del producto</label>
-      <input id="nombreProducto" type="text" placeholder="Nombre">
+      <input
+        id="nombreProducto"
+        type="text"
+        placeholder="Nombre del producto">
 
       <label for="descripcionProducto">Descripción</label>
-      <input id="descripcionProducto" type="text" placeholder="Descripción">
+      <input
+        id="descripcionProducto"
+        type="text"
+        placeholder="Descripción">
 
       <label for="precioCUP">Precio en CUP</label>
-      <input id="precioCUP" type="number" min="0" step="0.01" placeholder="0">
+      <input
+        id="precioCUP"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="0">
 
       <label for="precioUSD">Precio en USD</label>
-      <input id="precioUSD" type="number" min="0" step="0.01" placeholder="0">
+      <input
+        id="precioUSD"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="0">
 
-      <div class="acciones-formulario">
-        <button onclick="guardarProducto()">Guardar producto</button>
-        <button onclick="cancelarEdicion()" class="boton-secundario">Cancelar</button>
-      </div>
+      <button
+        class="btn-principal"
+        onclick="guardarProducto()">
+        Guardar producto
+      </button>
+
+      <button
+        id="btnCancelarProducto"
+        class="btn-secundario"
+        onclick="cancelarEdicion()"
+        style="display:none;width:100%;margin-top:10px">
+        Cancelar edición
+      </button>
     </div>
 
     <div class="tarjeta">
-      <h3>Catálogo</h3>
+      <h3 style="margin-bottom:15px">Catálogo de productos</h3>
       <div id="catalogoProductos"></div>
     </div>
   `;
@@ -524,32 +601,64 @@ function dibujarCatalogo() {
   if (!contenedor) return;
 
   if (!productos.length) {
-    contenedor.innerHTML = "<p>No hay productos registrados.</p>";
+    contenedor.innerHTML = `
+      <p class="texto-vacio">
+        No hay productos registrados.
+      </p>
+    `;
     return;
   }
 
   contenedor.innerHTML = productos.map(producto => `
-    <div class="producto-item">
-      <div>
-        <strong>${escapar(producto.nombre)}</strong>
-        <p>${escapar(producto.descripcion || "")}</p>
-        <p>CUP: ${formato(producto.precioCUP || 0)}</p>
-        <p>USD: ${formato(producto.precioUSD || 0)}</p>
+    <div class="producto">
+      <div class="producto-info">
+        <h3>${escapar(producto.nombre)}</h3>
+
+        <p style="font-size:12px;color:#777;margin:5px 0">
+          ${escapar(producto.descripcion || "")}
+        </p>
+
+        <p class="precio">
+          ${formato(producto.precioCUP || 0)} CUP
+        </p>
+
+        <p style="font-size:13px;color:#3979c6;font-weight:bold;margin-top:4px">
+          ${formato(producto.precioUSD || 0)} USD
+        </p>
       </div>
 
-      <div class="acciones-producto">
-        <button onclick="editarProducto('${producto.id}')">Editar</button>
-        <button onclick="eliminarProducto('${producto.id}')">Eliminar</button>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <button
+          class="btn-secundario"
+          onclick="editarProducto('${escapar(String(producto.id))}')">
+          Editar
+        </button>
+
+        <button
+          class="btn-peligro"
+          onclick="eliminarProducto('${escapar(String(producto.id))}')">
+          Eliminar
+        </button>
       </div>
     </div>
   `).join("");
 }
 
 async function guardarProducto() {
-  const nombre = document.getElementById("nombreProducto")?.value.trim();
-  const descripcion = document.getElementById("descripcionProducto")?.value.trim() || "";
-  const precioCUP = Number(document.getElementById("precioCUP")?.value || 0);
-  const precioUSD = Number(document.getElementById("precioUSD")?.value || 0);
+  const nombre = document
+    .getElementById("nombreProducto")?.value.trim();
+
+  const descripcion = document
+    .getElementById("descripcionProducto")?.value.trim() || "";
+
+  const precioCUP = Number(
+    document.getElementById("precioCUP")?.value || 0
+  );
+
+  const precioUSD = Number(
+    document.getElementById("precioUSD")?.value || 0
+  );
+
   const id = document.getElementById("productoId")?.value;
 
   if (!nombre) {
@@ -557,13 +666,23 @@ async function guardarProducto() {
     return;
   }
 
-  if (precioCUP < 0 || precioUSD < 0 || (!precioCUP && !precioUSD)) {
+  if (
+    !Number.isFinite(precioCUP) ||
+    !Number.isFinite(precioUSD) ||
+    precioCUP < 0 ||
+    precioUSD < 0 ||
+    (!precioCUP && !precioUSD)
+  ) {
     alert("Introduce al menos un precio válido.");
     return;
   }
 
   const producto = {
-    id: id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+    id: id || (
+      crypto.randomUUID
+        ? crypto.randomUUID()
+        : String(Date.now())
+    ),
     nombre,
     descripcion,
     precioCUP,
@@ -573,7 +692,9 @@ async function guardarProducto() {
   try {
     await guardarRegistro("productos", producto);
 
-    const indice = productos.findIndex(p => String(p.id) === String(producto.id));
+    const indice = productos.findIndex(
+      p => String(p.id) === String(producto.id)
+    );
 
     if (indice >= 0) {
       productos[indice] = producto;
@@ -583,7 +704,9 @@ async function guardarProducto() {
 
     cancelarEdicion();
     dibujarCatalogo();
+
     alert("Producto guardado correctamente.");
+
   } catch (error) {
     console.error(error);
     alert("No se pudo guardar el producto.");
@@ -591,15 +714,31 @@ async function guardarProducto() {
 }
 
 function editarProducto(id) {
-  const producto = productos.find(p => String(p.id) === String(id));
+  const producto = productos.find(
+    p => String(p.id) === String(id)
+  );
+
   if (!producto) return;
 
   document.getElementById("productoId").value = producto.id;
   document.getElementById("nombreProducto").value = producto.nombre || "";
-  document.getElementById("descripcionProducto").value = producto.descripcion || "";
-  document.getElementById("precioCUP").value = producto.precioCUP || 0;
-  document.getElementById("precioUSD").value = producto.precioUSD || 0;
-  document.getElementById("tituloFormularioProducto").textContent = "Editar producto";
+  document.getElementById("descripcionProducto").value =
+    producto.descripcion || "";
+
+  document.getElementById("precioCUP").value =
+    producto.precioCUP || 0;
+
+  document.getElementById("precioUSD").value =
+    producto.precioUSD || 0;
+
+  document.getElementById("tituloFormularioProducto").textContent =
+    "Editar producto";
+
+  const botonCancelar = document.getElementById("btnCancelarProducto");
+
+  if (botonCancelar) {
+    botonCancelar.style.display = "block";
+  }
 
   document.getElementById("nombreProducto").scrollIntoView({
     behavior: "smooth",
@@ -622,19 +761,38 @@ function cancelarEdicion() {
   });
 
   const titulo = document.getElementById("tituloFormularioProducto");
-  if (titulo) titulo.textContent = "Agregar producto";
+
+  if (titulo) {
+    titulo.textContent = "Agregar producto";
+  }
+
+  const botonCancelar = document.getElementById("btnCancelarProducto");
+
+  if (botonCancelar) {
+    botonCancelar.style.display = "none";
+  }
 }
 
 async function eliminarProducto(id) {
-  const producto = productos.find(p => String(p.id) === String(id));
+  const producto = productos.find(
+    p => String(p.id) === String(id)
+  );
+
   if (!producto) return;
 
-  if (!confirm(`¿Eliminar el producto "${producto.nombre}"?`)) return;
+  if (!confirm(`¿Eliminar el producto "${producto.nombre}"?`)) {
+    return;
+  }
 
   try {
     await eliminarRegistro("productos", id);
-    productos = productos.filter(p => String(p.id) !== String(id));
+
+    productos = productos.filter(
+      p => String(p.id) !== String(id)
+    );
+
     dibujarCatalogo();
+
   } catch (error) {
     console.error(error);
     alert("No se pudo eliminar el producto.");
@@ -652,26 +810,25 @@ function mostrarCaja() {
   carrito = [];
 
   const ahora = new Date();
-  const fecha = fechaLocal(ahora);
 
   pantalla.innerHTML = `
-    <div class="encabezado-pantalla">
-      <h2>Caja de ventas</h2>
-      <p>Registra las operaciones de venta.</p>
-    </div>
+    <span class="etiqueta">NUEVA OPERACIÓN</span>
+    <h2 class="titulo-seccion">Caja de ventas</h2>
 
     <div class="tarjeta">
-      <h3>Moneda de venta</h3>
+      <h3 style="margin-bottom:14px">Moneda de venta</h3>
 
-      <div class="selector-moneda">
+      <div style="display:flex;gap:10px">
         <button
-          class="${monedaVenta === "CUP" ? "activo" : ""}"
+          class="${monedaVenta === "CUP" ? "btn-principal" : "btn-secundario"}"
+          style="flex:1"
           onclick="cambiarMonedaVenta('CUP')">
           CUP
         </button>
 
         <button
-          class="${monedaVenta === "USD" ? "activo" : ""}"
+          class="${monedaVenta === "USD" ? "btn-principal" : "btn-secundario"}"
+          style="flex:1"
           onclick="cambiarMonedaVenta('USD')">
           USD
         </button>
@@ -679,15 +836,17 @@ function mostrarCaja() {
     </div>
 
     <div class="tarjeta">
-      <h3>Datos de la venta</h3>
+      <h3 style="margin-bottom:15px">Datos de la venta</h3>
 
       <label for="fechaVenta">Fecha y hora</label>
+
       <input
         type="datetime-local"
         id="fechaVenta"
-        value="${fecha}T${String(ahora.getHours()).padStart(2, "0")}:${String(ahora.getMinutes()).padStart(2, "0")}">
+        value="${fechaLocal(ahora)}">
 
       <label for="lugarVenta">Lugar donde se realizó la venta</label>
+
       <select id="lugarVenta">
         <option value="">Seleccionar lugar...</option>
         <option value="Almacén">Almacén</option>
@@ -696,6 +855,7 @@ function mostrarCaja() {
       </select>
 
       <label for="porcentajeVenta">Porcentaje de salario</label>
+
       <input
         type="number"
         id="porcentajeVenta"
@@ -706,7 +866,7 @@ function mostrarCaja() {
     </div>
 
     <div class="tarjeta">
-      <h3>Productos disponibles</h3>
+      <h3 style="margin-bottom:12px">Productos disponibles</h3>
 
       <input
         type="search"
@@ -718,12 +878,16 @@ function mostrarCaja() {
     </div>
 
     <div class="tarjeta">
-      <h3>Carrito de venta</h3>
+      <h3 style="margin-bottom:12px">Carrito de venta</h3>
+
       <div id="carritoVenta"></div>
+
       <div id="resumenVenta"></div>
 
-      <button class="boton-principal" onclick="registrarVenta()">
-        Registrar venta
+      <button
+        class="btn-vendido"
+        onclick="registrarVenta()">
+        REGISTRAR VENTA
       </button>
     </div>
   `;
@@ -752,7 +916,11 @@ function dibujarProductosCaja() {
   );
 
   if (!lista.length) {
-    contenedor.innerHTML = "<p>No se encontraron productos.</p>";
+    contenedor.innerHTML = `
+      <p class="texto-vacio">
+        No se encontraron productos.
+      </p>
+    `;
     return;
   }
 
@@ -760,13 +928,19 @@ function dibujarProductosCaja() {
     const precio = precioProducto(producto, monedaVenta);
 
     return `
-      <div class="producto-item">
-        <div>
-          <strong>${escapar(producto.nombre)}</strong>
-          <p>${formato(precio)} ${monedaVenta}</p>
+      <div class="producto">
+        <div class="producto-info">
+          <h3>${escapar(producto.nombre)}</h3>
+
+          <p class="precio">
+            ${formato(precio)} ${monedaVenta}
+          </p>
         </div>
 
-        <button onclick="cambiarCantidad('${producto.id}', 1)">
+        <button
+          class="btn-principal"
+          style="width:auto;padding:11px 15px"
+          onclick="cambiarCantidad('${escapar(String(producto.id))}',1)">
           Agregar
         </button>
       </div>
@@ -775,17 +949,24 @@ function dibujarProductosCaja() {
 }
 
 function cambiarCantidad(id, cambio) {
-  const producto = productos.find(p => String(p.id) === String(id));
+  const producto = productos.find(
+    p => String(p.id) === String(id)
+  );
+
   if (!producto) return;
 
-  let linea = carrito.find(p => String(p.id) === String(id));
+  let linea = carrito.find(
+    p => String(p.id) === String(id)
+  );
 
   if (!linea && cambio > 0) {
     linea = {
       id: producto.id,
       nombre: producto.nombre,
       cantidad: 0,
-      precioCUP: Number(producto.precioCUP || 0),
+      precioCUP: Number(
+        producto.precioCUP ?? producto.precio ?? 0
+      ),
       precioUSD: Number(producto.precioUSD || 0)
     };
 
@@ -797,7 +978,9 @@ function cambiarCantidad(id, cambio) {
   linea.cantidad += cambio;
 
   if (linea.cantidad <= 0) {
-    carrito = carrito.filter(p => String(p.id) !== String(id));
+    carrito = carrito.filter(
+      p => String(p.id) !== String(id)
+    );
   }
 
   actualizarResumen();
@@ -835,11 +1018,15 @@ function calcularVenta() {
       subtotal,
       moneda: monedaVenta,
       precioCUP: precioEnCUP,
+      precioUSD: Number(item.precioUSD || 0),
       subtotalCUP: precioEnCUP * item.cantidad
     };
   });
 
-  const salarioCUP = totalCUP * porcentaje / 100;
+  const salarioCUP = calcularSalarioLineasCUP(
+    lineas,
+    porcentaje
+  );
 
   return {
     lineas,
@@ -859,23 +1046,41 @@ function actualizarResumen() {
   const calculo = calcularVenta();
 
   if (!carrito.length) {
-    contenedorCarrito.innerHTML = "<p>El carrito está vacío.</p>";
+    contenedorCarrito.innerHTML = `
+      <p class="texto-vacio">El carrito está vacío.</p>
+    `;
   } else {
     contenedorCarrito.innerHTML = carrito.map(item => {
       const precio = precioProducto(item, monedaVenta);
 
       return `
-        <div class="producto-item">
-          <div>
-            <strong>${escapar(item.nombre)}</strong>
-            <p>${formato(precio)} ${monedaVenta} x ${item.cantidad}</p>
-            <p>Subtotal: ${formato(precio * item.cantidad)} ${monedaVenta}</p>
+        <div class="producto">
+          <div class="producto-info">
+            <h3>${escapar(item.nombre)}</h3>
+
+            <p style="font-size:12px;color:#777;margin-top:5px">
+              ${formato(precio)} ${monedaVenta} x ${item.cantidad}
+            </p>
+
+            <p class="precio" style="margin-top:5px">
+              Subtotal: ${formato(precio * item.cantidad)} ${monedaVenta}
+            </p>
           </div>
 
-          <div class="acciones-producto">
-            <button onclick="cambiarCantidad('${item.id}', -1)">−</button>
-            <strong>${item.cantidad}</strong>
-            <button onclick="cambiarCantidad('${item.id}', 1)">+</button>
+          <div class="controles-cantidad">
+            <button
+              class="btn-cantidad"
+              onclick="cambiarCantidad('${escapar(String(item.id))}',-1)">
+              −
+            </button>
+
+            <span class="cantidad">${item.cantidad}</span>
+
+            <button
+              class="btn-cantidad"
+              onclick="cambiarCantidad('${escapar(String(item.id))}',1)">
+              +
+            </button>
           </div>
         </div>
       `;
@@ -883,19 +1088,26 @@ function actualizarResumen() {
   }
 
   contenedorResumen.innerHTML = `
-    <div class="resumen-linea">
-      <span>Total de venta:</span>
-      <strong>${formato(calculo.total)} ${monedaVenta}</strong>
-    </div>
+    <div class="resumen">
+      <p style="font-size:13px;color:#ddd">
+        Total de venta
+      </p>
 
-    <div class="resumen-linea">
-      <span>Base para salario en CUP:</span>
-      <strong>${formato(calculo.totalCUP)} CUP</strong>
-    </div>
+      <div class="total">
+        ${formato(calculo.total)} ${monedaVenta}
+      </div>
 
-    <div class="resumen-linea">
-      <span>Salario (${formato(calculo.porcentaje)}%):</span>
-      <strong>${formato(calculo.salarioCUP)} CUP</strong>
+      <hr style="border:0;border-top:1px solid #ffffff30;margin:15px 0">
+
+      <div style="display:flex;justify-content:space-between;gap:10px;margin:9px 0">
+        <span style="color:#ddd">Base para salario:</span>
+        <strong>${formato(calculo.totalCUP)} CUP</strong>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;gap:10px;margin:9px 0">
+        <span style="color:#ddd">Salario (${formato(calculo.porcentaje)}%):</span>
+        <strong class="salario">${formato(calculo.salarioCUP)} CUP</strong>
+      </div>
     </div>
   `;
 }
@@ -912,12 +1124,13 @@ async function registrarVenta() {
 
   const fecha = document.getElementById("fechaVenta")?.value;
   const lugarVenta = document.getElementById("lugarVenta")?.value || "";
+
   const porcentaje = Number(
     document.getElementById("porcentajeVenta")?.value
   );
 
-  if (!fecha) {
-    alert("Selecciona la fecha y hora de la venta.");
+  if (!fecha || Number.isNaN(new Date(fecha).getTime())) {
+    alert("Selecciona una fecha y hora válidas.");
     return;
   }
 
@@ -935,7 +1148,7 @@ async function registrarVenta() {
 
   const calculo = calcularVenta();
 
-  if (calculo.total <= 0) {
+  if (!Number.isFinite(calculo.total) || calculo.total <= 0) {
     alert("El total de la venta debe ser mayor que cero.");
     return;
   }
@@ -950,7 +1163,10 @@ async function registrarVenta() {
   if (!confirmacion) return;
 
   const venta = {
-    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    id: crypto.randomUUID
+      ? crypto.randomUUID()
+      : String(Date.now()),
+
     fecha: new Date(fecha).toISOString(),
     lugarVenta,
     moneda: monedaVenta,
@@ -958,8 +1174,15 @@ async function registrarVenta() {
     total: calculo.total,
     salario: calculo.salarioCUP,
     porcentaje: calculo.porcentaje,
-    totalUSD: monedaVenta === "USD" ? calculo.total : 0,
-    totalCUP: monedaVenta === "CUP" ? calculo.total : 0,
+
+    totalUSD: monedaVenta === "USD"
+      ? calculo.total
+      : 0,
+
+    totalCUP: monedaVenta === "CUP"
+      ? calculo.total
+      : 0,
+
     salarioUSD: 0,
     salarioCUP: calculo.salarioCUP
   };
@@ -974,6 +1197,7 @@ async function registrarVenta() {
     alert("Venta registrada correctamente.");
 
     navegar("inicio");
+
   } catch (error) {
     console.error(error);
     alert("No se pudo registrar la venta.");
@@ -989,16 +1213,19 @@ function mostrarRegistro() {
   if (!pantalla) return;
 
   pantalla.innerHTML = `
-    <div class="encabezado-pantalla">
-      <h2>Registro de ventas</h2>
-      <p>Consulta, filtra y administra las ventas realizadas.</p>
-    </div>
+    <span class="etiqueta">HISTORIAL</span>
+
+    <h2 class="titulo-seccion">Registro de ventas</h2>
 
     <div class="tarjeta">
-      <h3>Filtros de búsqueda</h3>
+      <h3 style="margin-bottom:15px">Filtros de búsqueda</h3>
 
       <label for="filtroPeriodo">Período</label>
-      <select id="filtroPeriodo" onchange="actualizarVisibilidadFiltros(); actualizarRegistro();">
+
+      <select
+        id="filtroPeriodo"
+        onchange="actualizarVisibilidadFiltros();actualizarRegistro()">
+
         <option value="todo">Todas las ventas</option>
         <option value="dia">Por día</option>
         <option value="mes">Por mes</option>
@@ -1009,8 +1236,10 @@ function mostrarRegistro() {
       <div id="filtrosFecha"></div>
 
       <label for="filtroProducto">Producto</label>
+
       <select id="filtroProducto" onchange="actualizarRegistro()">
         <option value="">Todos los productos</option>
+
         ${productos.map(p => `
           <option value="${escapar(String(p.id))}">
             ${escapar(p.nombre)}
@@ -1019,6 +1248,7 @@ function mostrarRegistro() {
       </select>
 
       <label for="filtroMoneda">Moneda</label>
+
       <select id="filtroMoneda" onchange="actualizarRegistro()">
         <option value="">Todas las monedas</option>
         <option value="CUP">CUP</option>
@@ -1026,6 +1256,7 @@ function mostrarRegistro() {
       </select>
 
       <label for="filtroLugar">Lugar de venta</label>
+
       <select id="filtroLugar" onchange="actualizarRegistro()">
         <option value="">Todos los lugares</option>
         <option value="Almacén">Almacén</option>
@@ -1035,6 +1266,7 @@ function mostrarRegistro() {
       </select>
 
       <label for="filtroMinimo">Importe mínimo</label>
+
       <input
         type="number"
         id="filtroMinimo"
@@ -1043,6 +1275,7 @@ function mostrarRegistro() {
         oninput="actualizarRegistro()">
 
       <label for="filtroMaximo">Importe máximo</label>
+
       <input
         type="number"
         id="filtroMaximo"
@@ -1050,24 +1283,27 @@ function mostrarRegistro() {
         placeholder="Sin máximo"
         oninput="actualizarRegistro()">
 
-      <div class="acciones-formulario">
-        <button onclick="limpiarFiltrosRegistro()" class="boton-secundario">
-          Limpiar filtros
-        </button>
+      <button
+        class="btn-secundario"
+        style="width:100%;margin-bottom:10px"
+        onclick="limpiarFiltrosRegistro()">
+        Limpiar filtros
+      </button>
 
-        <button onclick="exportarRegistroPDF()">
-          Exportar PDF
-        </button>
-      </div>
+      <button
+        class="btn-principal"
+        onclick="exportarRegistroPDF()">
+        Exportar PDF
+      </button>
     </div>
 
     <div class="tarjeta">
-      <h3>Resumen de todas las ventas</h3>
+      <h3 style="margin-bottom:12px">Resumen de todas las ventas</h3>
       <div id="resumenCompletoVentas"></div>
     </div>
 
     <div class="tarjeta">
-      <h3>Resultados del filtro</h3>
+      <h3 style="margin-bottom:12px">Resultados del filtro</h3>
       <div id="resultadosRegistro"></div>
     </div>
   `;
@@ -1086,47 +1322,53 @@ function mostrarResumenVentas() {
   if (!contenedor) return;
 
   const totalCUP = ventas.reduce(
-    (suma, venta) => suma + Number(venta.totalCUP || 0), 0
+    (suma, venta) => suma + Number(venta.totalCUP || 0),
+    0
   );
 
   const totalUSD = ventas.reduce(
-    (suma, venta) => suma + Number(venta.totalUSD || 0), 0
+    (suma, venta) => suma + Number(venta.totalUSD || 0),
+    0
   );
 
   const salarioCUP = ventas.reduce(
-    (suma, venta) => suma + Number(venta.salarioCUP || venta.salario || 0), 0
+    (suma, venta) =>
+      suma + Number(venta.salarioCUP || venta.salario || 0),
+    0
   );
 
   const unidades = ventas.reduce((suma, venta) => {
     return suma + (venta.productos || []).reduce(
-      (subtotal, producto) => subtotal + Number(producto.cantidad || 0), 0
+      (subtotal, producto) =>
+        subtotal + Number(producto.cantidad || 0),
+      0
     );
   }, 0);
 
   contenedor.innerHTML = `
-    <div class="resumen-linea">
+    <div style="display:flex;justify-content:space-between;gap:10px;margin:10px 0">
       <span>Operaciones registradas:</span>
       <strong>${ventas.length}</strong>
     </div>
 
-    <div class="resumen-linea">
+    <div style="display:flex;justify-content:space-between;gap:10px;margin:10px 0">
       <span>Unidades vendidas:</span>
       <strong>${unidades}</strong>
     </div>
 
-    <div class="resumen-linea">
+    <div style="display:flex;justify-content:space-between;gap:10px;margin:10px 0">
       <span>Total vendido en CUP:</span>
       <strong>${formato(totalCUP)} CUP</strong>
     </div>
 
-    <div class="resumen-linea">
+    <div style="display:flex;justify-content:space-between;gap:10px;margin:10px 0">
       <span>Total vendido en USD:</span>
       <strong>${formato(totalUSD)} USD</strong>
     </div>
 
-    <div class="resumen-linea">
+    <div style="display:flex;justify-content:space-between;gap:10px;margin:10px 0">
       <span>Salario acumulado:</span>
-      <strong>${formato(salarioCUP)} CUP</strong>
+      <strong style="color:#16834a">${formato(salarioCUP)} CUP</strong>
     </div>
   `;
 }
@@ -1136,14 +1378,10 @@ function mostrarResumenVentas() {
 // ==========================================
 
 function actualizarVisibilidadFiltros() {
-  const periodo = document.getElementById("filtroPeriodo")?.value || "todo";
+  const periodo = document.getElementById("filtroPeriodo")?.value;
   const contenedor = document.getElementById("filtrosFecha");
 
   if (!contenedor) return;
-
-  const hoy = fechaLocal(new Date());
-  const mes = mesLocal(new Date());
-  const anio = new Date().getFullYear();
 
   if (periodo === "dia") {
     contenedor.innerHTML = `
@@ -1151,7 +1389,7 @@ function actualizarVisibilidadFiltros() {
       <input
         type="date"
         id="fechaFiltro"
-        value="${hoy}"
+        value="${fechaLocal().slice(0, 10)}"
         onchange="actualizarRegistro()">
     `;
   } else if (periodo === "mes") {
@@ -1160,7 +1398,7 @@ function actualizarVisibilidadFiltros() {
       <input
         type="month"
         id="mesFiltro"
-        value="${mes}"
+        value="${mesLocal()}"
         onchange="actualizarRegistro()">
     `;
   } else if (periodo === "anio") {
@@ -1169,9 +1407,9 @@ function actualizarVisibilidadFiltros() {
       <input
         type="number"
         id="anioFiltro"
-        value="${anio}"
         min="2000"
         max="2100"
+        value="${new Date().getFullYear()}"
         onchange="actualizarRegistro()">
     `;
   } else if (periodo === "rango") {
@@ -1198,19 +1436,19 @@ function actualizarVisibilidadFiltros() {
 // ==========================================
 
 function limpiarFiltrosRegistro() {
-  const ids = [
-    "filtroPeriodo",
-    "filtroProducto",
-    "filtroMoneda",
-    "filtroLugar",
-    "filtroMinimo",
-    "filtroMaximo"
-  ];
+  const periodo = document.getElementById("filtroPeriodo");
+  const producto = document.getElementById("filtroProducto");
+  const moneda = document.getElementById("filtroMoneda");
+  const lugar = document.getElementById("filtroLugar");
+  const minimo = document.getElementById("filtroMinimo");
+  const maximo = document.getElementById("filtroMaximo");
 
-  ids.forEach(id => {
-    const campo = document.getElementById(id);
-    if (campo) campo.value = id === "filtroPeriodo" ? "todo" : "";
-  });
+  if (periodo) periodo.value = "todo";
+  if (producto) producto.value = "";
+  if (moneda) moneda.value = "";
+  if (lugar) lugar.value = "";
+  if (minimo) minimo.value = "";
+  if (maximo) maximo.value = "";
 
   actualizarVisibilidadFiltros();
   actualizarRegistro();
@@ -1235,154 +1473,228 @@ function actualizarRegistro() {
   const minimo = minimoTexto === "" ? null : Number(minimoTexto);
   const maximo = maximoTexto === "" ? null : Number(maximoTexto);
 
-  const fechaDia = document.getElementById("fechaFiltro")?.value || "";
-  const fechaMes = document.getElementById("mesFiltro")?.value || "";
-  const anio = document.getElementById("anioFiltro")?.value || "";
-  const desde = document.getElementById("fechaDesde")?.value || "";
-  const hasta = document.getElementById("fechaHasta")?.value || "";
+  let lista = [...ventas];
 
-  let filtradas = ventas.filter(venta => {
-    const fecha = new Date(venta.fecha);
-    const diaVenta = fechaLocal(fecha);
-    const mesVenta = mesLocal(fecha);
-    const anioVenta = String(fecha.getFullYear());
+  // FILTRO POR FECHA
+  if (periodo === "dia") {
+    const fecha = document.getElementById("fechaFiltro")?.value;
 
-    if (periodo === "dia" && fechaDia && diaVenta !== fechaDia) return false;
-    if (periodo === "mes" && fechaMes && mesVenta !== fechaMes) return false;
-    if (periodo === "anio" && anio && anioVenta !== String(anio)) return false;
-
-    if (periodo === "rango") {
-      if (desde && diaVenta < desde) return false;
-      if (hasta && diaVenta > hasta) return false;
-    }
-
-    if (monedaFiltro && venta.moneda !== monedaFiltro) return false;
-
-    const lugar = venta.lugarVenta || "Sin especificar";
-    if (lugarFiltro && lugar !== lugarFiltro) return false;
-
-    if (productoFiltro) {
-      const contieneProducto = (venta.productos || []).some(
-        producto => String(producto.id) === String(productoFiltro)
+    if (fecha) {
+      lista = lista.filter(venta =>
+        fechaParaComparar(venta.fecha) === fecha
       );
+    }
+  }
 
-      if (!contieneProducto) return false;
+  if (periodo === "mes") {
+    const mes = document.getElementById("mesFiltro")?.value;
+
+    if (mes) {
+      lista = lista.filter(venta =>
+        mesLocal(venta.fecha) === mes
+      );
+    }
+  }
+
+  if (periodo === "anio") {
+    const anio = document.getElementById("anioFiltro")?.value;
+
+    if (anio) {
+      lista = lista.filter(venta =>
+        String(new Date(venta.fecha).getFullYear()) === String(anio)
+      );
+    }
+  }
+
+  if (periodo === "rango") {
+    const desde = document.getElementById("fechaDesde")?.value;
+    const hasta = document.getElementById("fechaHasta")?.value;
+
+    if (desde) {
+      lista = lista.filter(venta =>
+        fechaParaComparar(venta.fecha) >= desde
+      );
     }
 
-    const importe = Number(venta.total || 0);
+    if (hasta) {
+      lista = lista.filter(venta =>
+        fechaParaComparar(venta.fecha) <= hasta
+      );
+    }
+  }
 
-    if (minimo !== null && importe < minimo) return false;
-    if (maximo !== null && importe > maximo) return false;
-
-    return true;
-  });
-
-  filtradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-  const totalCUP = filtradas.reduce(
-    (suma, venta) => suma + Number(venta.totalCUP || 0), 0
-  );
-
-  const totalUSD = filtradas.reduce(
-    (suma, venta) => suma + Number(venta.totalUSD || 0), 0
-  );
-
-  const salarioCUP = filtradas.reduce(
-    (suma, venta) => suma + Number(venta.salarioCUP || venta.salario || 0), 0
-  );
-
-  const unidades = filtradas.reduce((suma, venta) => {
-    return suma + (venta.productos || []).reduce(
-      (subtotal, producto) => subtotal + Number(producto.cantidad || 0), 0
+  // FILTRO POR PRODUCTO
+  if (productoFiltro) {
+    lista = lista.filter(venta =>
+      (venta.productos || []).some(producto =>
+        String(producto.id) === String(productoFiltro)
+      )
     );
-  }, 0);
+  }
 
-  const resumen = `
-    <div class="resumen-linea">
-      <span>Operaciones:</span>
-      <strong>${filtradas.length}</strong>
-    </div>
+  // FILTRO POR MONEDA
+  if (monedaFiltro) {
+    lista = lista.filter(venta =>
+      (venta.moneda || "CUP") === monedaFiltro
+    );
+  }
 
-    <div class="resumen-linea">
-      <span>Unidades vendidas:</span>
-      <strong>${unidades}</strong>
-    </div>
+  // FILTRO POR LUGAR
+  if (lugarFiltro) {
+    lista = lista.filter(venta =>
+      (venta.lugarVenta || "Sin especificar") === lugarFiltro
+    );
+  }
 
-    <div class="resumen-linea">
-      <span>Total CUP:</span>
-      <strong>${formato(totalCUP)} CUP</strong>
-    </div>
+  // FILTRO POR IMPORTE
+  if (minimo !== null && Number.isFinite(minimo)) {
+    lista = lista.filter(venta =>
+      Number(venta.total || 0) >= minimo
+    );
+  }
 
-    <div class="resumen-linea">
-      <span>Total USD:</span>
-      <strong>${formato(totalUSD)} USD</strong>
-    </div>
+  if (maximo !== null && Number.isFinite(maximo)) {
+    lista = lista.filter(venta =>
+      Number(venta.total || 0) <= maximo
+    );
+  }
 
-    <div class="resumen-linea">
-      <span>Salario:</span>
-      <strong>${formato(salarioCUP)} CUP</strong>
-    </div>
-  `;
+  // ORDENAR DE MÁS RECIENTE A MÁS ANTIGUA
+  lista.sort((a, b) =>
+    new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+  );
 
-  if (!filtradas.length) {
+  if (!lista.length) {
     contenedor.innerHTML = `
-      ${resumen}
-      <p>No hay ventas que coincidan con los filtros.</p>
+      <p class="texto-vacio">
+        No hay ventas que coincidan con los filtros seleccionados.
+      </p>
     `;
     return;
   }
 
-  contenedor.innerHTML = `
-    ${resumen}
+  const totalCUP = lista.reduce(
+    (suma, venta) => suma + Number(venta.totalCUP || 0),
+    0
+  );
 
-    <hr>
+  const totalUSD = lista.reduce(
+    (suma, venta) => suma + Number(venta.totalUSD || 0),
+    0
+  );
 
-    ${filtradas.map(venta => {
-      const fecha = new Date(venta.fecha);
-      const lugar = venta.lugarVenta || "Sin especificar";
+  const salario = lista.reduce(
+    (suma, venta) =>
+      suma + Number(venta.salarioCUP || venta.salario || 0),
+    0
+  );
 
-      const detalleProductos = (venta.productos || []).map(producto => `
-        <div class="detalle-producto-venta">
-          ${escapar(producto.nombre)}
-          — ${Number(producto.cantidad || 0)} unidades
-          — ${formato(producto.subtotal ?? (
-            Number(producto.precio || 0) * Number(producto.cantidad || 0)
-          ))} ${venta.moneda}
-        </div>
-      `).join("");
+  let html = `
+    <div class="resumen" style="margin-bottom:15px">
+      <p style="color:#ddd;font-size:13px">Ventas encontradas: ${lista.length}</p>
 
-      return `
-        <div class="venta-item">
-          <div class="venta-encabezado">
-            <strong>${mostrarFecha(fecha)}</strong>
-            <span>${venta.moneda}</span>
-          </div>
+      <div style="margin-top:10px">
+        <strong>Total CUP:</strong> ${formato(totalCUP)} CUP
+      </div>
 
-          <p><strong>Lugar de venta:</strong> ${escapar(lugar)}</p>
+      <div style="margin-top:7px">
+        <strong>Total USD:</strong> ${formato(totalUSD)} USD
+      </div>
 
-          <div class="detalle-venta">
-            ${detalleProductos}
-          </div>
-
-          <div class="resumen-linea">
-            <span>Total:</span>
-            <strong>${formato(venta.total)} ${venta.moneda}</strong>
-          </div>
-
-          <div class="resumen-linea">
-            <span>Salario:</span>
-            <strong>${formato(venta.salarioCUP || venta.salario || 0)} CUP</strong>
-          </div>
-
-          <button
-            class="boton-eliminar"
-            onclick="eliminarVenta('${venta.id}')">
-            Eliminar venta
-          </button>
-        </div>
-      `;
-    }).join("")}
+      <div style="margin-top:7px">
+        <strong>Salario:</strong>
+        <span class="salario">${formato(salario)} CUP</span>
+      </div>
+    </div>
   `;
+
+  html += lista.map(venta => {
+    const moneda = venta.moneda || "CUP";
+    const lugar = venta.lugarVenta || "Sin especificar";
+
+    const salarioVenta = Number(
+      venta.salarioCUP ?? venta.salario ?? 0
+    );
+
+    const fecha = mostrarFecha(venta.fecha);
+
+    const productosHTML = (venta.productos || []).map(producto => `
+      <div class="producto" style="padding:10px 0">
+        <div class="producto-info">
+          <strong>${escapar(producto.nombre || "Producto")}</strong>
+
+          <p style="font-size:12px;color:#777;margin-top:4px">
+            ${Number(producto.cantidad || 0)} unidades
+            × ${formato(producto.precio || 0)} ${moneda}
+          </p>
+        </div>
+
+        <strong>
+          ${formato(producto.subtotal ?? (
+            Number(producto.cantidad || 0) *
+            Number(producto.precio || 0)
+          ))} ${moneda}
+        </strong>
+      </div>
+    `).join("");
+
+    return `
+      <div class="tarjeta" style="margin-bottom:15px">
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div>
+            <span class="etiqueta">VENTA REGISTRADA</span>
+
+            <h3 style="margin-top:7px">
+              ${escapar(fecha)}
+            </h3>
+          </div>
+
+          <strong>${moneda}</strong>
+        </div>
+
+        <div style="margin:12px 0;padding:10px;background:#f5f5f5;border-radius:8px">
+          <strong>Lugar de venta:</strong>
+          ${escapar(lugar)}
+        </div>
+
+        <div style="margin-top:10px">
+          ${productosHTML}
+        </div>
+
+        <hr style="border:0;border-top:1px solid #ddd;margin:12px 0">
+
+        <div style="display:flex;justify-content:space-between;gap:10px;margin:8px 0">
+          <strong>Total de venta:</strong>
+          <strong class="precio">
+            ${formato(venta.total || 0)} ${moneda}
+          </strong>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;gap:10px;margin:8px 0">
+          <span>Porcentaje de salario:</span>
+          <strong>${formato(venta.porcentaje || 0)}%</strong>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;gap:10px;margin:8px 0">
+          <span>Salario calculado:</span>
+          <strong class="salario">
+            ${formato(salarioVenta)} CUP
+          </strong>
+        </div>
+
+        <button
+          class="btn-peligro"
+          style="width:100%;margin-top:12px"
+          onclick="eliminarVenta('${escapar(String(venta.id))}')">
+          Eliminar venta
+        </button>
+
+      </div>
+    `;
+  }).join("");
+
+  contenedor.innerHTML = html;
 }
 
 // ==========================================
@@ -1390,17 +1702,23 @@ function actualizarRegistro() {
 // ==========================================
 
 function exportarRegistroPDF() {
-  const contenido = document.getElementById("resultadosRegistro");
+  const contenedor = document.getElementById("resultadosRegistro");
 
-  if (!contenido || !contenido.innerHTML.trim()) {
-    alert("No hay información para exportar.");
+  if (!contenedor || !contenedor.innerHTML.trim()) {
+    alert("No hay ventas para exportar.");
     return;
   }
 
+  if (!ventas.length) {
+    alert("No existen ventas registradas.");
+    return;
+  }
+
+  const contenido = contenedor.innerHTML;
   const ventana = window.open("", "_blank");
 
   if (!ventana) {
-    alert("Permite las ventanas emergentes para exportar el PDF.");
+    alert("El navegador bloqueó la ventana. Permite las ventanas emergentes para exportar.");
     return;
   }
 
@@ -1409,7 +1727,9 @@ function exportarRegistroPDF() {
     <html lang="es">
     <head>
       <meta charset="UTF-8">
-      <title>Registro de ventas</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <title>Registro de ventas - Caja</title>
 
       <style>
         body {
@@ -1420,49 +1740,78 @@ function exportarRegistroPDF() {
 
         h1 {
           text-align: center;
+          margin-bottom: 5px;
         }
 
-        .venta-item {
-          border: 1px solid #ccc;
+        .subtitulo {
+          text-align: center;
+          color: #666;
+          margin-bottom: 25px;
+        }
+
+        .tarjeta {
+          border: 1px solid #ddd;
           border-radius: 8px;
-          padding: 12px;
+          padding: 15px;
           margin-bottom: 15px;
-          break-inside: avoid;
+          page-break-inside: avoid;
         }
 
-        .resumen-linea,
-        .venta-encabezado {
+        .producto {
           display: flex;
           justify-content: space-between;
           gap: 10px;
-          margin: 7px 0;
+          padding: 8px 0;
+          border-bottom: 1px solid #eee;
         }
 
-        .detalle-producto-venta {
-          margin: 5px 0;
+        .producto-info {
+          flex: 1;
+        }
+
+        .resumen {
+          background: #f2f2f2;
+          color: #222;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 15px;
+        }
+
+        .total, .precio, .salario {
+          font-weight: bold;
+        }
+
+        .etiqueta {
+          font-size: 11px;
+          font-weight: bold;
         }
 
         button {
           display: none !important;
         }
 
-        hr {
-          margin: 20px 0;
-        }
-
         @media print {
           body {
             padding: 0;
+          }
+
+          .tarjeta {
+            break-inside: avoid;
           }
         }
       </style>
     </head>
 
     <body>
-      <h1>REGISTRO DE VENTAS</h1>
-      <p>Fecha de impresión: ${new Date().toLocaleString("es")}</p>
+      <h1>CAJA DE VENTAS</h1>
+      <p class="subtitulo">Registro de operaciones comerciales</p>
 
-      ${contenido.innerHTML}
+      <p>
+        Fecha de exportación:
+        ${escapar(mostrarFecha(new Date().toISOString()))}
+      </p>
+
+      ${contenido}
 
       <script>
         window.onload = function() {
@@ -1481,22 +1830,34 @@ function exportarRegistroPDF() {
 // ==========================================
 
 async function eliminarVenta(id) {
-  const venta = ventas.find(v => String(v.id) === String(id));
-  if (!venta) return;
+  const venta = ventas.find(
+    item => String(item.id) === String(id)
+  );
 
-  if (!confirm("¿Estás seguro de que deseas eliminar esta venta?")) {
+  if (!venta) {
+    alert("No se encontró la venta seleccionada.");
     return;
   }
 
-  try {
-    await eliminarRegistro("ventas", id);
+  const confirmar = confirm(
+    "¿Estás seguro de eliminar esta venta?\n\n" +
+    "Esta operación no se puede deshacer."
+  );
 
-    ventas = ventas.filter(v => String(v.id) !== String(id));
+  if (!confirmar) return;
+
+  try {
+    await eliminarRegistro("ventas", venta.id);
+
+    ventas = ventas.filter(
+      item => String(item.id) !== String(id)
+    );
 
     mostrarResumenVentas();
     actualizarRegistro();
 
     alert("Venta eliminada correctamente.");
+
   } catch (error) {
     console.error(error);
     alert("No se pudo eliminar la venta.");
@@ -1504,19 +1865,22 @@ async function eliminarVenta(id) {
 }
 
 // ==========================================
-// ESTADÍSTICAS
+// BARRAS PARA GRÁFICOS ESTADÍSTICOS
 // ==========================================
 
 function barraEstadistica(valor, maximo, color) {
-  const porcentaje = maximo > 0
-    ? Math.max(0, Math.min(100, valor / maximo * 100))
+  const numero = Math.max(0, Number(valor) || 0);
+  const limite = Math.max(0, Number(maximo) || 0);
+
+  const porcentaje = limite > 0
+    ? Math.min(100, (numero / limite) * 100)
     : 0;
 
   return `
     <div style="
       width:100%;
       height:12px;
-      background:#e8e8e8;
+      background:#e9e9e9;
       border-radius:20px;
       overflow:hidden;
       margin-top:7px;
@@ -1531,6 +1895,10 @@ function barraEstadistica(valor, maximo, color) {
   `;
 }
 
+// ==========================================
+// PANEL DE ESTADÍSTICAS
+// ==========================================
+
 function mostrarEstadisticas() {
   const pantalla = document.getElementById("pantallaEstadisticas");
   if (!pantalla) return;
@@ -1540,109 +1908,146 @@ function mostrarEstadisticas() {
   const totalUnidades = ventas.reduce((suma, venta) => {
     return suma + (venta.productos || []).reduce(
       (subtotal, producto) =>
-        subtotal + Number(producto.cantidad || 0), 0
+        subtotal + Number(producto.cantidad || 0),
+      0
     );
   }, 0);
 
   const totalCUP = ventas.reduce(
-    (suma, venta) => suma + Number(venta.totalCUP || 0), 0
+    (suma, venta) => suma + Number(venta.totalCUP || 0),
+    0
   );
 
   const totalUSD = ventas.reduce(
-    (suma, venta) => suma + Number(venta.totalUSD || 0), 0
+    (suma, venta) => suma + Number(venta.totalUSD || 0),
+    0
   );
 
-  const salarioCUP = ventas.reduce(
+  const totalSalario = ventas.reduce(
     (suma, venta) =>
-      suma + Number(venta.salarioCUP || venta.salario || 0), 0
+      suma + Number(venta.salarioCUP || venta.salario || 0),
+    0
   );
 
   // ------------------------------------------
   // VENTAS POR LUGAR
   // ------------------------------------------
 
-  const lugares = ["Almacén", "Tienda", "Casa", "Sin especificar"];
+  const lugares = [
+    "Almacén",
+    "Tienda",
+    "Casa",
+    "Sin especificar"
+  ];
 
-  const ventasPorLugar = lugares.map(lugar => ({
-    nombre: lugar,
-    cantidad: ventas.filter(
-      venta => (venta.lugarVenta || "Sin especificar") === lugar
-    ).length
-  }));
+  const operacionesPorLugar = {};
+
+  lugares.forEach(lugar => {
+    operacionesPorLugar[lugar] = ventas.filter(venta =>
+      (venta.lugarVenta || "Sin especificar") === lugar
+    ).length;
+  });
 
   const maxLugar = Math.max(
     1,
-    ...ventasPorLugar.map(item => item.cantidad)
+    ...Object.values(operacionesPorLugar)
   );
 
-  const graficoLugares = ventasPorLugar.map(item => `
-    <div style="margin:16px 0;">
-      <div style="display:flex;justify-content:space-between;gap:10px;">
-        <strong>${item.nombre}</strong>
-        <strong>${item.cantidad} ventas</strong>
+  const coloresLugares = [
+    "#e87520",
+    "#2878c8",
+    "#29965b",
+    "#888888"
+  ];
+
+  const graficoLugares = lugares.map((lugar, indice) => `
+    <div style="margin:15px 0">
+      <div style="display:flex;justify-content:space-between;gap:10px">
+        <strong>${escapar(lugar)}</strong>
+        <strong>${operacionesPorLugar[lugar]} ventas</strong>
       </div>
 
-      ${barraEstadistica(item.cantidad, maxLugar, "#ef8b24")}
+      ${barraEstadistica(
+        operacionesPorLugar[lugar],
+        maxLugar,
+        coloresLugares[indice]
+      )}
     </div>
   `).join("");
 
   // ------------------------------------------
-  // EVOLUCIÓN MENSUAL DE LOS ÚLTIMOS 6 MESES
+  // EVOLUCIÓN MENSUAL: CUP Y USD POR SEPARADO
   // ------------------------------------------
 
   const meses = [];
 
+  const fechaActual = new Date();
+
   for (let i = 5; i >= 0; i--) {
-    const fecha = new Date();
-    fecha.setDate(1);
-    fecha.setMonth(fecha.getMonth() - i);
+    const fecha = new Date(
+      fechaActual.getFullYear(),
+      fechaActual.getMonth() - i,
+      1
+    );
 
     const clave = mesLocal(fecha);
+
+    const nombre = fecha.toLocaleDateString("es", {
+      month: "short",
+      year: "numeric"
+    });
+
+    const ventasMes = ventas.filter(venta =>
+      mesLocal(venta.fecha) === clave
+    );
+
+    const cup = ventasMes.reduce(
+      (suma, venta) => suma + Number(venta.totalCUP || 0),
+      0
+    );
+
+    const usd = ventasMes.reduce(
+      (suma, venta) => suma + Number(venta.totalUSD || 0),
+      0
+    );
 
     meses.push({
       clave,
-      nombre: fecha.toLocaleDateString("es", {
-        month: "short",
-        year: "2-digit"
-      }),
-      cup: 0,
-      usd: 0
+      nombre,
+      cup,
+      usd
     });
   }
 
-  ventas.forEach(venta => {
-    const fecha = new Date(venta.fecha);
-    const clave = mesLocal(fecha);
+  const maxCUP = Math.max(
+    1,
+    ...meses.map(mes => mes.cup)
+  );
 
-    const mes = meses.find(item => item.clave === clave);
-    if (!mes) return;
-
-    mes.cup += Number(venta.totalCUP || 0);
-    mes.usd += Number(venta.totalUSD || 0);
-  });
-
-  const maxCUP = Math.max(1, ...meses.map(m => m.cup));
-  const maxUSD = Math.max(1, ...meses.map(m => m.usd));
+  const maxUSD = Math.max(
+    1,
+    ...meses.map(mes => mes.usd)
+  );
 
   const graficoCUP = meses.map(mes => `
-    <div style="margin:14px 0;">
-      <div style="display:flex;justify-content:space-between;">
-        <strong>${mes.nombre}</strong>
+    <div style="margin:14px 0">
+      <div style="display:flex;justify-content:space-between;gap:10px">
+        <span>${escapar(mes.nombre)}</span>
         <strong>${formato(mes.cup)} CUP</strong>
       </div>
 
-      ${barraEstadistica(mes.cup, maxCUP, "#269b65")}
+      ${barraEstadistica(mes.cup, maxCUP, "#29965b")}
     </div>
   `).join("");
 
   const graficoUSD = meses.map(mes => `
-    <div style="margin:14px 0;">
-      <div style="display:flex;justify-content:space-between;">
-        <strong>${mes.nombre}</strong>
+    <div style="margin:14px 0">
+      <div style="display:flex;justify-content:space-between;gap:10px">
+        <span>${escapar(mes.nombre)}</span>
         <strong>${formato(mes.usd)} USD</strong>
       </div>
 
-      ${barraEstadistica(mes.usd, maxUSD, "#3979c6")}
+      ${barraEstadistica(mes.usd, maxUSD, "#2878c8")}
     </div>
   `).join("");
 
@@ -1650,120 +2055,128 @@ function mostrarEstadisticas() {
   // PRODUCTOS MÁS VENDIDOS
   // ------------------------------------------
 
-  const rankingProductos = {};
+  const unidadesPorProducto = {};
 
   ventas.forEach(venta => {
     (venta.productos || []).forEach(producto => {
-      const clave = String(producto.id || producto.nombre);
+      const nombre = producto.nombre || "Producto sin nombre";
 
-      if (!rankingProductos[clave]) {
-        rankingProductos[clave] = {
-          nombre: producto.nombre || "Producto",
-          cantidad: 0
-        };
+      if (!unidadesPorProducto[nombre]) {
+        unidadesPorProducto[nombre] = 0;
       }
 
-      rankingProductos[clave].cantidad += Number(
+      unidadesPorProducto[nombre] += Number(
         producto.cantidad || 0
       );
     });
   });
 
-  const mejoresProductos = Object.values(rankingProductos)
-    .sort((a, b) => b.cantidad - a.cantidad)
+  const productosTop = Object.entries(unidadesPorProducto)
+    .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
   const maxProducto = Math.max(
     1,
-    ...mejoresProductos.map(p => p.cantidad)
+    ...productosTop.map(item => item[1])
   );
 
-  const graficoProductos = mejoresProductos.length
-    ? mejoresProductos.map((producto, indice) => `
-        <div style="margin:16px 0;">
-          <div style="display:flex;justify-content:space-between;gap:10px;">
-            <strong>${indice + 1}. ${escapar(producto.nombre)}</strong>
-            <strong>${producto.cantidad} unidades</strong>
+  const graficoProductos = productosTop.length
+    ? productosTop.map(([nombre, cantidad], indice) => `
+        <div style="margin:15px 0">
+          <div style="display:flex;justify-content:space-between;gap:10px">
+            <strong>${indice + 1}. ${escapar(nombre)}</strong>
+            <strong>${cantidad} unidades</strong>
           </div>
 
-          ${barraEstadistica(
-            producto.cantidad,
-            maxProducto,
-            "#8b62bd"
-          )}
+          ${barraEstadistica(cantidad, maxProducto, "#e87520")}
         </div>
       `).join("")
-    : "<p>Todavía no hay productos vendidos.</p>";
+    : `
+      <p class="texto-vacio">
+        Todavía no hay productos vendidos.
+      </p>
+    `;
 
   // ------------------------------------------
-  // MOSTRAR ESTADÍSTICAS
+  // CONSTRUIR PANTALLA
   // ------------------------------------------
 
   pantalla.innerHTML = `
-    <div class="encabezado-pantalla">
-      <h2>Estadísticas</h2>
-      <p>Indicadores y comportamiento de las ventas.</p>
-    </div>
+    <span class="etiqueta">ANÁLISIS COMERCIAL</span>
+
+    <h2 class="titulo-seccion">Estadísticas</h2>
 
     <div class="tarjeta">
       <h3>Indicadores generales</h3>
 
-      <div class="resumen-linea">
-        <span>Operaciones realizadas:</span>
-        <strong>${totalOperaciones}</strong>
-      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px">
 
-      <div class="resumen-linea">
-        <span>Unidades vendidas:</span>
-        <strong>${totalUnidades}</strong>
-      </div>
+        <div style="background:#f5f5f5;padding:14px;border-radius:9px">
+          <p style="font-size:12px;color:#777">Operaciones</p>
+          <h2>${totalOperaciones}</h2>
+        </div>
 
-      <div class="resumen-linea">
-        <span>Ventas en CUP:</span>
-        <strong>${formato(totalCUP)} CUP</strong>
-      </div>
+        <div style="background:#f5f5f5;padding:14px;border-radius:9px">
+          <p style="font-size:12px;color:#777">Unidades vendidas</p>
+          <h2>${totalUnidades}</h2>
+        </div>
 
-      <div class="resumen-linea">
-        <span>Ventas en USD:</span>
-        <strong>${formato(totalUSD)} USD</strong>
-      </div>
+        <div style="background:#f5f5f5;padding:14px;border-radius:9px">
+          <p style="font-size:12px;color:#777">Ventas CUP</p>
+          <h3 style="color:#29965b">${formato(totalCUP)}</h3>
+        </div>
 
-      <div class="resumen-linea">
-        <span>Salario acumulado:</span>
-        <strong>${formato(salarioCUP)} CUP</strong>
+        <div style="background:#f5f5f5;padding:14px;border-radius:9px">
+          <p style="font-size:12px;color:#777">Ventas USD</p>
+          <h3 style="color:#2878c8">${formato(totalUSD)}</h3>
+        </div>
+
+        <div style="background:#f5f5f5;padding:14px;border-radius:9px;grid-column:1/-1">
+          <p style="font-size:12px;color:#777">Salario acumulado</p>
+          <h2 style="color:#29965b">${formato(totalSalario)} CUP</h2>
+        </div>
+
       </div>
     </div>
 
     <div class="tarjeta">
       <h3>Ventas por lugar</h3>
-      <p>Cantidad de operaciones según el lugar de venta.</p>
+      <p style="font-size:12px;color:#777;margin-top:5px">
+        Cantidad de operaciones realizadas en cada ubicación.
+      </p>
 
       ${graficoLugares}
     </div>
 
     <div class="tarjeta">
-      <h3>Evolución de ventas en CUP</h3>
-      <p>Comparación de los últimos seis meses.</p>
+      <h3>Evolución mensual en CUP</h3>
+      <p style="font-size:12px;color:#777;margin-top:5px">
+        Últimos seis meses.
+      </p>
 
       ${graficoCUP}
     </div>
 
     <div class="tarjeta">
-      <h3>Evolución de ventas en USD</h3>
-      <p>Comparación de los últimos seis meses.</p>
+      <h3>Evolución mensual en USD</h3>
+      <p style="font-size:12px;color:#777;margin-top:5px">
+        Últimos seis meses.
+      </p>
 
       ${graficoUSD}
     </div>
 
     <div class="tarjeta">
       <h3>Productos más vendidos</h3>
-      <p>Clasificación según unidades vendidas.</p>
+      <p style="font-size:12px;color:#777;margin-top:5px">
+        Clasificación por cantidad de unidades.
+      </p>
 
       ${graficoProductos}
     </div>
 
     <button
-      class="boton-principal"
+      class="btn-principal"
       onclick="navegar('inicio')">
       Volver al inicio
     </button>
@@ -1774,4 +2187,7 @@ function mostrarEstadisticas() {
 // INICIAR APLICACIÓN
 // ==========================================
 
-document.addEventListener("DOMContentLoaded", iniciarAplicacion);
+document.addEventListener(
+  "DOMContentLoaded",
+  iniciarAplicacion
+);
