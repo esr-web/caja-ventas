@@ -10,7 +10,7 @@
   <title>CAJA | Gestión de ventas</title>
 
   <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./icono.png" type="image/png">
+  <link rel="icon" href="./icono.png">
   <link rel="apple-touch-icon" href="./icono.png">
   <link rel="stylesheet" href="./estilos.css">
 </head>
@@ -19,126 +19,114 @@
 
   <header class="encabezado">
     <div class="marca">
-      <div class="marca-icono">C</div>
-      <div>
-        <h1>CAJA<span>.</span></h1>
-        <p>GESTIÓN DE VENTAS</p>
-      </div>
-    </div>
-
-    <div class="estado">
-      <span id="puntoConexion"></span>
-      <span id="estadoConexion">Preparando</span>
+      <h1>CAJA</h1>
+      <p>Gestión de ventas</p>
     </div>
   </header>
 
   <main id="contenido">
 
+    <!-- INICIO -->
     <section id="pantallaInicio" class="pantalla activa">
 
       <div class="bienvenida">
-        <span class="etiqueta">PANEL PRINCIPAL</span>
-        <h2>Bienvenido</h2>
-        <p>¿Qué deseas hacer hoy?</p>
+        <h2>Panel principal</h2>
+        <p>Selecciona una opción para continuar.</p>
       </div>
 
       <div class="menu-principal">
 
-        <button class="tarjeta-menu tarjeta-caja"
-          onclick="navegar('caja')">
-
+        <button class="tarjeta-menu" onclick="navegar('caja')">
           <div class="icono-menu">🛒</div>
-
           <div class="texto-menu">
-            <h3>Caja de ventas</h3>
-            <p>Seleccionar productos y registrar ventas.</p>
+            <h3>Nueva venta</h3>
+            <p>Registrar una venta.</p>
           </div>
-
           <span class="flecha-menu">↗</span>
         </button>
 
-        <button class="tarjeta-menu"
-          onclick="navegar('productos')">
-
+        <button class="tarjeta-menu" onclick="navegar('productos')">
           <div class="icono-menu">📦</div>
-
           <div class="texto-menu">
             <h3>Productos</h3>
-            <p>Administrar catálogo, precios y productos.</p>
+            <p>Administrar los productos.</p>
           </div>
-
           <span class="flecha-menu">↗</span>
         </button>
 
-        <button class="tarjeta-menu"
-          onclick="navegar('registro')">
-
+        <button class="tarjeta-menu" onclick="navegar('registro')">
           <div class="icono-menu">📋</div>
-
           <div class="texto-menu">
             <h3>Registro de ventas</h3>
-            <p>Consultar operaciones, salarios y estadísticas.</p>
+            <p>Consultar, filtrar y eliminar ventas.</p>
           </div>
-
           <span class="flecha-menu">↗</span>
         </button>
 
-        <button class="tarjeta-menu"
-          onclick="navegar('efectivo')">
+        <button class="tarjeta-menu" onclick="navegar('estadisticas')">
+          <div class="icono-menu">📊</div>
+          <div class="texto-menu">
+            <h3>Estadísticas</h3>
+            <p>Consultar gráficos y resultados de las ventas.</p>
+          </div>
+          <span class="flecha-menu">↗</span>
+        </button>
 
+        <button class="tarjeta-menu" onclick="navegar('efectivo')">
           <div class="icono-menu">💵</div>
-
           <div class="texto-menu">
             <h3>Conteo de efectivo</h3>
-            <p>Contar billetes y calcular el efectivo disponible.</p>
+            <p>Calcular el dinero disponible en caja.</p>
           </div>
-
           <span class="flecha-menu">↗</span>
         </button>
 
-      </div>
-
-      <div class="nota-inicio">
-        <span>●</span>
-        Tus datos se guardan en este dispositivo.
       </div>
 
     </section>
 
+    <!-- CAJA -->
     <section id="pantallaCaja" class="pantalla"></section>
 
+    <!-- PRODUCTOS -->
     <section id="pantallaProductos" class="pantalla"></section>
 
+    <!-- REGISTRO -->
     <section id="pantallaRegistro" class="pantalla"></section>
 
+    <!-- ESTADÍSTICAS -->
+    <section id="pantallaEstadisticas" class="pantalla"></section>
+
+    <!-- EFECTIVO -->
     <section id="pantallaEfectivo" class="pantalla"></section>
 
   </main>
 
+  <!-- NAVEGACIÓN INFERIOR -->
   <nav class="navegacion-inferior">
 
-    <button onclick="navegar('inicio')" class="nav-item activo" id="navInicio">
+    <button onclick="navegar('inicio')" class="nav-item">
       <span>⌂</span>
       <small>Inicio</small>
     </button>
 
-    <button onclick="navegar('caja')" class="nav-item" id="navCaja">
-      <span>🛒</span>
+    <button onclick="navegar('caja')" class="nav-item">
+      <span>＋</span>
       <small>Caja</small>
     </button>
 
-    <button onclick="navegar('productos')" class="nav-item" id="navProductos">
-      <span>▦</span>
+    <button onclick="navegar('productos')" class="nav-item">
+      <span>▣</span>
       <small>Productos</small>
     </button>
 
-    <button onclick="navegar('registro')" class="nav-item" id="navRegistro">
-      <span>▤</span>
+    <button onclick="navegar('registro')" class="nav-item">
+      <span>☷</span>
       <small>Registro</small>
     </button>
 
-    <button onclick="navegar('efectivo')" class="nav-item" id="navEfectivo">
-      <span>💵</span>
+    <button onclick="navegar('efectivo')" class="nav-item">
+      <span>＄</span>
       <small>Efectivo</small>
     </button>
 
@@ -151,10 +139,7 @@
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function() {
-        navigator.serviceWorker.register("./service-worker.js")
-          .catch(function(error) {
-            console.error("Error del Service Worker:", error);
-          });
+        navigator.serviceWorker.register("./service-worker.js");
       });
     }
   </script>
