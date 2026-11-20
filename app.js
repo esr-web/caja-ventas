@@ -2232,16 +2232,14 @@ function mostrarEstadisticas() {
   `;
 }
 
+
 // ==========================================
 // 31. CONTEO DE EFECTIVO
 // ==========================================
 
-const denominacionesCUP = [
-  1000, 500, 200, 100, 50, 20, 10, 5, 3, 1
-];
-
-const denominacionesUSD = [
-  100, 50, 20, 10, 5, 1
+const denominacionesEfectivo = [
+  10, 20, 50, 100, 200, 500,
+  1000, 2000, 5000, 10000, 20000
 ];
 
 const CLAVE_CONTEO_EFECTIVO = "caja_conteo_efectivo_v1";
@@ -2252,20 +2250,30 @@ const CLAVE_CONTEO_EFECTIVO = "caja_conteo_efectivo_v1";
 
 function obtenerConteoGuardado() {
   try {
-    const datos = localStorage.getItem(CLAVE_CONTEO_EFECTIVO);
+    const datos = JSON.parse(
+      localStorage.getItem(CLAVE_CONTEO_EFECTIVO)
+    );
 
-    return datos ? JSON.parse(datos) : {
-      CUP: {},
-      USD: {}
-    };
+    // Compatibilidad con el formato anterior
+    const cantidades = datos?.cantidades || datos || {};
+
+    const resultado = {};
+
+    denominacionesEfectivo.forEach(valor => {
+      const cantidad = cantidades[valor];
+
+      resultado[valor] = Math.max(
+        0,
+        Number(cantidad) || 0
+      );
+    });
+
+    return resultado;
 
   } catch (error) {
     console.error("Error leyendo conteo:", error);
 
-    return {
-      CUP: {},
-      USD: {}
-    };
+    return {};
   }
 }
 
@@ -2275,30 +2283,21 @@ function obtenerConteoGuardado() {
 
 function guardarConteoEfectivo() {
   try {
-    const datos = {
-      CUP: {},
-      USD: {}
-    };
+    const datos = {};
 
-    denominacionesCUP.forEach(valor => {
-      const campo = document.getElementById("efectivoCUP_" + valor);
+    denominacionesEfectivo.forEach(valor => {
+      const campo = document.getElementById(
+        "efectivo_" + valor
+      );
 
-      datos.CUP[valor] = campo
-        ? Math.max(0, Number(campo.value) || 0)
-        : 0;
-    });
-
-    denominacionesUSD.forEach(valor => {
-      const campo = document.getElementById("efectivoUSD_" + valor);
-
-      datos.USD[valor] = campo
+      datos[valor] = campo
         ? Math.max(0, Number(campo.value) || 0)
         : 0;
     });
 
     localStorage.setItem(
       CLAVE_CONTEO_EFECTIVO,
-      JSON.stringify(datos)
+      JSON.stringify({ cantidades: datos })
     );
 
   } catch (error) {
@@ -2307,7 +2306,7 @@ function guardarConteoEfectivo() {
 }
 
 // ==========================================
-// 34. MOSTRAR PANTALLA DE EFECTIVO
+// 34. MOSTRAR CONTEO DE EFECTIVO
 // ==========================================
 
 function mostrarEfectivo() {
@@ -2317,107 +2316,108 @@ function mostrarEfectivo() {
 
   const guardado = obtenerConteoGuardado();
 
-  function construirDenominaciones(moneda, lista, datos) {
-    return lista.map(valor => {
-      const cantidad = Math.max(
-        0,
-        Number(datos?.[valor] || 0)
-      );
-
-      return `
-        <div style="
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:10px;
-          padding:10px 0;
-          border-bottom:1px solid #eee
-        ">
-
-          <strong>${valor} ${moneda}</strong>
-
-          <input
-            type="number"
-            id="efectivo${moneda}_${valor}"
-            min="0"
-            step="1"
-            value="${cantidad}"
-            placeholder="Cantidad"
-            style="width:110px"
-            oninput="calcularConteoEfectivo()">
-
-        </div>
-      `;
-    }).join("");
-  }
-
   pantalla.innerHTML = `
     <span class="etiqueta">CONTROL DE DINERO</span>
 
     <h2 class="titulo-seccion">Conteo de efectivo</h2>
 
-    <div class="tarjeta">
+    <div style="
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px
+    ">
 
-      <h3>Billetes y monedas CUP</h3>
+      ${denominacionesEfectivo.map(valor => {
+        const cantidad = Number(guardado[valor] || 0);
+        const subtotal = valor * cantidad;
 
-      ${construirDenominaciones(
-        "CUP",
-        denominacionesCUP,
-        guardado.CUP
-      )}
+        return `
+          <div class="tarjeta" style="
+            margin:0;
+            padding:13px;
+            text-align:center
+          ">
 
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        margin-top:15px;
-        font-size:18px
-      ">
-        <strong>Total CUP:</strong>
-        <strong id="totalEfectivoCUP">0 CUP</strong>
-      </div>
+            <h3 style="
+              font-size:20px;
+              margin:0 0 12px
+            ">
+              ${formato(valor)}
+            </h3>
+
+            <label
+              for="efectivo_${valor}"
+              style="
+                display:block;
+                font-size:12px;
+                color:#777;
+                margin-bottom:6px
+              ">
+              Cantidad de billetes
+            </label>
+
+            <input
+              type="number"
+              id="efectivo_${valor}"
+              min="0"
+              step="1"
+              inputmode="numeric"
+              value="${cantidad > 0 ? cantidad : ""}"
+              placeholder="0"
+              style="
+                width:100%;
+                box-sizing:border-box;
+                text-align:center;
+                font-size:18px;
+                font-weight:bold
+              "
+              oninput="calcularConteoEfectivo()">
+
+            <div style="
+              font-size:12px;
+              color:#777;
+              margin-top:12px
+            ">
+              Importe
+            </div>
+
+            <strong
+              id="subtotalEfectivo_${valor}"
+              style="
+                display:block;
+                color:#269b63;
+                font-size:15px;
+                margin-top:4px
+              ">
+              ${formato(subtotal)}
+            </strong>
+
+          </div>
+        `;
+      }).join("")}
 
     </div>
 
-    <div class="tarjeta">
+    <div class="tarjeta" style="
+      margin-top:16px;
+      text-align:center;
+      padding:22px
+    ">
 
-      <h3>Billetes USD</h3>
+      <span class="etiqueta">TOTAL DE EFECTIVO</span>
 
-      ${construirDenominaciones(
-        "USD",
-        denominacionesUSD,
-        guardado.USD
-      )}
+      <h2
+        id="totalEfectivo"
+        style="
+          color:#269b63;
+          font-size:30px;
+          margin:12px 0
+        ">
+        0
+      </h2>
 
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        margin-top:15px;
-        font-size:18px
-      ">
-        <strong>Total USD:</strong>
-        <strong id="totalEfectivoUSD">0 USD</strong>
-      </div>
-
-    </div>
-
-    <div class="tarjeta">
-
-      <h3>Resultado del conteo</h3>
-
-      <p>
-        Total disponible en CUP:
-      </p>
-
-      <h2 id="resultadoCUP">0 CUP</h2>
-
-      <p style="margin-top:15px">
-        Total disponible en USD:
-      </p>
-
-      <h2 id="resultadoUSD">0 USD</h2>
-
-      <p style="font-size:12px;color:#777;margin-top:15px">
-        Las monedas se mantienen separadas. No se realiza conversión entre CUP y USD.
+      <p style="font-size:12px;color:#777">
+        Suma de todas las denominaciones
       </p>
 
     </div>
@@ -2428,7 +2428,6 @@ function mostrarEfectivo() {
       onclick="limpiarConteoEfectivo()">
       Limpiar conteo
     </button>
-
   `;
 
   calcularConteoEfectivo();
@@ -2439,39 +2438,35 @@ function mostrarEfectivo() {
 // ==========================================
 
 function calcularConteoEfectivo() {
-  let totalCUP = 0;
-  let totalUSD = 0;
+  let total = 0;
 
-  denominacionesCUP.forEach(valor => {
-    const campo = document.getElementById("efectivoCUP_" + valor);
-
-    const cantidad = campo
-      ? Math.max(0, Number(campo.value) || 0)
-      : 0;
-
-    totalCUP += valor * cantidad;
-  });
-
-  denominacionesUSD.forEach(valor => {
-    const campo = document.getElementById("efectivoUSD_" + valor);
+  denominacionesEfectivo.forEach(valor => {
+    const campo = document.getElementById(
+      "efectivo_" + valor
+    );
 
     const cantidad = campo
-      ? Math.max(0, Number(campo.value) || 0)
+      ? Math.max(0, Math.floor(Number(campo.value) || 0))
       : 0;
 
-    totalUSD += valor * cantidad;
+    const subtotal = valor * cantidad;
+
+    total += subtotal;
+
+    const elementoSubtotal = document.getElementById(
+      "subtotalEfectivo_" + valor
+    );
+
+    if (elementoSubtotal) {
+      elementoSubtotal.textContent = formato(subtotal);
+    }
   });
 
-  const campoCUP = document.getElementById("totalEfectivoCUP");
-  const campoUSD = document.getElementById("totalEfectivoUSD");
-  const resultadoCUP = document.getElementById("resultadoCUP");
-  const resultadoUSD = document.getElementById("resultadoUSD");
+  const elementoTotal = document.getElementById("totalEfectivo");
 
-  if (campoCUP) campoCUP.textContent = formato(totalCUP) + " CUP";
-  if (campoUSD) campoUSD.textContent = formato(totalUSD) + " USD";
-
-  if (resultadoCUP) resultadoCUP.textContent = formato(totalCUP) + " CUP";
-  if (resultadoUSD) resultadoUSD.textContent = formato(totalUSD) + " USD";
+  if (elementoTotal) {
+    elementoTotal.textContent = formato(total);
+  }
 
   guardarConteoEfectivo();
 }
@@ -2487,24 +2482,26 @@ function limpiarConteoEfectivo() {
 
   if (!confirmar) return;
 
-  const datos = {
-    CUP: {},
-    USD: {}
-  };
-
   try {
+    const datos = {};
+
+    denominacionesEfectivo.forEach(valor => {
+      datos[valor] = 0;
+    });
+
     localStorage.setItem(
       CLAVE_CONTEO_EFECTIVO,
-      JSON.stringify(datos)
+      JSON.stringify({ cantidades: datos })
     );
 
     mostrarEfectivo();
 
   } catch (error) {
+    console.error("Error limpiando conteo:", error);
     alert("No se pudo limpiar el conteo.");
-    console.error(error);
   }
 }
+
 
 // ==========================================
 // 37. INICIAR APLICACIÓN
