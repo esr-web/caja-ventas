@@ -69,7 +69,7 @@
           <div class="icono-menu">🏷️</div>
           <div class="texto-menu">
             <h3>Inventario</h3>
-            <p>Ver cantidades por área: Almacén, Tienda y Casa.</p>
+            <p>Entradas de stock y cantidades por área.</p>
           </div>
           <span class="flecha-menu">↗</span>
         </button>
@@ -222,13 +222,48 @@
 
       <div id="resumenInventario" class="inventario-resumen"></div>
 
+      <!-- ===== ENTRADA DE PRODUCTOS ===== -->
+      <div class="tarjeta">
+        <h3 style="margin-bottom:12px">➕ Entrada de producto</h3>
+
+        <label for="entradaProducto">Producto</label>
+        <select id="entradaProducto"></select>
+
+        <label for="entradaArea">Área destino</label>
+        <select id="entradaArea">
+          <option value="Tienda" selected>Tienda</option>
+          <option value="Casa">Casa</option>
+        </select>
+
+        <label for="entradaCantidad">Cantidad a añadir</label>
+        <input type="number" id="entradaCantidad" min="1" step="1"
+               inputmode="numeric" placeholder="0" value="1">
+
+        <button type="button" class="btn-principal"
+                onclick="registrarEntradaInventario()">
+          AGREGAR AL STOCK
+        </button>
+      </div>
+
+      <!-- ===== BUSCADOR + EXPORTAR ===== -->
       <div class="tarjeta">
         <label for="buscarInventario">Buscar producto</label>
         <input type="text" id="buscarInventario" placeholder="Buscar..."
                oninput="dibujarInventario()">
+
+        <button type="button" class="btn-secundario" style="width:100%"
+                onclick="exportarInventarioPDF()">
+          📄 EXPORTAR INVENTARIO PDF
+        </button>
       </div>
 
+      <!-- ===== LISTA DE STOCK ACTUAL ===== -->
+      <h3 style="margin:20px 0 12px">Stock actual</h3>
       <div id="listaInventario"></div>
+
+      <!-- ===== HISTORIAL DE ENTRADAS ===== -->
+      <h3 style="margin:24px 0 12px">Historial de entradas</h3>
+      <div id="listaEntradas"></div>
 
     </section>
 
@@ -312,7 +347,7 @@
 
   </main>
 
-  <!-- NAV INFERIOR CON 6 ÍTEMS (incluye Inventario) -->
+  <!-- NAV INFERIOR -->
   <nav class="navegacion-inferior">
 
     <button onclick="navegar('inicio')" class="nav-item" data-pantalla="inicio" aria-label="Inicio">
