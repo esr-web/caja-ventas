@@ -43,6 +43,8 @@
 
       <div id="resumenRapidoInicio" class="resumen-rapido"></div>
 
+      <div id="inventarioInicio" class="inventario-inicio"></div>
+
       <div class="menu-principal">
 
         <button class="tarjeta-menu tarjeta-caja" onclick="navegar('caja')">
@@ -59,6 +61,15 @@
           <div class="texto-menu">
             <h3>Productos</h3>
             <p>Administrar productos y stock por área.</p>
+          </div>
+          <span class="flecha-menu">↗</span>
+        </button>
+
+        <button class="tarjeta-menu" onclick="navegar('inventario')">
+          <div class="icono-menu">🏷️</div>
+          <div class="texto-menu">
+            <h3>Inventario</h3>
+            <p>Ver cantidades por área: Almacén, Tienda y Casa.</p>
           </div>
           <span class="flecha-menu">↗</span>
         </button>
@@ -204,6 +215,23 @@
 
     </section>
 
+    <!-- ==================== INVENTARIO ==================== -->
+    <section id="pantallaInventario" class="pantalla">
+
+      <h2 class="titulo-seccion">Inventario por área</h2>
+
+      <div id="resumenInventario" class="inventario-resumen"></div>
+
+      <div class="tarjeta">
+        <label for="buscarInventario">Buscar producto</label>
+        <input type="text" id="buscarInventario" placeholder="Buscar..."
+               oninput="dibujarInventario()">
+      </div>
+
+      <div id="listaInventario"></div>
+
+    </section>
+
     <!-- ==================== REGISTRO ==================== -->
     <section id="pantallaRegistro" class="pantalla">
 
@@ -284,7 +312,9 @@
 
   </main>
 
+  <!-- NAV INFERIOR CON 6 ÍTEMS (incluye Inventario) -->
   <nav class="navegacion-inferior">
+
     <button onclick="navegar('inicio')" class="nav-item" data-pantalla="inicio" aria-label="Inicio">
       <span>⌂</span>
       <small>Inicio</small>
@@ -300,6 +330,11 @@
       <small>Productos</small>
     </button>
 
+    <button onclick="navegar('inventario')" class="nav-item" data-pantalla="inventario" aria-label="Inventario">
+      <span>🏷️</span>
+      <small>Inventario</small>
+    </button>
+
     <button onclick="navegar('registro')" class="nav-item" data-pantalla="registro" aria-label="Registro">
       <span>☷</span>
       <small>Registro</small>
@@ -309,6 +344,7 @@
       <span>＄</span>
       <small>Efectivo</small>
     </button>
+
   </nav>
 
   <script src="./database.js"></script>
