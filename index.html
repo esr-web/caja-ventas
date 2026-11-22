@@ -42,7 +42,7 @@
         </button>
         <button class="tarjeta-menu" onclick="navegar('productos')">
           <div class="icono-menu">📦</div>
-          <div class="texto-menu"><h3>Productos</h3><p>Administrar productos, variantes y stock.</p></div>
+          <div class="texto-menu"><h3>Productos</h3><p>Administrar productos, precios y stock.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
         <button class="tarjeta-menu" onclick="navegar('inventario')">
@@ -72,33 +72,50 @@
     <!-- CAJA -->
     <section id="pantallaCaja" class="pantalla">
       <h2 class="titulo-seccion">Nueva venta</h2>
+
       <div class="tarjeta">
-        <label for="fechaVenta">Fecha</label>
-        <input type="date" id="fechaVenta">
-        <label for="lugarVenta">Lugar de venta</label>
-        <select id="lugarVenta" onchange="dibujarProductosCaja()">
-          <option value="Almacén">Almacén (stock infinito)</option>
-          <option value="Tienda" selected>Tienda</option>
-          <option value="Casa">Casa</option>
-        </select>
-        <label for="monedaSeleccionada">Moneda</label>
-        <select id="monedaSeleccionada" onchange="cambiarMonedaVenta()">
-          <option value="CUP">CUP</option>
-          <option value="USD">USD</option>
-        </select>
-        <label for="porcentajeVenta">% salario</label>
-        <input type="number" id="porcentajeVenta" min="0" max="100" step="0.5"
-               onchange="actualizarPorcentajeSalario()">
+        <div class="fila-stock">
+          <div>
+            <label for="fechaVenta">Fecha</label>
+            <input type="date" id="fechaVenta">
+          </div>
+          <div>
+            <label for="lugarVenta">Lugar de venta</label>
+            <select id="lugarVenta" onchange="dibujarProductosCaja()">
+              <option value="Almacén">Almacén (∞)</option>
+              <option value="Tienda" selected>Tienda</option>
+              <option value="Casa">Casa</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="fila-stock">
+          <div>
+            <label for="monedaSeleccionada">Moneda</label>
+            <select id="monedaSeleccionada" onchange="cambiarMonedaVenta()">
+              <option value="CUP">CUP</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <div>
+            <label for="porcentajeVenta">% salario</label>
+            <input type="number" id="porcentajeVenta" min="0" max="100" step="0.5"
+                   onchange="actualizarPorcentajeSalario()">
+          </div>
+        </div>
       </div>
+
       <div class="tarjeta">
         <label for="buscarProductoCaja">Buscar producto</label>
         <input type="text" id="buscarProductoCaja" placeholder="Buscar..."
                oninput="dibujarProductosCaja()">
         <div id="listaProductosCaja"></div>
       </div>
+
       <h3 class="titulo-carrito">Carrito de venta</h3>
       <div id="carritoVenta"></div>
       <div id="resumenVenta" class="resumen"></div>
+
       <button type="button" class="btn-vendido" onclick="registrarVenta()">REGISTRAR VENTA</button>
       <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
               onclick="cancelarVenta()">CANCELAR VENTA</button>
@@ -125,14 +142,14 @@
 
         <div class="variantes-bloque">
           <div class="variantes-cabecera">
-            <h4>Precios / presentaciones</h4>
+            <h4>Precios de venta</h4>
             <button type="button" class="btn-secundario"
                     style="padding:6px 10px;font-size:12px"
-                    onclick="agregarVarianteFormulario()">+ Añadir presentación</button>
+                    onclick="agregarVarianteFormulario()">+ Añadir precio</button>
           </div>
           <p class="nota-variantes">
-            Ej. "1 kg", "5 kg", "25 kg". Cada presentación tiene su propio precio.
-            El stock es compartido entre todas.
+            Cada precio tiene un nombre (ej. "1 kg", "5 kg"). El stock es del producto base,
+            compartido entre todas las presentaciones.
           </p>
           <div id="listaVariantesFormulario"></div>
         </div>
@@ -186,7 +203,6 @@
     <section id="pantallaRegistro" class="pantalla">
       <h2 class="titulo-seccion">Registro de ventas</h2>
 
-      <!-- RESUMEN ARRIBA (responde a los filtros) -->
       <div id="resumenRegistro"></div>
 
       <div class="tarjeta">
@@ -252,17 +268,6 @@
     </section>
 
   </main>
-
-  <!-- MODAL VARIANTE -->
-  <div id="modalVariante" class="modal-fondo" style="display:none">
-    <div class="modal-caja">
-      <h3 id="modalVarianteTitulo">Elige presentación</h3>
-      <p id="modalVarianteSubtitulo" class="modal-sub"></p>
-      <div id="modalVarianteLista"></div>
-      <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
-              onclick="cerrarModalVariante()">CANCELAR</button>
-    </div>
-  </div>
 
   <nav class="navegacion-inferior">
     <button onclick="navegar('inicio')" class="nav-item" data-pantalla="inicio"><span>⌂</span><small>Inicio</small></button>
