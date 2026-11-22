@@ -1,5 +1,5 @@
 // ==========================================
-// CAJA - APLICACIÓN PRINCIPAL (con variantes)
+// CAJA - APLICACIÓN PRINCIPAL (con variantes + editar/eliminar en inventario)
 // ==========================================
 
 let productos = [];
@@ -11,7 +11,7 @@ let productoEnEdicion = null;
 let porcentajeSalario = 5;
 let pantallaActual = "inicio";
 let monedaVenta = "CUP";
-let variantePendienteProductoId = null; // para el modal
+let variantePendienteProductoId = null;
 
 const CLAVE_EFECTIVO = "caja_conteo_efectivo_v1";
 const LUGARES_VENTA = ["Almacén", "Tienda", "Casa"];
@@ -69,7 +69,6 @@ function generarIdVariante() {
 // ==========================================
 
 function normalizarVariantes(producto) {
-  // Si tiene variantes, normalizarlas.
   if (Array.isArray(producto.variantes) && producto.variantes.length) {
     return producto.variantes.map(v => ({
       id: String(v.id || generarIdVariante()),
@@ -79,7 +78,6 @@ function normalizarVariantes(producto) {
     }));
   }
 
-  // Productos viejos: crear una variante "única" con los precios antiguos.
   const pCUP = Number(producto.precioCUP ?? producto.precio) || 0;
   const pUSD = Number(producto.precioUSD) || 0;
 
@@ -165,13 +163,11 @@ function adaptarEntrada(e) {
 // PRECIOS / VARIANTES
 // ==========================================
 
-// Obtener precio de una variante concreta según moneda.
 function precioVariante(variante, moneda = monedaVenta) {
   if (!variante) return 0;
   return moneda === "USD" ? Number(variante.precioUSD) || 0 : Number(variante.precioCUP) || 0;
 }
 
-// Para compatibilidad: precio "principal" (primera variante).
 function precioProducto(producto, moneda = monedaVenta) {
   if (!producto || !producto.variantes?.length) return 0;
   return precioVariante(producto.variantes[0], moneda);
@@ -181,7 +177,6 @@ function precioCUPProducto(producto) {
   return precioProducto(producto, "CUP");
 }
 
-// Nombre con etiqueta de variante para mostrar en carrito/registro.
 function nombreConVariante(nombre, etiqueta) {
   if (!etiqueta || etiqueta === "Único") return nombre;
   return `${nombre} (${etiqueta})`;
@@ -209,7 +204,6 @@ async function descontarStockVenta(lineas, lugar) {
   const clave = claveStockLugar(lugar);
   if (!clave) return;
 
-  // Agrupar por idProducto (por si hay varias variantes del mismo producto).
   const porProducto = {};
   for (const linea of lineas) {
     const idP = Number(linea.idProducto);
@@ -401,7 +395,6 @@ function agregarVarianteFormulario(variante = null) {
   const cont = document.getElementById("listaVariantesFormulario");
   if (!cont) return;
 
-  // Si es la primera vez (sin variantes), quitar el aviso de "sin variantes".
   const aviso = cont.querySelector(".sin-variantes-aviso");
   if (aviso) aviso.remove();
 
@@ -420,7 +413,7 @@ function leerVariantesFormulario() {
     const cup = Number(fila.querySelector(".variante-input-cup").value) || 0;
     const usd = Number(fila.querySelector(".variante-input-usd").value) || 0;
 
-    if (!etiqueta && cup === 0 && usd === 0) return; // fila vacía
+    if (!etiqueta && cup === 0 && usd === 0) return;
 
     variantes.push({
       id: fila.dataset.id || generarIdVariante(),
@@ -467,7 +460,6 @@ async function guardarProducto() {
     return;
   }
 
-  // Validar que al menos una variante tenga algún precio > 0.
   const conPrecio = variantes.some(v => v.precioCUP > 0 || v.precioUSD > 0);
   if (!conPrecio) {
     alert("Al menos una presentación debe tener un precio mayor que 0.");
@@ -503,6 +495,7 @@ async function guardarProducto() {
     cancelarEdicion();
     dibujarCatalogo();
     dibujarProductosCaja();
+    dibujarInventario();
     actualizarInicio();
 
     alert(estabaEditando ? "Producto actualizado." : "Producto guardado.");
@@ -533,7 +526,17 @@ function editarProducto(id) {
   document.getElementById("btnCancelarEdicion").style.display = "block";
   document.getElementById("tituloFormularioProducto").textContent = "Editar producto";
 
-  document.getElementById("nombreProducto").scrollIntoView({ behavior: "smooth", block: "center" });
+  // Si estamos en Inventario, saltar a Productos para que el formulario esté visible.
+  if (pantallaActual === "inventario") {
+    navegar("productos");
+  }
+
+  setTimeout(() => {
+    const nombreInput = document.getElementById("nombreProducto");
+    if (nombreInput) {
+      nombreInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, 100);
 }
 
 function cancelarEdicion() {
@@ -571,6 +574,7 @@ async function eliminarProducto(id) {
     dibujarCatalogo();
     dibujarProductosCaja();
     dibujarCarrito();
+    dibujarInventario();
     actualizarInicio();
 
     alert("Producto eliminado.");
@@ -724,7 +728,7 @@ function dibujarInventario() {
       : "—";
 
     return `
-      <div class="inventario-fila">
+      <div class="inventario-fila inventario-fila-con-acciones">
         <div class="inventario-fila-nombre">
           <h3>${escapar(p.nombre)}</h3>
           <small>${escapar(variantesTxt)}</small>
@@ -732,6 +736,12 @@ function dibujarInventario() {
         <div class="inventario-col almacen"><small>Almacén</small><strong>∞</strong></div>
         <div class="inventario-col tienda"><small>Tienda</small><strong>${p.stock.tienda}</strong></div>
         <div class="inventario-col casa"><small>Casa</small><strong>${p.stock.casa}</strong></div>
+        <div class="inventario-acciones">
+          <button type="button" class="btn-secundario inventario-btn"
+                  onclick="editarProducto(${Number(p.id)})">EDITAR</button>
+          <button type="button" class="btn-peligro inventario-btn"
+                  onclick="eliminarProducto(${Number(p.id)})">ELIMINAR</button>
+        </div>
       </div>
     `;
   }).join("");
@@ -880,7 +890,6 @@ function cambiarMonedaVenta() {
   const nueva = selector.value;
   if (nueva !== "CUP" && nueva !== "USD") { selector.value = anterior; return; }
 
-  // Recalcular precios del carrito según variante.
   const precios = [];
   for (const linea of carrito) {
     const producto = productos.find(p => Number(p.id) === Number(linea.idProducto));
@@ -1043,7 +1052,6 @@ function agregarVarianteAlCarrito(idProducto, idVariante) {
     Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante
   );
 
-  // El stock se valida sobre el TOTAL del producto (sumando variantes).
   const totalEnCarrito = carrito
     .filter(l => Number(l.idProducto) === Number(idProducto))
     .reduce((s, l) => s + Number(l.cantidad), 0);
@@ -1096,7 +1104,6 @@ function cambiarCantidadCarrito(idProducto, idVariante, cambio) {
   }
 
   if (disponible !== Infinity) {
-    // Recalcular cuánto sería el total si aceptamos el cambio.
     const nuevoTotal = totalEnCarrito - linea.cantidad + nueva;
     if (nuevoTotal > disponible) {
       alert(`No hay stock suficiente en ${lugar}.`);
@@ -1310,6 +1317,7 @@ async function confirmarVenta() {
     dibujarCarrito();
     dibujarProductosCaja();
     dibujarCatalogo();
+    dibujarInventario();
     actualizarInicio();
 
     alert(
