@@ -1076,3 +1076,207 @@ button:focus-visible {
     font-size: 11px;
   }
 }
+/* ============================================================
+   REGISTRO - Estadísticas filtradas
+   ============================================================ */
+
+.resumen-filtrado {
+  background: var(--blanco);
+  padding: 18px;
+}
+
+.resumen-filtrado-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 2px solid var(--naranja);
+}
+
+.resumen-filtrado-header h3 {
+  font-size: 15px;
+  color: var(--negro);
+}
+
+.resumen-filtrado-header small {
+  font-size: 11px;
+  color: var(--gris);
+  background: var(--naranja-claro);
+  padding: 4px 9px;
+  border-radius: 20px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.resumen-filtrado-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.resumen-filtrado-item {
+  background: var(--fondo);
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--borde);
+}
+
+.resumen-filtrado-item small {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--gris);
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.resumen-filtrado-item strong {
+  font-size: 16px;
+  color: var(--negro);
+  word-break: break-word;
+}
+
+.resumen-filtrado-item.verde {
+  background: var(--verde-claro);
+  border-color: #c5e4d1;
+}
+.resumen-filtrado-item.verde strong { color: var(--verde); }
+
+.resumen-filtrado-item.naranja {
+  background: var(--naranja-claro);
+  border-color: #f5d5b3;
+}
+.resumen-filtrado-item.naranja strong { color: #a25a12; }
+
+.resumen-filtrado-bloque {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.resumen-filtrado-bloque h4 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--gris);
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.resumen-filtrado-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.resumen-lugares {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resumen-lugar-fila {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.resumen-lugar-nombre {
+  color: var(--negro);
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resumen-lugar-barra {
+  height: 8px;
+  background: #eee;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.resumen-lugar-barra-fill {
+  height: 100%;
+  background: var(--naranja);
+  border-radius: 20px;
+  transition: width .3s;
+}
+
+.resumen-lugar-cant {
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.resumen-lugar-cant small { color: var(--gris); }
+
+.resumen-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resumen-ranking-item {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--fondo);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.resumen-ranking-num {
+  background: var(--naranja);
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.resumen-ranking-nombre {
+  color: var(--negro);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resumen-ranking-cant {
+  color: var(--verde);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.resumen-filtrado-pie {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--borde);
+  font-size: 11px;
+  color: var(--gris);
+}
+
+.resumen-filtrado-pie strong { color: var(--negro); }
+
+@media (min-width: 500px) {
+  .resumen-filtrado-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
