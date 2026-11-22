@@ -1202,6 +1202,9 @@ function valorFiltro(id) {
 
 function obtenerVentasFiltradas() {
   const periodo = valorFiltro("filtroPeriodo");
+  const dia = valorFiltro("filtroDia");
+  const fechaDesde = valorFiltro("filtroFechaDesde");
+  const fechaHasta = valorFiltro("filtroFechaHasta");
   const producto = valorFiltro("filtroProducto");
   const moneda = valorFiltro("filtroMoneda");
   const lugar = valorFiltro("filtroLugar");
@@ -1212,21 +1215,37 @@ function obtenerVentasFiltradas() {
   const mesActual = mesLocal();
   const fechaHoy = new Date(); fechaHoy.setHours(0,0,0,0);
   const inicioSemana = new Date(fechaHoy);
-  const dia = (inicioSemana.getDay() + 6) % 7;
-  inicioSemana.setDate(inicioSemana.getDate() - dia);
+  const diaSemana = (inicioSemana.getDay() + 6) % 7;
+  inicioSemana.setDate(inicioSemana.getDate() - diaSemana);
+
+  // Prioridad: día concreto > rango > período rápido.
+  const usaDiaConcreto = !!dia;
+  const usaRango = !!(fechaDesde || fechaHasta);
 
   return ventas.filter(venta => {
     const fecha = fechaParaComparar(venta.fecha);
-    if (periodo === "hoy" && fecha !== hoy) return false;
-    if (periodo === "mes" && !fecha.startsWith(mesActual)) return false;
-    if (periodo === "anio" && !fecha.startsWith(String(new Date().getFullYear()))) return false;
-    if (periodo === "semana") {
+
+    // --- Filtrado por fecha ---
+    if (usaDiaConcreto) {
+      if (fecha !== dia) return false;
+    } else if (usaRango) {
       if (!fecha) return false;
-      const fv = new Date(fecha + "T00:00:00");
-      if (Number.isNaN(fv.getTime())) return false;
-      fv.setHours(0,0,0,0);
-      if (fv < inicioSemana || fv > fechaHoy) return false;
+      if (fechaDesde && fecha < fechaDesde) return false;
+      if (fechaHasta && fecha > fechaHasta) return false;
+    } else {
+      if (periodo === "hoy" && fecha !== hoy) return false;
+      if (periodo === "mes" && !fecha.startsWith(mesActual)) return false;
+      if (periodo === "anio" && !fecha.startsWith(String(new Date().getFullYear()))) return false;
+      if (periodo === "semana") {
+        if (!fecha) return false;
+        const fv = new Date(fecha + "T00:00:00");
+        if (Number.isNaN(fv.getTime())) return false;
+        fv.setHours(0,0,0,0);
+        if (fv < inicioSemana || fv > fechaHoy) return false;
+      }
     }
+
+    // --- Filtro por producto ---
     if (producto) {
       const idP = Number(producto);
       const tiene = venta.productos.some(l => {
@@ -1235,11 +1254,18 @@ function obtenerVentasFiltradas() {
       });
       if (!tiene) return false;
     }
+
+    // --- Filtro por moneda ---
     if (moneda && venta.moneda !== moneda) return false;
+
+    // --- Filtro por lugar ---
     if (lugar && venta.lugarVenta !== lugar) return false;
+
+    // --- Filtro por importe ---
     const imp = Number(venta.total) || 0;
     if (minimo !== "" && imp < Number(minimo)) return false;
     if (maximo !== "" && imp > Number(maximo)) return false;
+
     return true;
   });
 }
@@ -1360,8 +1386,20 @@ function aplicarFiltrosRegistro() { dibujarRegistro(); }
 function filtrarRegistro() { dibujarRegistro(); }
 
 function limpiarFiltrosRegistro() {
-  ["filtroPeriodo","filtroProducto","filtroMoneda","filtroLugar","filtroMinimo","filtroMaximo"]
-    .forEach(id => { const c = document.getElementById(id); if (c) c.value = ""; });
+  [
+    "filtroPeriodo",
+    "filtroDia",
+    "filtroFechaDesde",
+    "filtroFechaHasta",
+    "filtroProducto",
+    "filtroMoneda",
+    "filtroLugar",
+    "filtroMinimo",
+    "filtroMaximo"
+  ].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) c.value = "";
+  });
   dibujarRegistro();
 }
 
