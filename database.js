@@ -1,3 +1,6 @@
+// ==========================================
+// CAJA - BASE DE DATOS (IndexedDB)
+// ==========================================
 
 const DB_NAME = "CajaVentasDB";
 const DB_VERSION = 1;
@@ -28,9 +31,7 @@ function abrirBaseDatos() {
           autoIncrement: true
         });
 
-        ventas.createIndex("fecha", "fecha", {
-          unique: false
-        });
+        ventas.createIndex("fecha", "fecha", { unique: false });
       }
     };
 
@@ -92,12 +93,44 @@ function eliminarDato(tabla, id) {
 }
 
 // ==========================================
+// REAJUSTAR AUTOINCREMENT
+// ==========================================
+
+function reajustarAutoIncrement(tabla) {
+  return new Promise((resolve) => {
+    try {
+      const transaccion = db.transaction(tabla, "readwrite");
+      const almacen = transaccion.objectStore(tabla);
+      const solicitud = almacen.openCursor(null, "prev");
+
+      solicitud.onsuccess = function(event) {
+        const cursor = event.target.result;
+
+        if (cursor) {
+          try {
+            almacen.autoIncrement = Number(cursor.key) + 1;
+          } catch (e) {
+            console.warn("No se pudo reajustar autoIncrement:", e);
+          }
+        }
+      };
+
+      transaccion.oncomplete = () => resolve(true);
+      transaccion.onerror = () => resolve(false);
+
+    } catch (error) {
+      console.warn("Error al reajustar autoIncrement:", error);
+      resolve(false);
+    }
+  });
+}
+
+// ==========================================
 // RESTAURAR REGISTROS DE UNA COPIA
 // ==========================================
 
 function reemplazarTodos(tabla, registros) {
   return new Promise((resolve, reject) => {
-
     if (!db) {
       reject(new Error("La base de datos no está abierta."));
       return;
@@ -118,7 +151,9 @@ function reemplazarTodos(tabla, registros) {
         almacen.put(registro);
       });
 
-      transaccion.oncomplete = function() {
+      transaccion.oncomplete = async function() {
+        // Reajustar el autoIncrement para evitar colisiones futuras.
+        await reajustarAutoIncrement(tabla);
         resolve(true);
       };
 
