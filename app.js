@@ -180,6 +180,7 @@ function calcularSalarioLineasCUP(lineas) {
 // FIN DE LA PARTE 1
 // ==========================================
 
+
 // ==========================================
 // CAJA - PARTE 2
 // BASE DE DATOS Y NAVEGACIÓN
@@ -190,41 +191,31 @@ function calcularSalarioLineasCUP(lineas) {
 // ==========================================
 
 async function iniciarAplicacion() {
-  try {
-    await abrirBaseDatos();
+  await abrirBaseDatos();
 
-    const productosGuardados = await obtenerTodos("productos");
-    const ventasGuardadas = await obtenerTodos("ventas");
+  const productosGuardados = await obtenerTodos("productos");
+  const ventasGuardadas = await obtenerTodos("ventas");
 
-    productos = productosGuardados
-      .map(adaptarProducto)
-      .filter(Boolean);
+  productos = productosGuardados
+    .map(adaptarProducto)
+    .filter(Boolean);
 
-    ventas = ventasGuardadas
-      .map(adaptarVenta)
-      .filter(Boolean);
+  ventas = ventasGuardadas
+    .map(adaptarVenta)
+    .filter(Boolean);
 
-    // Sincronizar los datos adaptados sin cambiar sus ID.
-    for (const producto of productos) {
-      await guardarDato("productos", producto);
-    }
-
-    for (const venta of ventas) {
-      await guardarDato("ventas", venta);
-    }
-
-    navegar("inicio");
-
-    actualizarEstadoConexion();
-
-  } catch (error) {
-    console.error("Error al iniciar CAJA:", error);
-
-    alert(
-      "No se pudo iniciar la aplicación.\n\n" +
-      "Comprueba que la base de datos esté disponible."
-    );
+  // Sincronizar los datos adaptados sin cambiar sus ID.
+  for (const producto of productos) {
+    await guardarDato("productos", producto);
   }
+
+  for (const venta of ventas) {
+    await guardarDato("ventas", venta);
+  }
+
+  navegar("inicio");
+
+  actualizarEstadoConexion();
 }
 
 // ==========================================
@@ -288,7 +279,8 @@ function navegar(nombre) {
   document.querySelectorAll(".nav-item").forEach(boton => {
     boton.classList.remove("activo");
 
-    const accion = boton.dataset.pantalla ||
+    const accion =
+      boton.dataset.pantalla ||
       boton.dataset.destino ||
       "";
 
@@ -340,6 +332,7 @@ function irPantalla(nombre) {
 // ==========================================
 // FIN DE LA PARTE 2
 // ==========================================
+
 
 
  // ==========================================
@@ -1253,6 +1246,7 @@ function cancelarVenta() {
 // ==========================================
 
 
+
 // ==========================================
 // CAJA - PARTE 6
 // HISTORIAL Y FILTROS DE VENTAS
@@ -1315,11 +1309,22 @@ function obtenerVentasFiltradas() {
   const hoy = fechaLocal();
   const mesActual = mesLocal();
 
+  // Calcular el inicio de la semana: lunes.
+  const fechaHoy = new Date();
+  fechaHoy.setHours(0, 0, 0, 0);
+
+  const inicioSemana = new Date(fechaHoy);
+  const diaSemana = (inicioSemana.getDay() + 6) % 7;
+
+  inicioSemana.setDate(inicioSemana.getDate() - diaSemana);
+
   return ventas.filter(venta => {
     const fecha = fechaParaComparar(venta.fecha);
 
     // Filtro por período.
-    if (periodo === "hoy" && fecha !== hoy) return false;
+    if (periodo === "hoy" && fecha !== hoy) {
+      return false;
+    }
 
     if (periodo === "mes" && !fecha.startsWith(mesActual)) {
       return false;
@@ -1331,19 +1336,21 @@ function obtenerVentasFiltradas() {
       }
     }
 
+    // Filtro de la semana actual, incluyendo todo el día de hoy.
     if (periodo === "semana") {
-      const fechaVenta = new Date(fecha + "T12:00:00");
-      const inicioSemana = new Date();
-      inicioSemana.setHours(12, 0, 0, 0);
+      if (!fecha) return false;
 
-      const diaSemana = (inicioSemana.getDay() + 6) % 7;
+      const fechaVenta = new Date(fecha + "T00:00:00");
 
-      inicioSemana.setDate(inicioSemana.getDate() - diaSemana);
+      if (Number.isNaN(fechaVenta.getTime())) {
+        return false;
+      }
+
+      fechaVenta.setHours(0, 0, 0, 0);
 
       if (
-        !fecha ||
         fechaVenta < inicioSemana ||
-        fechaVenta > new Date()
+        fechaVenta > fechaHoy
       ) {
         return false;
       }
@@ -1596,6 +1603,7 @@ async function eliminarVenta(id) {
 // ==========================================
 // FIN DE LA PARTE 6
 // ==========================================
+
 
 // ==========================================
 // CAJA - PARTE 7
