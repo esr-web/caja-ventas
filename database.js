@@ -3,7 +3,7 @@
 // ==========================================
 
 const DB_NAME = "CajaVentasDB";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let db;
 
@@ -30,8 +30,17 @@ function abrirBaseDatos() {
           keyPath: "id",
           autoIncrement: true
         });
-
         ventas.createIndex("fecha", "fecha", { unique: false });
+      }
+
+      // NUEVA TABLA: entradas de inventario
+      if (!base.objectStoreNames.contains("entradas")) {
+        const entradas = base.createObjectStore("entradas", {
+          keyPath: "id",
+          autoIncrement: true
+        });
+        entradas.createIndex("fecha", "fecha", { unique: false });
+        entradas.createIndex("idProducto", "idProducto", { unique: false });
       }
     };
 
@@ -105,7 +114,6 @@ function reajustarAutoIncrement(tabla) {
 
       solicitud.onsuccess = function(event) {
         const cursor = event.target.result;
-
         if (cursor) {
           try {
             almacen.autoIncrement = Number(cursor.key) + 1;
@@ -141,18 +149,20 @@ function reemplazarTodos(tabla, registros) {
       return;
     }
 
+    // La tabla "entradas" puede no venir en copias viejas.
+    if (!db.objectStoreNames.contains(tabla)) {
+      resolve(true);
+      return;
+    }
+
     try {
       const transaccion = db.transaction(tabla, "readwrite");
       const almacen = transaccion.objectStore(tabla);
 
       almacen.clear();
-
-      registros.forEach(registro => {
-        almacen.put(registro);
-      });
+      registros.forEach(r => almacen.put(r));
 
       transaccion.oncomplete = async function() {
-        // Reajustar el autoIncrement para evitar colisiones futuras.
         await reajustarAutoIncrement(tabla);
         resolve(true);
       };
