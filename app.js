@@ -13,7 +13,7 @@ let pantallaActual = "inicio";
 let monedaVenta = "CUP";
 
 // Estado de la UI de caja: qué producto está desplegado
-let productosDesplegadosCaja = new Set(); // ids de producto con acordeón abierto
+let productosDesplegadosCaja = new Set();
 
 const CLAVE_EFECTIVO = "caja_conteo_efectivo_v1";
 const LUGARES_VENTA = ["Almacén", "Tienda", "Casa"];
@@ -799,7 +799,6 @@ function dibujarProductosCaja() {
     const totalEnCarrito = totalUnidadesEnCarrito(idProducto);
     const abierto = productosDesplegadosCaja.has(idProducto) || totalEnCarrito > 0;
 
-    // Encabezado con botón AGREGAR (solo si aún no está desplegado).
     const botonAgregar = abierto
       ? ""
       : `
@@ -811,7 +810,6 @@ function dibujarProductosCaja() {
         </button>
       `;
 
-    // Precios desplegables con sus controles.
     const filasPrecios = abierto
       ? producto.variantes.map(v => {
           const precio = precioVariante(v, monedaVenta);
@@ -868,7 +866,6 @@ function dibujarProductosCaja() {
   }).join("");
 }
 
-// Cambia cantidad de una variante concreta (botones − / +)
 function cambiarCantidadVarianteCaja(idProducto, idVariante, cambio) {
   const producto = productos.find(p => Number(p.id) === Number(idProducto));
   if (!producto) return;
@@ -889,7 +886,6 @@ function cambiarCantidadVarianteCaja(idProducto, idVariante, cambio) {
       carrito = carrito.filter(l =>
         !(Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante)
       );
-      // Si el producto ya no tiene nada, cerrar el acordeón.
       if (totalUnidadesEnCarrito(idProducto) === 0) {
         productosDesplegadosCaja.delete(Number(idProducto));
       }
@@ -927,7 +923,6 @@ function cambiarCantidadVarianteCaja(idProducto, idVariante, cambio) {
     });
   }
 
-  // Asegurarse de que esté desplegado.
   productosDesplegadosCaja.add(Number(idProducto));
 
   dibujarProductosCaja();
@@ -1615,11 +1610,14 @@ function mostrarEfectivo() {
   cargarConteoEfectivo();
   const cont = document.getElementById("contenidoEfectivo");
   if (!cont) return;
+
   const filas = denominacionesEfectivo.map(v => `
     <div class="producto">
       <div class="producto-info">
         <h3>${formato(v)} CUP</h3>
-        <small style="color:#777">Subtotal: <strong id="subtotalEfectivo${v}">${formato(v * conteoEfectivo[v])} CUP</strong></small>
+        <small style="color:#777">
+          Subtotal: <strong id="subtotalEfectivo${v}">${formato(v * conteoEfectivo[v])} CUP</strong>
+        </small>
       </div>
       <div style="width:100px;flex-shrink:0">
         <label for="billetes${v}">Cantidad</label>
@@ -1629,6 +1627,7 @@ function mostrarEfectivo() {
       </div>
     </div>
   `).join("");
+
   cont.innerHTML = `
     <div class="tarjeta">
       <h3 style="margin-bottom:8px">Conteo de efectivo</h3>
@@ -1640,7 +1639,11 @@ function mostrarEfectivo() {
       <div class="total" id="totalEfectivo">${formato(calcularTotalEfectivo())} CUP</div>
       <p style="font-size:12px;color:#ccc">Guardado automáticamente.</p>
     </div>
-    <button type="button" class="btn-secundario" style="width:100%;margin-top:15px"
+
+    <button type="button" class="btn-principal" style="width:100%;margin-top:15px"
+            onclick="exportarEfectivoPDF()">📄 EXPORTAR CONTEO PDF</button>
+
+    <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
             onclick="limpiarConteoEfectivo()">LIMPIAR CONTEO</button>
   `;
 }
@@ -1664,6 +1667,115 @@ function limpiarConteoEfectivo() {
   denominacionesEfectivo.forEach(v => conteoEfectivo[v] = 0);
   guardarConteoEfectivo();
   mostrarEfectivo();
+}
+
+// ==========================================
+// EXPORTAR CONTEO DE EFECTIVO A PDF
+// ==========================================
+
+function exportarEfectivoPDF() {
+  cargarConteoEfectivo();
+
+  const fechaHora = mostrarFechaHora(new Date().toISOString());
+  const total = calcularTotalEfectivo();
+
+  const filas = denominacionesEfectivo.map(v => {
+    const cantidad = Number(conteoEfectivo[v]) || 0;
+    const subtotal = v * cantidad;
+    return `
+      <tr>
+        <td>${formato(v)} CUP</td>
+        <td class="numero">${cantidad}</td>
+        <td class="numero">${formato(subtotal)} CUP</td>
+      </tr>
+    `;
+  }).join("");
+
+  const totalBilletes = denominacionesEfectivo.reduce(
+    (s, v) => s + (Number(conteoEfectivo[v]) || 0), 0
+  );
+
+  const documento = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <title>Conteo de efectivo - CAJA</title>
+      <style>
+        *{box-sizing:border-box}
+        body{font-family:Arial,sans-serif;color:#242424;margin:25px}
+        h1{margin-bottom:5px;font-size:25px}
+        .subtitulo{color:#777;margin-bottom:25px;font-size:13px}
+        .resumen{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+        .resumen div{border:1px solid #ddd;border-radius:8px;padding:12px;flex:1;min-width:140px}
+        .resumen small{display:block;font-size:10px;color:#777;text-transform:uppercase;letter-spacing:.4px}
+        .resumen strong{display:block;margin-top:6px;font-size:18px}
+        .resumen div.total-final{background:#222;color:white;border-color:#222}
+        .resumen div.total-final small{color:#bbb}
+        .resumen div.total-final strong{color:#75df9a}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th,td{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}
+        th{background:#222;color:white}
+        .numero{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+        tr{page-break-inside:avoid}
+        tfoot td{background:#f5f5f5;font-weight:bold}
+        .pie{margin-top:30px;color:#777;font-size:10px;text-align:center}
+      </style>
+    </head>
+    <body>
+      <h1>CAJA | Conteo de efectivo</h1>
+      <div class="subtitulo">Informe generado el ${escapar(fechaHora)}</div>
+
+      <div class="resumen">
+        <div>
+          <small>Fecha y hora</small>
+          <strong style="font-size:14px">${escapar(fechaHora)}</strong>
+        </div>
+        <div>
+          <small>Total de billetes</small>
+          <strong>${totalBilletes}</strong>
+        </div>
+        <div class="total-final">
+          <small>Total en efectivo</small>
+          <strong>${formato(total)} CUP</strong>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Denominación</th>
+            <th class="numero">Cantidad de billetes</th>
+            <th class="numero">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filas}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="numero">${totalBilletes}</td>
+            <td class="numero">${formato(total)} CUP</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="pie">Sistema de gestión de ventas CAJA</div>
+
+      <script>window.onload=function(){window.print()};<\/script>
+    </body>
+    </html>
+  `;
+
+  const ventana = window.open("", "_blank");
+  if (!ventana) {
+    alert("El navegador bloqueó la ventana de impresión.\n\nPermite las ventanas emergentes.");
+    return;
+  }
+  ventana.document.open();
+  ventana.document.write(documento);
+  ventana.document.close();
 }
 
 // ==========================================
