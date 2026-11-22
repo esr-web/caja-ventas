@@ -12,6 +12,9 @@ let porcentajeSalario = 5;
 let pantallaActual = "inicio";
 let monedaVenta = "CUP";
 
+// Estado de la UI de caja: qué producto está desplegado
+let productosDesplegadosCaja = new Set(); // ids de producto con acordeón abierto
+
 const CLAVE_EFECTIVO = "caja_conteo_efectivo_v1";
 const LUGARES_VENTA = ["Almacén", "Tienda", "Casa"];
 
@@ -459,6 +462,7 @@ async function eliminarProducto(id) {
     productos = productos.filter(p => Number(p.id) !== Number(id));
     if (productoEnEdicion && Number(productoEnEdicion.id) === Number(id)) cancelarEdicion();
     carrito = carrito.filter(l => Number(l.idProducto) !== Number(id));
+    productosDesplegadosCaja.delete(Number(id));
     dibujarCatalogo();
     dibujarProductosCaja();
     dibujarCarrito();
@@ -712,7 +716,7 @@ function exportarInventarioPDF() {
 }
 
 // ==========================================
-// CAJA - NUEVA EXPERIENCIA
+// CAJA
 // ==========================================
 
 function mostrarCaja() {
@@ -756,7 +760,17 @@ function cambiarMonedaVenta() {
   dibujarCarrito();
 }
 
-// === NUEVO DISEÑO DE CAJA: producto como tarjeta, precios como filas ===
+// === CAJA: acordeón por producto ===
+
+function toggleProductoCaja(idProducto) {
+  const id = Number(idProducto);
+  if (productosDesplegadosCaja.has(id)) {
+    productosDesplegadosCaja.delete(id);
+  } else {
+    productosDesplegadosCaja.add(id);
+  }
+  dibujarProductosCaja();
+}
 
 function dibujarProductosCaja() {
   const lista = document.getElementById("listaProductosCaja");
@@ -777,35 +791,64 @@ function dibujarProductosCaja() {
   }
 
   lista.innerHTML = filtrados.map(producto => {
+    const idProducto = Number(producto.id);
     const disponible = stockDisponible(producto, lugar);
     const stockTexto = disponible === Infinity ? "∞" : disponible;
     const sinStock = disponible !== Infinity && disponible <= 0;
 
-    const filasPrecios = producto.variantes.map(v => {
-      const precio = precioVariante(v, monedaVenta);
-      const enCarrito = cantidadEnCarritoVariante(producto.id, v.id);
-      const bloqueado = sinStock || precio <= 0;
+    const totalEnCarrito = totalUnidadesEnCarrito(idProducto);
+    const abierto = productosDesplegadosCaja.has(idProducto) || totalEnCarrito > 0;
 
-      return `
-        <div class="precio-fila">
-          <div class="precio-fila-info">
-            <span class="precio-etiqueta">${escapar(v.etiqueta || "Único")}</span>
-            <span class="precio-valor">
-              ${precio > 0 ? formato(precio) + " " + monedaVenta : "— sin precio —"}
-            </span>
-          </div>
-          <div class="precio-fila-controles">
-            <button type="button" class="btn-cantidad"
-                    onclick="cambiarCantidadVarianteCaja(${Number(producto.id)},'${escapar(v.id)}',-1)"
-                    ${enCarrito === 0 ? "disabled" : ""}>−</button>
-            <span class="cantidad">${enCarrito}</span>
-            <button type="button" class="btn-cantidad"
-                    onclick="cambiarCantidadVarianteCaja(${Number(producto.id)},'${escapar(v.id)}',1)"
-                    ${bloqueado ? "disabled" : ""}>+</button>
-          </div>
-        </div>
+    // Encabezado con botón AGREGAR (solo si aún no está desplegado).
+    const botonAgregar = abierto
+      ? ""
+      : `
+        <button type="button" class="btn-principal"
+                style="width:auto;min-width:100px;padding:10px 14px;font-size:13px"
+                ${sinStock ? "disabled" : ""}
+                onclick="toggleProductoCaja(${idProducto})">
+          ${sinStock ? "SIN STOCK" : "AGREGAR"}
+        </button>
       `;
-    }).join("");
+
+    // Precios desplegables con sus controles.
+    const filasPrecios = abierto
+      ? producto.variantes.map(v => {
+          const precio = precioVariante(v, monedaVenta);
+          const enCarrito = cantidadEnCarritoVariante(idProducto, v.id);
+          const bloqueado = sinStock || precio <= 0;
+
+          return `
+            <div class="precio-fila">
+              <div class="precio-fila-info">
+                <span class="precio-etiqueta">${escapar(v.etiqueta || "Único")}</span>
+                <span class="precio-valor">
+                  ${precio > 0 ? formato(precio) + " " + monedaVenta : "— sin precio —"}
+                </span>
+              </div>
+              <div class="precio-fila-controles">
+                <button type="button" class="btn-cantidad"
+                        onclick="cambiarCantidadVarianteCaja(${idProducto},'${escapar(v.id)}',-1)"
+                        ${enCarrito === 0 ? "disabled" : ""}>−</button>
+                <span class="cantidad">${enCarrito}</span>
+                <button type="button" class="btn-cantidad"
+                        onclick="cambiarCantidadVarianteCaja(${idProducto},'${escapar(v.id)}',1)"
+                        ${bloqueado ? "disabled" : ""}>+</button>
+              </div>
+            </div>
+          `;
+        }).join("")
+      : "";
+
+    const botonCerrar = abierto
+      ? `
+        <button type="button" class="btn-secundario"
+                style="padding:6px 10px;font-size:11px;margin-top:8px"
+                onclick="toggleProductoCaja(${idProducto})">
+          Cerrar precios
+        </button>
+      `
+      : "";
 
     return `
       <div class="producto-caja">
@@ -816,14 +859,93 @@ function dibujarProductosCaja() {
               Stock ${lugar}: <strong>${stockTexto}</strong>
             </small>
           </div>
+          ${botonAgregar}
         </div>
-        ${filasPrecios || `<div class="texto-vacio">Sin precios registrados.</div>`}
+        ${filasPrecios}
+        ${botonCerrar}
       </div>
     `;
   }).join("");
 }
 
-// === NUEVO CARRITO: una tarjeta por producto, con sus presentaciones ===
+// Cambia cantidad de una variante concreta (botones − / +)
+function cambiarCantidadVarianteCaja(idProducto, idVariante, cambio) {
+  const producto = productos.find(p => Number(p.id) === Number(idProducto));
+  if (!producto) return;
+
+  const lugarInput = document.getElementById("lugarVenta");
+  const lugar = lugarInput ? lugarInput.value : "Tienda";
+  const disponible = stockDisponible(producto, lugar);
+
+  const linea = carrito.find(l =>
+    Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante
+  );
+
+  const cantidadActual = linea ? Number(linea.cantidad) : 0;
+  const nueva = cantidadActual + Number(cambio);
+
+  if (nueva <= 0) {
+    if (linea) {
+      carrito = carrito.filter(l =>
+        !(Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante)
+      );
+      // Si el producto ya no tiene nada, cerrar el acordeón.
+      if (totalUnidadesEnCarrito(idProducto) === 0) {
+        productosDesplegadosCaja.delete(Number(idProducto));
+      }
+      dibujarProductosCaja();
+      dibujarCarrito();
+    }
+    return;
+  }
+
+  const totalProducto = totalUnidadesEnCarrito(idProducto);
+  const nuevoTotal = totalProducto - cantidadActual + nueva;
+
+  if (disponible !== Infinity && nuevoTotal > disponible) {
+    alert(`No hay stock suficiente en ${lugar}. Disponible: ${disponible}.`);
+    return;
+  }
+
+  if (linea) {
+    linea.cantidad = nueva;
+  } else {
+    const variante = producto.variantes.find(v => v.id === idVariante);
+    if (!variante) { alert("Precio no encontrado."); return; }
+    const precio = Number(precioVariante(variante, monedaVenta));
+    if (!Number.isFinite(precio) || precio <= 0) {
+      alert(`El precio "${variante.etiqueta}" no tiene valor en ${monedaVenta}.`);
+      return;
+    }
+    carrito.push({
+      idProducto: producto.id,
+      idVariante: variante.id,
+      etiquetaVariante: variante.etiqueta,
+      nombre: producto.nombre,
+      cantidad: 1,
+      precio
+    });
+  }
+
+  // Asegurarse de que esté desplegado.
+  productosDesplegadosCaja.add(Number(idProducto));
+
+  dibujarProductosCaja();
+  dibujarCarrito();
+}
+
+function quitarVarianteDelCarrito(idProducto, idVariante) {
+  carrito = carrito.filter(l =>
+    !(Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante)
+  );
+  if (totalUnidadesEnCarrito(idProducto) === 0) {
+    productosDesplegadosCaja.delete(Number(idProducto));
+  }
+  dibujarProductosCaja();
+  dibujarCarrito();
+}
+
+// === CARRITO ===
 
 function dibujarCarrito() {
   const cont = document.getElementById("carritoVenta");
@@ -838,7 +960,6 @@ function dibujarCarrito() {
     return;
   }
 
-  // Agrupar por producto
   const porProducto = {};
   carrito.forEach(linea => {
     const idP = Number(linea.idProducto);
@@ -900,66 +1021,6 @@ function dibujarCarrito() {
       <div class="salario">Salario (${porcentajeSalario}%): ${formato(t.salario)} CUP</div>
     `;
   }
-}
-
-// Cambia cantidad de una variante concreta (usado tanto en caja como en carrito)
-function cambiarCantidadVarianteCaja(idProducto, idVariante, cambio) {
-  const producto = productos.find(p => Number(p.id) === Number(idProducto));
-  if (!producto) return;
-
-  const lugarInput = document.getElementById("lugarVenta");
-  const lugar = lugarInput ? lugarInput.value : "Tienda";
-  const disponible = stockDisponible(producto, lugar);
-
-  const linea = carrito.find(l =>
-    Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante
-  );
-
-  const cantidadActual = linea ? Number(linea.cantidad) : 0;
-  const nueva = cantidadActual + Number(cambio);
-
-  if (nueva <= 0) {
-    if (linea) quitarVarianteDelCarrito(idProducto, idVariante);
-    return;
-  }
-
-  const totalProducto = totalUnidadesEnCarrito(idProducto);
-  const nuevoTotal = totalProducto - cantidadActual + nueva;
-
-  if (disponible !== Infinity && nuevoTotal > disponible) {
-    alert(`No hay stock suficiente en ${lugar}. Disponible: ${disponible}.`);
-    return;
-  }
-
-  if (linea) {
-    linea.cantidad = nueva;
-  } else {
-    const variante = producto.variantes.find(v => v.id === idVariante);
-    if (!variante) { alert("Precio no encontrado."); return; }
-    const precio = Number(precioVariante(variante, monedaVenta));
-    if (!Number.isFinite(precio) || precio <= 0) {
-      alert(`El precio "${variante.etiqueta}" no tiene valor en ${monedaVenta}.`);
-      return;
-    }
-    carrito.push({
-      idProducto: producto.id,
-      idVariante: variante.id,
-      etiquetaVariante: variante.etiqueta,
-      cantidad: 1,
-      precio
-    });
-  }
-
-  dibujarProductosCaja();
-  dibujarCarrito();
-}
-
-function quitarVarianteDelCarrito(idProducto, idVariante) {
-  carrito = carrito.filter(l =>
-    !(Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante)
-  );
-  dibujarProductosCaja();
-  dibujarCarrito();
 }
 
 function calcularTotalesVenta() {
@@ -1089,8 +1150,9 @@ async function confirmarVenta() {
     await descontarStockVenta(lineasVenta, lugar);
 
     carrito = [];
-    dibujarCarrito();
+    productosDesplegadosCaja.clear();
     dibujarProductosCaja();
+    dibujarCarrito();
     dibujarCatalogo();
     dibujarInventario();
     actualizarInicio();
@@ -1113,6 +1175,7 @@ function cancelarVenta() {
   if (!carrito.length) return;
   if (!confirm("¿Cancelar esta venta y vaciar el carrito?")) return;
   carrito = [];
+  productosDesplegadosCaja.clear();
   dibujarProductosCaja();
   dibujarCarrito();
 }
@@ -1186,30 +1249,22 @@ function obtenerVentasFiltradas() {
   });
 }
 
-// ==========================================
-// REGISTRO - RESUMEN AL INICIO (5 métricas)
-// ==========================================
-
 function actualizarResumenRegistro(lista) {
   const cont = document.getElementById("resumenRegistro");
   if (!cont) return;
 
   const operaciones = lista.length;
-
   const sacosVendidos = lista.reduce((sum, v) => {
     return sum + (v.productos || []).reduce(
       (s, l) => s + (Number(l.cantidad) || 0), 0
     );
   }, 0);
-
   const ventasCUP = lista
     .filter(v => (v.moneda || "CUP") === "CUP")
     .reduce((s, v) => s + (Number(v.total) || 0), 0);
-
   const ventasUSD = lista
     .filter(v => v.moneda === "USD")
     .reduce((s, v) => s + (Number(v.total) || 0), 0);
-
   const salarioAcumulado = lista.reduce(
     (s, v) => s + (Number(v.salario) || 0), 0
   );
