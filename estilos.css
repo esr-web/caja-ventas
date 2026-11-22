@@ -903,3 +903,128 @@ button:focus-visible {
     font-size: 18px;
   }
 }
+/* ============================================================
+   VARIANTES DE PRODUCTO
+   ============================================================ */
+
+.variantes-bloque {
+  margin-top: 15px;
+  padding: 14px;
+  background: var(--fondo);
+  border-radius: 12px;
+  border: 1px solid var(--borde);
+}
+
+.variantes-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.variantes-cabecera h4 {
+  font-size: 14px;
+  color: var(--negro);
+}
+
+.nota-variantes {
+  font-size: 11px;
+  color: var(--gris);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.variante-fila {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.variante-fila input {
+  margin-bottom: 8px;
+}
+
+.variante-fila-precios {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.variante-fila-precios > div {
+  min-width: 0;
+}
+
+.variante-fila-precios input {
+  margin-bottom: 0;
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.variante-linea {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--borde);
+}
+
+.variante-linea:last-child {
+  border-bottom: none;
+}
+
+.variante-etiqueta {
+  font-weight: bold;
+  color: var(--negro);
+}
+
+.variante-precios {
+  color: var(--verde);
+  font-variant-numeric: tabular-nums;
+}
+
+.variantes-lista {
+  margin-top: 8px;
+}
+
+.producto-con-variantes {
+  align-items: flex-start;
+}
+
+/* Modal de variantes */
+.modal-fondo {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.modal-caja {
+  background: var(--blanco);
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+
+.modal-caja h3 {
+  margin-bottom: 6px;
+  font-size: 18px;
+}
+
+.modal-sub {
+  color: var(--gris);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
