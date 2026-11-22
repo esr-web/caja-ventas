@@ -1,5 +1,5 @@
 // ==========================================
-// CAJA - APLICACIÓN PRINCIPAL
+// CAJA - APLICACIÓN PRINCIPAL (con variantes)
 // ==========================================
 
 let productos = [];
@@ -8,17 +8,16 @@ let ventas = [];
 let entradas = [];
 
 let productoEnEdicion = null;
-
 let porcentajeSalario = 5;
 let pantallaActual = "inicio";
 let monedaVenta = "CUP";
+let variantePendienteProductoId = null; // para el modal
 
 const CLAVE_EFECTIVO = "caja_conteo_efectivo_v1";
-
 const LUGARES_VENTA = ["Almacén", "Tienda", "Casa"];
 
 // ==========================================
-// FORMATEO Y ESCAPE
+// UTILIDADES
 // ==========================================
 
 function formato(valor) {
@@ -30,29 +29,18 @@ function formato(valor) {
 
 function escapar(valor) {
   return String(valor ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-
-// ==========================================
-// FECHAS
-// ==========================================
 
 function fechaLocal() {
   const f = new Date();
   return `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,"0")}-${String(f.getDate()).padStart(2,"0")}`;
 }
 
-function fechaParaComparar(fecha) {
-  return fecha ? String(fecha).slice(0, 10) : "";
-}
-
-function mesLocal(fecha = new Date()) {
-  return `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,"0")}`;
-}
+function fechaParaComparar(fecha) { return fecha ? String(fecha).slice(0, 10) : ""; }
+function mesLocal(fecha = new Date()) { return `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,"0")}`; }
 
 function mostrarFecha(fecha) {
   if (!fecha) return "";
@@ -72,9 +60,38 @@ function mostrarFechaHora(iso) {
   return `${dd}/${mm}/${yy} ${hh}:${mi}`;
 }
 
+function generarIdVariante() {
+  return "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
 // ==========================================
 // ADAPTADORES
 // ==========================================
+
+function normalizarVariantes(producto) {
+  // Si tiene variantes, normalizarlas.
+  if (Array.isArray(producto.variantes) && producto.variantes.length) {
+    return producto.variantes.map(v => ({
+      id: String(v.id || generarIdVariante()),
+      etiqueta: String(v.etiqueta || ""),
+      precioCUP: Number(v.precioCUP) || 0,
+      precioUSD: Number(v.precioUSD) || 0
+    }));
+  }
+
+  // Productos viejos: crear una variante "única" con los precios antiguos.
+  const pCUP = Number(producto.precioCUP ?? producto.precio) || 0;
+  const pUSD = Number(producto.precioUSD) || 0;
+
+  if (pCUP === 0 && pUSD === 0) return [];
+
+  return [{
+    id: generarIdVariante(),
+    etiqueta: "Único",
+    precioCUP: pCUP,
+    precioUSD: pUSD
+  }];
+}
 
 function adaptarProducto(producto) {
   if (!producto || typeof producto !== "object") return null;
@@ -85,12 +102,11 @@ function adaptarProducto(producto) {
     id: producto.id,
     nombre: String(producto.nombre || ""),
     descripcion: String(producto.descripcion || ""),
-    precioCUP: Number(producto.precioCUP ?? producto.precio) || 0,
-    precioUSD: Number(producto.precioUSD) || 0,
     stock: {
       tienda: Number(stock.tienda) || 0,
       casa: Number(stock.casa) || 0
-    }
+    },
+    variantes: normalizarVariantes(producto)
   };
 }
 
@@ -108,6 +124,8 @@ function adaptarVenta(venta) {
         return {
           ...linea,
           idProducto,
+          idVariante: linea.idVariante || null,
+          etiquetaVariante: String(linea.etiquetaVariante || ""),
           nombre: String(linea.nombre || "Producto"),
           cantidad,
           precio,
@@ -144,19 +162,34 @@ function adaptarEntrada(e) {
 }
 
 // ==========================================
-// PRECIOS Y STOCK
+// PRECIOS / VARIANTES
 // ==========================================
 
+// Obtener precio de una variante concreta según moneda.
+function precioVariante(variante, moneda = monedaVenta) {
+  if (!variante) return 0;
+  return moneda === "USD" ? Number(variante.precioUSD) || 0 : Number(variante.precioCUP) || 0;
+}
+
+// Para compatibilidad: precio "principal" (primera variante).
 function precioProducto(producto, moneda = monedaVenta) {
-  if (!producto) return 0;
-  return moneda === "USD"
-    ? Number(producto.precioUSD) || 0
-    : Number(producto.precioCUP) || 0;
+  if (!producto || !producto.variantes?.length) return 0;
+  return precioVariante(producto.variantes[0], moneda);
 }
 
 function precioCUPProducto(producto) {
-  return producto ? (Number(producto.precioCUP) || 0) : 0;
+  return precioProducto(producto, "CUP");
 }
+
+// Nombre con etiqueta de variante para mostrar en carrito/registro.
+function nombreConVariante(nombre, etiqueta) {
+  if (!etiqueta || etiqueta === "Único") return nombre;
+  return `${nombre} (${etiqueta})`;
+}
+
+// ==========================================
+// STOCK
+// ==========================================
 
 function claveStockLugar(lugar) {
   if (lugar === "Tienda") return "tienda";
@@ -176,23 +209,27 @@ async function descontarStockVenta(lineas, lugar) {
   const clave = claveStockLugar(lugar);
   if (!clave) return;
 
+  // Agrupar por idProducto (por si hay varias variantes del mismo producto).
+  const porProducto = {};
   for (const linea of lineas) {
-    const producto = productos.find(p => Number(p.id) === Number(linea.idProducto));
+    const idP = Number(linea.idProducto);
+    porProducto[idP] = (porProducto[idP] || 0) + Number(linea.cantidad || 0);
+  }
+
+  for (const idP in porProducto) {
+    const producto = productos.find(p => Number(p.id) === Number(idP));
     if (!producto) continue;
 
     const actual = Number(producto.stock?.[clave]) || 0;
-    producto.stock[clave] = Math.max(0, actual - Number(linea.cantidad || 0));
+    producto.stock[clave] = Math.max(0, actual - porProducto[idP]);
 
-    try {
-      await guardarDato("productos", producto);
-    } catch (e) {
-      console.warn("No se pudo actualizar stock:", e);
-    }
+    try { await guardarDato("productos", producto); }
+    catch (e) { console.warn(e); }
   }
 }
 
 // ==========================================
-// INICIAR
+// INICIO
 // ==========================================
 
 async function iniciarAplicacion() {
@@ -214,15 +251,10 @@ async function iniciarAplicacion() {
   actualizarEstadoConexion();
 }
 
-// ==========================================
-// CONEXIÓN
-// ==========================================
-
 function actualizarEstadoConexion() {
   const punto = document.getElementById("puntoConexion");
   const texto = document.getElementById("textoConexion");
   if (!punto) return;
-
   if (navigator.onLine) {
     punto.style.background = "#58c985";
     if (texto) texto.textContent = "En línea";
@@ -252,13 +284,11 @@ function navegar(nombre) {
 
   const id = pantallas[nombre];
   if (!id) return;
-
   const destino = document.getElementById(id);
   if (!destino) return;
 
   document.querySelectorAll(".pantalla").forEach(p => p.classList.remove("activa"));
   destino.classList.add("activa");
-
   pantallaActual = nombre;
 
   document.querySelectorAll(".nav-item").forEach(b => {
@@ -281,7 +311,7 @@ function cambiarPantalla(n) { navegar(n); }
 function irPantalla(n) { navegar(n); }
 
 // ==========================================
-// PRODUCTOS
+// PRODUCTOS - CATÁLOGO
 // ==========================================
 
 function mostrarProductos() {
@@ -298,44 +328,129 @@ function dibujarCatalogo() {
     return;
   }
 
-  lista.innerHTML = productos.map(producto => `
-    <div class="producto">
-      <div class="producto-info">
-        <h3>${escapar(producto.nombre)}</h3>
-        <p>CUP: <strong>${formato(producto.precioCUP)}</strong> · USD: <strong>${formato(producto.precioUSD)}</strong></p>
-        <p class="stock-linea">
-          Tienda: <strong>${producto.stock.tienda}</strong> ·
-          Casa: <strong>${producto.stock.casa}</strong> ·
-          Almacén: <strong>∞</strong>
-        </p>
-      </div>
+  lista.innerHTML = productos.map(producto => {
+    const variantesHtml = producto.variantes.length
+      ? producto.variantes.map(v => `
+          <div class="variante-linea">
+            <span class="variante-etiqueta">${escapar(v.etiqueta || "Único")}</span>
+            <span class="variante-precios">
+              ${formato(v.precioCUP)} CUP · ${formato(v.precioUSD)} USD
+            </span>
+          </div>
+        `).join("")
+      : `<div class="variante-linea"><em>Sin variantes</em></div>`;
 
-      <div class="acciones-producto">
-        <button type="button" class="btn-secundario"
-                onclick="editarProducto(${Number(producto.id)})">EDITAR</button>
-        <button type="button" class="btn-secundario"
-                onclick="eliminarProducto(${Number(producto.id)})">ELIMINAR</button>
+    return `
+      <div class="producto producto-con-variantes">
+        <div class="producto-info">
+          <h3>${escapar(producto.nombre)}</h3>
+          <p class="stock-linea">
+            Tienda: <strong>${producto.stock.tienda}</strong> ·
+            Casa: <strong>${producto.stock.casa}</strong> ·
+            Almacén: <strong>∞</strong>
+          </p>
+          <div class="variantes-lista">${variantesHtml}</div>
+        </div>
+
+        <div class="acciones-producto">
+          <button type="button" class="btn-secundario"
+                  onclick="editarProducto(${Number(producto.id)})">EDITAR</button>
+          <button type="button" class="btn-secundario"
+                  onclick="eliminarProducto(${Number(producto.id)})">ELIMINAR</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ==========================================
+// PRODUCTOS - FORMULARIO VARIANTES
+// ==========================================
+
+function crearFilaVarianteHTML(variante = null) {
+  const id = variante?.id || generarIdVariante();
+  const etiqueta = variante?.etiqueta || "";
+  const cup = variante?.precioCUP ?? "";
+  const usd = variante?.precioUSD ?? "";
+
+  return `
+    <div class="variante-fila" data-id="${escapar(id)}">
+      <input type="text" class="variante-input-etiqueta"
+             placeholder="Presentación (ej. 1 kg)" value="${escapar(etiqueta)}">
+
+      <div class="variante-fila-precios">
+        <div>
+          <label style="font-size:11px">Precio CUP</label>
+          <input type="number" class="variante-input-cup" min="0" step="0.01"
+                 inputmode="decimal" placeholder="0.00" value="${cup}">
+        </div>
+        <div>
+          <label style="font-size:11px">Precio USD</label>
+          <input type="number" class="variante-input-usd" min="0" step="0.01"
+                 inputmode="decimal" placeholder="0.00" value="${usd}">
+        </div>
+        <button type="button" class="btn-peligro variante-btn-quitar"
+                style="padding:10px 12px;align-self:flex-end"
+                onclick="this.closest('.variante-fila').remove()">✕</button>
       </div>
     </div>
-  `).join("");
+  `;
 }
+
+function agregarVarianteFormulario(variante = null) {
+  const cont = document.getElementById("listaVariantesFormulario");
+  if (!cont) return;
+
+  // Si es la primera vez (sin variantes), quitar el aviso de "sin variantes".
+  const aviso = cont.querySelector(".sin-variantes-aviso");
+  if (aviso) aviso.remove();
+
+  cont.insertAdjacentHTML("beforeend", crearFilaVarianteHTML(variante));
+}
+
+function leerVariantesFormulario() {
+  const cont = document.getElementById("listaVariantesFormulario");
+  if (!cont) return [];
+
+  const filas = cont.querySelectorAll(".variante-fila");
+  const variantes = [];
+
+  filas.forEach(fila => {
+    const etiqueta = fila.querySelector(".variante-input-etiqueta").value.trim();
+    const cup = Number(fila.querySelector(".variante-input-cup").value) || 0;
+    const usd = Number(fila.querySelector(".variante-input-usd").value) || 0;
+
+    if (!etiqueta && cup === 0 && usd === 0) return; // fila vacía
+
+    variantes.push({
+      id: fila.dataset.id || generarIdVariante(),
+      etiqueta: etiqueta || "Único",
+      precioCUP: cup,
+      precioUSD: usd
+    });
+  });
+
+  return variantes;
+}
+
+function limpiarVariantesFormulario() {
+  const cont = document.getElementById("listaVariantesFormulario");
+  if (cont) cont.innerHTML = "";
+}
+
+// ==========================================
+// PRODUCTOS - GUARDAR
+// ==========================================
 
 async function guardarProducto() {
   const nombreInput = document.getElementById("nombreProducto");
-  const precioUSDInput = document.getElementById("precioProductoUSD");
-  const precioCUPInput = document.getElementById("precioProductoCUP");
   const stockTiendaInput = document.getElementById("stockTienda");
   const stockCasaInput = document.getElementById("stockCasa");
 
-  if (!nombreInput || !precioUSDInput || !precioCUPInput) {
-    alert("No se encontraron los campos del producto.");
-    return;
-  }
+  if (!nombreInput) return;
 
   const estabaEditando = productoEnEdicion !== null;
   const nombre = nombreInput.value.trim();
-  const precioUSD = Number(precioUSDInput.value);
-  const precioCUP = Number(precioCUPInput.value);
   const stockTienda = Math.max(0, Math.floor(Number(stockTiendaInput?.value) || 0));
   const stockCasa = Math.max(0, Math.floor(Number(stockCasaInput?.value) || 0));
 
@@ -345,20 +460,33 @@ async function guardarProducto() {
     return;
   }
 
-  if (
-    !Number.isFinite(precioUSD) || !Number.isFinite(precioCUP) ||
-    precioUSD < 0 || precioCUP < 0 ||
-    (precioUSD === 0 && precioCUP === 0)
-  ) {
-    alert("Introduce al menos un precio válido.");
+  const variantes = leerVariantesFormulario();
+
+  if (!variantes.length) {
+    alert("Añade al menos una presentación con precio.");
     return;
   }
 
-  const producto = { nombre, precioUSD, precioCUP, stock: { tienda: stockTienda, casa: stockCasa } };
+  // Validar que al menos una variante tenga algún precio > 0.
+  const conPrecio = variantes.some(v => v.precioCUP > 0 || v.precioUSD > 0);
+  if (!conPrecio) {
+    alert("Al menos una presentación debe tener un precio mayor que 0.");
+    return;
+  }
+
+  const producto = {
+    nombre,
+    stock: { tienda: stockTienda, casa: stockCasa },
+    variantes
+  };
 
   if (estabaEditando) {
     producto.id = productoEnEdicion.id;
-    Object.assign(producto, productoEnEdicion, { nombre, precioUSD, precioCUP, stock: { tienda: stockTienda, casa: stockCasa } });
+    Object.assign(producto, productoEnEdicion, {
+      nombre,
+      stock: { tienda: stockTienda, casa: stockCasa },
+      variantes
+    });
   }
 
   try {
@@ -384,6 +512,10 @@ async function guardarProducto() {
   }
 }
 
+// ==========================================
+// PRODUCTOS - EDITAR / CANCELAR / ELIMINAR
+// ==========================================
+
 function editarProducto(id) {
   const producto = productos.find(p => Number(p.id) === Number(id));
   if (!producto) return;
@@ -391,10 +523,11 @@ function editarProducto(id) {
   productoEnEdicion = { ...producto };
 
   document.getElementById("nombreProducto").value = producto.nombre || "";
-  document.getElementById("precioProductoUSD").value = producto.precioUSD || 0;
-  document.getElementById("precioProductoCUP").value = producto.precioCUP || 0;
   document.getElementById("stockTienda").value = producto.stock.tienda || 0;
   document.getElementById("stockCasa").value = producto.stock.casa || 0;
+
+  limpiarVariantesFormulario();
+  producto.variantes.forEach(v => agregarVarianteFormulario(v));
 
   document.getElementById("btnGuardarProducto").textContent = "ACTUALIZAR PRODUCTO";
   document.getElementById("btnCancelarEdicion").style.display = "block";
@@ -406,19 +539,20 @@ function editarProducto(id) {
 function cancelarEdicion() {
   productoEnEdicion = null;
 
-  ["nombreProducto","precioProductoCUP","precioProductoUSD","stockTienda","stockCasa"]
-    .forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = "";
-    });
+  ["nombreProducto", "stockTienda", "stockCasa"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  limpiarVariantesFormulario();
 
   const bg = document.getElementById("btnGuardarProducto");
   const bc = document.getElementById("btnCancelarEdicion");
-  const t  = document.getElementById("tituloFormularioProducto");
+  const t = document.getElementById("tituloFormularioProducto");
 
   if (bg) bg.textContent = "GUARDAR PRODUCTO";
   if (bc) bc.style.display = "none";
-  if (t)  t.textContent = "Añadir producto";
+  if (t) t.textContent = "Añadir producto";
 }
 
 async function eliminarProducto(id) {
@@ -454,7 +588,7 @@ function calcularTotalesInventario() {
   let tienda = 0, casa = 0;
   productos.forEach(p => {
     tienda += Number(p.stock?.tienda) || 0;
-    casa   += Number(p.stock?.casa)   || 0;
+    casa += Number(p.stock?.casa) || 0;
   });
   return { tienda, casa, almacen: Infinity, productos: productos.length };
 }
@@ -462,11 +596,7 @@ function calcularTotalesInventario() {
 function actualizarInventarioInicio() {
   const cont = document.getElementById("inventarioInicio");
   if (!cont) return;
-
-  if (!productos.length) {
-    cont.innerHTML = "";
-    return;
-  }
+  if (!productos.length) { cont.innerHTML = ""; return; }
 
   const totales = calcularTotalesInventario();
 
@@ -477,9 +607,7 @@ function actualizarInventarioInicio() {
       <div class="inventario-inicio-total tienda"><small>Tienda</small><strong>${totales.tienda}</strong></div>
       <div class="inventario-inicio-total casa"><small>Casa</small><strong>${totales.casa}</strong></div>
     </div>
-    <button type="button" class="ver-todos" onclick="navegar('inventario')">
-      Ver inventario detallado →
-    </button>
+    <button type="button" class="ver-todos" onclick="navegar('inventario')">Ver inventario detallado →</button>
   `;
 }
 
@@ -521,16 +649,8 @@ async function registrarEntradaInventario() {
   const area = selArea.value;
   const cantidad = Math.floor(Number(inputCantidad.value));
 
-  if (!idProducto) {
-    alert("Selecciona un producto.");
-    return;
-  }
-
-  if (area !== "Tienda" && area !== "Casa") {
-    alert("Área inválida. Elige Tienda o Casa.");
-    return;
-  }
-
+  if (!idProducto) { alert("Selecciona un producto."); return; }
+  if (area !== "Tienda" && area !== "Casa") { alert("Área inválida."); return; }
   if (!Number.isFinite(cantidad) || cantidad <= 0) {
     alert("La cantidad debe ser mayor que 0.");
     inputCantidad.focus();
@@ -538,19 +658,14 @@ async function registrarEntradaInventario() {
   }
 
   const producto = productos.find(p => Number(p.id) === idProducto);
-  if (!producto) {
-    alert("No se encontró el producto.");
-    return;
-  }
+  if (!producto) { alert("Producto no encontrado."); return; }
 
   const clave = claveStockLugar(area);
 
   try {
-    // 1. Sumar stock al producto.
     producto.stock[clave] = (Number(producto.stock[clave]) || 0) + cantidad;
     await guardarDato("productos", producto);
 
-    // 2. Registrar la entrada con fecha/hora.
     const entrada = {
       idProducto: producto.id,
       nombre: producto.nombre,
@@ -563,16 +678,13 @@ async function registrarEntradaInventario() {
     entrada.id = id;
     entradas.push(adaptarEntrada(entrada));
 
-    // 3. Refrescar UI.
     dibujarInventario();
     dibujarEntradas();
     dibujarCatalogo();
     actualizarInicio();
 
     inputCantidad.value = "1";
-
     alert(`Entrada registrada: +${cantidad} de "${producto.nombre}" en ${area}.`);
-
   } catch (e) {
     console.error(e);
     alert("No se pudo registrar la entrada.");
@@ -606,17 +718,23 @@ function dibujarInventario() {
     return;
   }
 
-  lista.innerHTML = filtrados.map(p => `
-    <div class="inventario-fila">
-      <div class="inventario-fila-nombre">
-        <h3>${escapar(p.nombre)}</h3>
-        <small>CUP ${formato(p.precioCUP)} · USD ${formato(p.precioUSD)}</small>
+  lista.innerHTML = filtrados.map(p => {
+    const variantesTxt = p.variantes.length
+      ? p.variantes.map(v => v.etiqueta || "Único").join(" · ")
+      : "—";
+
+    return `
+      <div class="inventario-fila">
+        <div class="inventario-fila-nombre">
+          <h3>${escapar(p.nombre)}</h3>
+          <small>${escapar(variantesTxt)}</small>
+        </div>
+        <div class="inventario-col almacen"><small>Almacén</small><strong>∞</strong></div>
+        <div class="inventario-col tienda"><small>Tienda</small><strong>${p.stock.tienda}</strong></div>
+        <div class="inventario-col casa"><small>Casa</small><strong>${p.stock.casa}</strong></div>
       </div>
-      <div class="inventario-col almacen"><small>Almacén</small><strong>∞</strong></div>
-      <div class="inventario-col tienda"><small>Tienda</small><strong>${p.stock.tienda}</strong></div>
-      <div class="inventario-col casa"><small>Casa</small><strong>${p.stock.casa}</strong></div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 function dibujarEntradas() {
@@ -628,8 +746,7 @@ function dibujarEntradas() {
     return;
   }
 
-  const lista = entradas
-    .slice()
+  const lista = entradas.slice()
     .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))
     .slice(0, 100);
 
@@ -639,10 +756,7 @@ function dibujarEntradas() {
         <h4>${escapar(e.nombre)}</h4>
         <small>${escapar(e.area)} · ${escapar(mostrarFechaHora(e.fecha))}</small>
       </div>
-      <div class="entrada-cantidad">
-        +${e.cantidad}
-        <small>uds</small>
-      </div>
+      <div class="entrada-cantidad">+${e.cantidad}<small>uds</small></div>
     </div>
   `).join("");
 }
@@ -652,29 +766,28 @@ function dibujarEntradas() {
 // ==========================================
 
 function exportarInventarioPDF() {
-  if (!productos.length) {
-    alert("No hay productos para exportar.");
-    return;
-  }
+  if (!productos.length) { alert("No hay productos para exportar."); return; }
 
   const totales = calcularTotalesInventario();
   const generado = mostrarFechaHora(new Date().toISOString());
 
-  // --- Filas del stock actual ---
-  const filasStock = productos.map(p => `
-    <tr>
-      <td>${escapar(p.nombre)}</td>
-      <td class="numero">${formato(p.precioCUP)}</td>
-      <td class="numero">${formato(p.precioUSD)}</td>
-      <td class="numero">∞</td>
-      <td class="numero">${p.stock.tienda}</td>
-      <td class="numero">${p.stock.casa}</td>
-    </tr>
-  `).join("");
+  const filasStock = productos.map(p => {
+    const variantesTxt = p.variantes.map(v =>
+      `${escapar(v.etiqueta || "Único")}: ${formato(v.precioCUP)} CUP / ${formato(v.precioUSD)} USD`
+    ).join("<br>") || "—";
 
-  // --- Filas del historial de entradas (ordenadas por fecha desc) ---
-  const entradasOrdenadas = entradas
-    .slice()
+    return `
+      <tr>
+        <td>${escapar(p.nombre)}</td>
+        <td>${variantesTxt}</td>
+        <td class="numero">∞</td>
+        <td class="numero">${p.stock.tienda}</td>
+        <td class="numero">${p.stock.casa}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const entradasOrdenadas = entradas.slice()
     .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
 
   const filasEntradas = entradasOrdenadas.length
@@ -686,94 +799,61 @@ function exportarInventarioPDF() {
           <td class="numero">+${e.cantidad}</td>
         </tr>
       `).join("")
-    : `<tr><td colspan="4" style="text-align:center;color:#999">Sin entradas registradas</td></tr>`;
+    : `<tr><td colspan="4" style="text-align:center;color:#999">Sin entradas</td></tr>`;
 
   const documento = `
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-      <meta charset="UTF-8">
-      <title>Inventario - CAJA</title>
-      <style>
-        * { box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; color: #242424; margin: 25px; }
-        h1 { margin-bottom: 5px; font-size: 25px; }
-        h2 { font-size: 16px; margin: 22px 0 10px; color: #242424; border-bottom: 2px solid #f28c28; padding-bottom: 5px; }
-        .subtitulo { color: #777; margin-bottom: 20px; font-size: 13px; }
-        .resumen { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
-        .resumen div { border: 1px solid #ddd; border-radius: 8px; padding: 12px; flex: 1; min-width: 120px; }
-        .resumen small { display: block; font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: .4px; }
-        .resumen strong { display: block; margin-top: 6px; font-size: 18px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
-        th { background: #222; color: white; }
-        .numero { text-align: right; white-space: nowrap; }
-        tr { page-break-inside: avoid; }
-        .pie { margin-top: 30px; color: #777; font-size: 10px; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <h1>CAJA | Inventario</h1>
-      <div class="subtitulo">Informe generado el ${escapar(generado)}</div>
+    <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+    <title>Inventario - CAJA</title><style>
+      *{box-sizing:border-box}
+      body{font-family:Arial,sans-serif;color:#242424;margin:25px}
+      h1{margin-bottom:5px;font-size:25px}
+      h2{font-size:16px;margin:22px 0 10px;border-bottom:2px solid #f28c28;padding-bottom:5px}
+      .subtitulo{color:#777;margin-bottom:20px;font-size:13px}
+      .resumen{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+      .resumen div{border:1px solid #ddd;border-radius:8px;padding:12px;flex:1;min-width:120px}
+      .resumen small{display:block;font-size:10px;color:#777;text-transform:uppercase}
+      .resumen strong{display:block;margin-top:6px;font-size:18px}
+      table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px}
+      th,td{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}
+      th{background:#222;color:white}
+      .numero{text-align:right;white-space:nowrap}
+      tr{page-break-inside:avoid}
+      .pie{margin-top:30px;color:#777;font-size:10px;text-align:center}
+    </style></head><body>
+    <h1>CAJA | Inventario</h1>
+    <div class="subtitulo">Informe generado el ${escapar(generado)}</div>
+    <div class="resumen">
+      <div><small>Productos</small><strong>${totales.productos}</strong></div>
+      <div><small>Almacén</small><strong>∞</strong></div>
+      <div><small>Total Tienda</small><strong>${totales.tienda} uds</strong></div>
+      <div><small>Total Casa</small><strong>${totales.casa} uds</strong></div>
+    </div>
 
-      <div class="resumen">
-        <div><small>Productos</small><strong>${totales.productos}</strong></div>
-        <div><small>Almacén</small><strong>∞</strong></div>
-        <div><small>Total Tienda</small><strong>${totales.tienda} uds</strong></div>
-        <div><small>Total Casa</small><strong>${totales.casa} uds</strong></div>
-      </div>
+    <h2>Stock actual por producto</h2>
+    <table>
+      <thead><tr>
+        <th>Producto</th><th>Presentaciones / precios</th>
+        <th>Almacén</th><th>Tienda</th><th>Casa</th>
+      </tr></thead>
+      <tbody>${filasStock}</tbody>
+    </table>
 
-      <h2>Stock actual por producto</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Precio CUP</th>
-            <th>Precio USD</th>
-            <th>Almacén</th>
-            <th>Tienda</th>
-            <th>Casa</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filasStock}
-        </tbody>
-      </table>
+    <h2>Historial de entradas</h2>
+    <table>
+      <thead><tr>
+        <th>Fecha y hora</th><th>Producto</th><th>Área</th><th>Cantidad</th>
+      </tr></thead>
+      <tbody>${filasEntradas}</tbody>
+    </table>
 
-      <h2>Historial de entradas</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha y hora</th>
-            <th>Producto</th>
-            <th>Área</th>
-            <th>Cantidad</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filasEntradas}
-        </tbody>
-      </table>
-
-      <div class="pie">Sistema de gestión de ventas CAJA</div>
-
-      <script>
-        window.onload = function() { window.print(); };
-      <\/script>
-    </body>
-    </html>
+    <div class="pie">Sistema de gestión de ventas CAJA</div>
+    <script>window.onload=function(){window.print()};<\/script>
+    </body></html>
   `;
 
-  const ventana = window.open("", "_blank");
-
-  if (!ventana) {
-    alert("El navegador bloqueó la ventana de impresión.\n\nPermite las ventanas emergentes.");
-    return;
-  }
-
-  ventana.document.open();
-  ventana.document.write(documento);
-  ventana.document.close();
+  const v = window.open("", "_blank");
+  if (!v) { alert("El navegador bloqueó la ventana."); return; }
+  v.document.open(); v.document.write(documento); v.document.close();
 }
 
 // ==========================================
@@ -783,10 +863,8 @@ function exportarInventarioPDF() {
 function mostrarCaja() {
   const f = document.getElementById("fechaVenta");
   if (f && !f.value) f.value = fechaLocal();
-
   const p = document.getElementById("porcentajeVenta");
   if (p) p.value = porcentajeSalario;
-
   const m = document.getElementById("monedaSeleccionada");
   if (m) m.value = monedaVenta;
 
@@ -800,24 +878,21 @@ function cambiarMonedaVenta() {
 
   const anterior = monedaVenta;
   const nueva = selector.value;
+  if (nueva !== "CUP" && nueva !== "USD") { selector.value = anterior; return; }
 
-  if (nueva !== "CUP" && nueva !== "USD") {
-    selector.value = anterior;
-    return;
-  }
-
+  // Recalcular precios del carrito según variante.
   const precios = [];
-
   for (const linea of carrito) {
     const producto = productos.find(p => Number(p.id) === Number(linea.idProducto));
-    if (!producto) {
-      alert("No se encontró uno de los productos del carrito.");
+    const variante = producto?.variantes?.find(v => v.id === linea.idVariante);
+    if (!variante) {
+      alert("No se encontró una variante del carrito.");
       selector.value = anterior;
       return;
     }
-    const np = Number(precioProducto(producto, nueva));
+    const np = Number(precioVariante(variante, nueva));
     if (!Number.isFinite(np) || np <= 0) {
-      alert(`El producto ${producto.nombre} no tiene precio en ${nueva}.`);
+      alert(`La presentación "${variante.etiqueta}" no tiene precio en ${nueva}.`);
       selector.value = anterior;
       return;
     }
@@ -840,7 +915,6 @@ function dibujarProductosCaja() {
 
   const busquedaInput = document.getElementById("buscarProductoCaja");
   const busqueda = busquedaInput ? busquedaInput.value.trim().toLowerCase() : "";
-
   const lugarInput = document.getElementById("lugarVenta");
   const lugar = lugarInput ? lugarInput.value : "Tienda";
 
@@ -854,16 +928,20 @@ function dibujarProductosCaja() {
   }
 
   lista.innerHTML = filtrados.map(producto => {
-    const precio = precioProducto(producto, monedaVenta);
     const stock = stockDisponible(producto, lugar);
     const stockTexto = stock === Infinity ? "∞" : stock;
     const sinStock = stock !== Infinity && stock <= 0;
+
+    const variantes = producto.variantes || [];
+    const preciosHtml = variantes.length === 1
+      ? `<div class="precio">${formato(precioVariante(variantes[0], monedaVenta))} ${monedaVenta} <small>(${escapar(variantes[0].etiqueta)})</small></div>`
+      : `<div class="precio">Desde ${formato(Math.min(...variantes.map(v => precioVariante(v, monedaVenta))))} ${monedaVenta}</div>`;
 
     return `
       <div class="producto">
         <div class="producto-info">
           <h3>${escapar(producto.nombre)}</h3>
-          <div class="precio">${formato(precio)} ${monedaVenta}</div>
+          ${preciosHtml}
           <small class="stock-linea ${sinStock ? "sin-stock" : ""}">
             Stock ${lugar}: <strong>${stockTexto}</strong>
           </small>
@@ -872,7 +950,7 @@ function dibujarProductosCaja() {
         <button type="button" class="btn-principal"
                 style="width:auto;min-width:100px;padding:12px 14px;font-size:13px"
                 ${sinStock ? "disabled" : ""}
-                onclick="agregarAlCarrito(${Number(producto.id)})">
+                onclick="agregarProductoAlCarrito(${Number(producto.id)})">
           ${sinStock ? "SIN STOCK" : "AGREGAR"}
         </button>
       </div>
@@ -880,24 +958,99 @@ function dibujarProductosCaja() {
   }).join("");
 }
 
-function agregarAlCarrito(id) {
-  const producto = productos.find(p => Number(p.id) === Number(id));
+function agregarProductoAlCarrito(idProducto) {
+  const producto = productos.find(p => Number(p.id) === Number(idProducto));
   if (!producto) return;
+
+  const variantes = producto.variantes || [];
+
+  if (!variantes.length) {
+    alert("Este producto no tiene presentaciones con precio.");
+    return;
+  }
+
+  if (variantes.length === 1) {
+    agregarVarianteAlCarrito(producto.id, variantes[0].id);
+    return;
+  }
+
+  abrirModalVariante(producto);
+}
+
+// ==========================================
+// MODAL DE VARIANTE
+// ==========================================
+
+function abrirModalVariante(producto) {
+  variantePendienteProductoId = producto.id;
+
+  const modal = document.getElementById("modalVariante");
+  const titulo = document.getElementById("modalVarianteTitulo");
+  const sub = document.getElementById("modalVarianteSubtitulo");
+  const lista = document.getElementById("modalVarianteLista");
+
+  if (!modal || !lista) return;
+
+  if (titulo) titulo.textContent = producto.nombre;
+  if (sub) sub.textContent = "Elige la presentación que se vende:";
+
+  lista.innerHTML = producto.variantes.map(v => `
+    <button type="button" class="btn-secundario"
+            style="width:100%;margin-bottom:8px;text-align:left;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:10px"
+            onclick="seleccionarVariante('${escapar(v.id)}')">
+      <span><strong>${escapar(v.etiqueta || "Único")}</strong></span>
+      <span style="color:#16834a;font-weight:bold">${formato(precioVariante(v, monedaVenta))} ${monedaVenta}</span>
+    </button>
+  `).join("");
+
+  modal.style.display = "flex";
+}
+
+function cerrarModalVariante() {
+  const modal = document.getElementById("modalVariante");
+  if (modal) modal.style.display = "none";
+  variantePendienteProductoId = null;
+}
+
+function seleccionarVariante(idVariante) {
+  if (!variantePendienteProductoId) return;
+  const idP = variantePendienteProductoId;
+  cerrarModalVariante();
+  agregarVarianteAlCarrito(idP, idVariante);
+}
+
+// ==========================================
+// CARRITO
+// ==========================================
+
+function agregarVarianteAlCarrito(idProducto, idVariante) {
+  const producto = productos.find(p => Number(p.id) === Number(idProducto));
+  if (!producto) return;
+
+  const variante = producto.variantes.find(v => v.id === idVariante);
+  if (!variante) { alert("Variante no encontrada."); return; }
 
   const lugarInput = document.getElementById("lugarVenta");
   const lugar = lugarInput ? lugarInput.value : "Tienda";
 
-  const precio = Number(precioProducto(producto, monedaVenta));
+  const precio = Number(precioVariante(variante, monedaVenta));
   if (!Number.isFinite(precio) || precio <= 0) {
-    alert(`El producto no tiene precio válido en ${monedaVenta}.`);
+    alert(`La presentación "${variante.etiqueta}" no tiene precio en ${monedaVenta}.`);
     return;
   }
 
-  const existente = carrito.find(l => Number(l.idProducto) === Number(id));
-  const enCarrito = existente ? existente.cantidad : 0;
+  const existente = carrito.find(l =>
+    Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante
+  );
+
+  // El stock se valida sobre el TOTAL del producto (sumando variantes).
+  const totalEnCarrito = carrito
+    .filter(l => Number(l.idProducto) === Number(idProducto))
+    .reduce((s, l) => s + Number(l.cantidad), 0);
+
   const disponible = stockDisponible(producto, lugar);
 
-  if (disponible !== Infinity && enCarrito + 1 > disponible) {
+  if (disponible !== Infinity && totalEnCarrito + 1 > disponible) {
     alert(`No hay stock suficiente en ${lugar}.`);
     return;
   }
@@ -908,6 +1061,8 @@ function agregarAlCarrito(id) {
   } else {
     carrito.push({
       idProducto: producto.id,
+      idVariante: variante.id,
+      etiquetaVariante: variante.etiqueta,
       nombre: producto.nombre,
       cantidad: 1,
       precio,
@@ -918,25 +1073,35 @@ function agregarAlCarrito(id) {
   dibujarCarrito();
 }
 
-function cambiarCantidadCarrito(id, cambio) {
-  const linea = carrito.find(l => Number(l.idProducto) === Number(id));
+function cambiarCantidadCarrito(idProducto, idVariante, cambio) {
+  const linea = carrito.find(l =>
+    Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante
+  );
   if (!linea) return;
 
-  const producto = productos.find(p => Number(p.id) === Number(id));
+  const producto = productos.find(p => Number(p.id) === Number(idProducto));
   const lugarInput = document.getElementById("lugarVenta");
   const lugar = lugarInput ? lugarInput.value : "Tienda";
   const disponible = producto ? stockDisponible(producto, lugar) : Infinity;
 
+  const totalEnCarrito = carrito
+    .filter(l => Number(l.idProducto) === Number(idProducto))
+    .reduce((s, l) => s + Number(l.cantidad), 0);
+
   const nueva = linea.cantidad + Number(cambio);
 
   if (nueva <= 0) {
-    quitarDelCarrito(id);
+    quitarDelCarrito(idProducto, idVariante);
     return;
   }
 
-  if (disponible !== Infinity && nueva > disponible) {
-    alert(`No hay stock suficiente en ${lugar}.`);
-    return;
+  if (disponible !== Infinity) {
+    // Recalcular cuánto sería el total si aceptamos el cambio.
+    const nuevoTotal = totalEnCarrito - linea.cantidad + nueva;
+    if (nuevoTotal > disponible) {
+      alert(`No hay stock suficiente en ${lugar}.`);
+      return;
+    }
   }
 
   linea.cantidad = nueva;
@@ -944,8 +1109,10 @@ function cambiarCantidadCarrito(id, cambio) {
   dibujarCarrito();
 }
 
-function quitarDelCarrito(id) {
-  carrito = carrito.filter(l => Number(l.idProducto) !== Number(id));
+function quitarDelCarrito(idProducto, idVariante) {
+  carrito = carrito.filter(l =>
+    !(Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante)
+  );
   dibujarCarrito();
 }
 
@@ -962,7 +1129,8 @@ function calcularTotalesVenta() {
       baseCUP += subtotal;
     } else {
       const producto = productos.find(p => Number(p.id) === Number(linea.idProducto));
-      baseCUP += cantidad * precioCUPProducto(producto);
+      const variante = producto?.variantes?.find(v => v.id === linea.idVariante);
+      baseCUP += cantidad * (Number(variante?.precioCUP) || 0);
     }
   });
 
@@ -987,26 +1155,30 @@ function dibujarCarrito() {
     return;
   }
 
-  cont.innerHTML = carrito.map(linea => `
-    <div class="producto">
-      <div class="producto-info">
-        <h3>${escapar(linea.nombre)}</h3>
-        <p>${formato(linea.precio)} ${monedaVenta} × ${linea.cantidad}</p>
-        <strong>${formato(linea.subtotal)} ${monedaVenta}</strong>
-      </div>
+  cont.innerHTML = carrito.map(linea => {
+    const nombreMostrar = nombreConVariante(linea.nombre, linea.etiquetaVariante);
 
-      <div class="controles-cantidad">
-        <button type="button" class="btn-cantidad"
-                onclick="cambiarCantidadCarrito(${Number(linea.idProducto)},-1)">−</button>
-        <span class="cantidad">${linea.cantidad}</span>
-        <button type="button" class="btn-cantidad"
-                onclick="cambiarCantidadCarrito(${Number(linea.idProducto)},1)">+</button>
-        <button type="button" class="btn-secundario"
-                style="padding:8px 10px;font-size:14px"
-                onclick="quitarDelCarrito(${Number(linea.idProducto)})">×</button>
+    return `
+      <div class="producto">
+        <div class="producto-info">
+          <h3>${escapar(nombreMostrar)}</h3>
+          <p>${formato(linea.precio)} ${monedaVenta} × ${linea.cantidad}</p>
+          <strong>${formato(linea.subtotal)} ${monedaVenta}</strong>
+        </div>
+
+        <div class="controles-cantidad">
+          <button type="button" class="btn-cantidad"
+                  onclick="cambiarCantidadCarrito(${Number(linea.idProducto)},'${escapar(linea.idVariante)}',-1)">−</button>
+          <span class="cantidad">${linea.cantidad}</span>
+          <button type="button" class="btn-cantidad"
+                  onclick="cambiarCantidadCarrito(${Number(linea.idProducto)},'${escapar(linea.idVariante)}',1)">+</button>
+          <button type="button" class="btn-secundario"
+                  style="padding:8px 10px;font-size:14px"
+                  onclick="quitarDelCarrito(${Number(linea.idProducto)},'${escapar(linea.idVariante)}')">×</button>
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
   if (resumen) {
     const t = calcularTotalesVenta();
@@ -1021,14 +1193,12 @@ function dibujarCarrito() {
 function actualizarPorcentajeSalario() {
   const input = document.getElementById("porcentajeVenta");
   if (!input) return;
-
   const valor = Number(input.value);
   if (!Number.isFinite(valor) || valor < 0 || valor > 100) {
     alert("Introduce un porcentaje entre 0 y 100.");
     input.value = porcentajeSalario;
     return;
   }
-
   porcentajeSalario = valor;
   dibujarCarrito();
 }
@@ -1040,10 +1210,7 @@ function actualizarPorcentajeSalario() {
 let guardandoVenta = false;
 
 function registrarVenta() {
-  if (!carrito.length) {
-    alert("Agrega productos antes de registrar la venta.");
-    return;
-  }
+  if (!carrito.length) { alert("Agrega productos antes de registrar."); return; }
 
   const fechaInput = document.getElementById("fechaVenta");
   const lugarInput = document.getElementById("lugarVenta");
@@ -1094,14 +1261,19 @@ async function confirmarVenta() {
       const precio = Number(linea.precio) || 0;
       const subtotal = cantidad * precio;
       const producto = productos.find(p => Number(p.id) === Number(linea.idProducto));
-      const precioCUP = producto ? precioCUPProducto(producto) : 0;
+      const variante = producto?.variantes?.find(v => v.id === linea.idVariante);
+
+      const precioCUP = Number(variante?.precioCUP) || 0;
       const subtotalCUP = cantidad * precioCUP;
       const baseCUP = monedaVenta === "CUP" ? subtotal : subtotalCUP;
       const salarioLinea = baseCUP * Number(porcentajeSalario) / 100;
 
       return {
         idProducto: linea.idProducto,
+        idVariante: linea.idVariante,
+        etiquetaVariante: linea.etiquetaVariante || "",
         nombre: linea.nombre,
+        nombreCompleto: nombreConVariante(linea.nombre, linea.etiquetaVariante),
         cantidad,
         precio,
         precioCUP,
@@ -1141,15 +1313,14 @@ async function confirmarVenta() {
     actualizarInicio();
 
     alert(
-      "Venta registrada correctamente.\n\n" +
+      "Venta registrada.\n\n" +
       "Total: " + formato(venta.total) + " " + venta.moneda + "\n" +
       "Lugar: " + venta.lugarVenta + "\n" +
       "Salario: " + formato(venta.salario) + " CUP"
     );
-
   } catch (e) {
     console.error(e);
-    alert("No se pudo registrar la venta.\n\nLos productos permanecen en el carrito.");
+    alert("No se pudo registrar la venta.");
   } finally {
     guardandoVenta = false;
   }
@@ -1175,7 +1346,6 @@ function mostrarRegistro() {
 function cargarOpcionesFiltroProductos() {
   const campo = document.getElementById("filtroProducto");
   if (!campo) return;
-
   const actual = campo.value;
   campo.innerHTML = `
     <option value="">Todos los productos</option>
@@ -1206,11 +1376,9 @@ function obtenerVentasFiltradas() {
 
   return ventas.filter(venta => {
     const fecha = fechaParaComparar(venta.fecha);
-
     if (periodo === "hoy" && fecha !== hoy) return false;
     if (periodo === "mes" && !fecha.startsWith(mesActual)) return false;
     if (periodo === "anio" && !fecha.startsWith(String(new Date().getFullYear()))) return false;
-
     if (periodo === "semana") {
       if (!fecha) return false;
       const fv = new Date(fecha + "T00:00:00");
@@ -1218,7 +1386,6 @@ function obtenerVentasFiltradas() {
       fv.setHours(0,0,0,0);
       if (fv < inicioSemana || fv > fechaHoy) return false;
     }
-
     if (producto) {
       const idP = Number(producto);
       const tiene = venta.productos.some(l => {
@@ -1227,14 +1394,11 @@ function obtenerVentasFiltradas() {
       });
       if (!tiene) return false;
     }
-
     if (moneda && venta.moneda !== moneda) return false;
     if (lugar && venta.lugarVenta !== lugar) return false;
-
     const imp = Number(venta.total) || 0;
     if (minimo !== "" && imp < Number(minimo)) return false;
     if (maximo !== "" && imp > Number(maximo)) return false;
-
     return true;
   });
 }
@@ -1243,16 +1407,14 @@ function dibujarRegistro() {
   const cont = document.getElementById("listaRegistro");
   if (!cont) return;
 
-  const filtradas = obtenerVentasFiltradas()
-    .slice()
-    .sort((a, b) => {
-      const fa = a.fechaRegistro || a.fecha || "";
-      const fb = b.fechaRegistro || b.fecha || "";
-      return String(fb).localeCompare(String(fa));
-    });
+  const filtradas = obtenerVentasFiltradas().slice().sort((a, b) => {
+    const fa = a.fechaRegistro || a.fecha || "";
+    const fb = b.fechaRegistro || b.fecha || "";
+    return String(fb).localeCompare(String(fa));
+  });
 
   if (!filtradas.length) {
-    cont.innerHTML = `<div class="texto-vacio">No hay ventas que coincidan con los filtros.</div>`;
+    cont.innerHTML = `<div class="texto-vacio">No hay ventas que coincidan.</div>`;
     actualizarResumenRegistro([]);
     return;
   }
@@ -1264,12 +1426,12 @@ function dibujarRegistro() {
       const cantidad = Number(l.cantidad) || 0;
       const precio = Number(l.precio) || 0;
       const subtotal = Number(l.subtotal) || (cantidad * precio);
+      const nombre = l.nombreCompleto ||
+        nombreConVariante(l.nombre || "Producto", l.etiquetaVariante || "");
 
       return `
         <div class="linea-venta">
-          <div class="linea-venta-nombre">
-            ${escapar(l.nombre || "Producto")} × ${cantidad}
-          </div>
+          <div class="linea-venta-nombre">${escapar(nombre)} × ${cantidad}</div>
           <div class="linea-venta-precio">
             ${formato(precio)} ${moneda}
             <small>Subtotal: ${formato(subtotal)} ${moneda}</small>
@@ -1285,26 +1447,17 @@ function dibujarRegistro() {
             <h3>Venta #${Number(venta.id)}</h3>
             <small style="color:#777">${mostrarFecha(venta.fecha)}</small>
           </div>
-          <strong class="precio" style="flex-shrink:0">
-            ${formato(venta.total)} ${moneda}
-          </strong>
+          <strong class="precio" style="flex-shrink:0">${formato(venta.total)} ${moneda}</strong>
         </div>
-
         <div style="margin-top:10px;font-size:13px">
           <strong>Lugar:</strong> ${escapar(venta.lugarVenta || "Sin especificar")}
         </div>
-
         <div style="margin-top:10px">${lineas}</div>
-
         <div style="margin-top:12px;font-size:13px;padding-top:10px;border-top:1px solid var(--borde)">
           <strong>Salario:</strong> ${formato(venta.salario)} CUP
         </div>
-
-        <button type="button" class="btn-peligro"
-                style="margin-top:12px;width:100%"
-                onclick="eliminarVenta(${Number(venta.id)})">
-          Eliminar venta
-        </button>
+        <button type="button" class="btn-peligro" style="margin-top:12px;width:100%"
+                onclick="eliminarVenta(${Number(venta.id)})">Eliminar venta</button>
       </div>
     `;
   }).join("");
@@ -1315,7 +1468,6 @@ function dibujarRegistro() {
 function actualizarResumenRegistro(lista) {
   const cont = document.getElementById("resumenRegistro");
   if (!cont) return;
-
   const cup = lista.filter(v => v.moneda === "CUP").reduce((s, v) => s + v.total, 0);
   const usd = lista.filter(v => v.moneda === "USD").reduce((s, v) => s + v.total, 0);
   const sal = lista.reduce((s, v) => s + (Number(v.salario) || 0), 0);
@@ -1343,7 +1495,7 @@ function limpiarFiltrosRegistro() {
 async function eliminarVenta(id) {
   const venta = ventas.find(v => Number(v.id) === Number(id));
   if (!venta) return;
-  if (!confirm(`¿Eliminar la venta #${venta.id}?\n\nEsta acción no se puede deshacer.`)) return;
+  if (!confirm(`¿Eliminar la venta #${venta.id}?`)) return;
 
   try {
     await eliminarDato("ventas", venta.id);
@@ -1375,9 +1527,10 @@ function exportarRegistroPDF() {
   const sal = lista.reduce((s, v) => s + Number(v.salario || 0), 0);
 
   const filas = lista.map(venta => {
-    const detalle = venta.productos.map(l =>
-      `<div>${escapar(l.nombre)} × ${Number(l.cantidad) || 0} — ${formato(l.precio)} ${escapar(venta.moneda)}</div>`
-    ).join("");
+    const detalle = venta.productos.map(l => {
+      const nombre = l.nombreCompleto || nombreConVariante(l.nombre, l.etiquetaVariante);
+      return `<div>${escapar(nombre)} × ${Number(l.cantidad) || 0} — ${formato(l.precio)} ${escapar(venta.moneda)}</div>`;
+    }).join("");
 
     return `
       <tr>
@@ -1410,7 +1563,7 @@ function exportarRegistroPDF() {
       .pie{margin-top:25px;color:#777;font-size:10px;text-align:center}
     </style></head><body>
     <h1>CAJA | Registro de ventas</h1>
-    <div class="sub">Informe generado el ${escapar(mostrarFecha(fechaLocal()))}</div>
+    <div class="sub">Generado el ${escapar(mostrarFecha(fechaLocal()))}</div>
     <div class="r">
       <div>Operaciones<strong>${lista.length}</strong></div>
       <div>Total CUP<strong>${formato(cup)} CUP</strong></div>
@@ -1451,7 +1604,7 @@ function obtenerResumenEstadisticas() {
 
     (v.productos || []).forEach(linea => {
       const c = Number(linea.cantidad) || 0;
-      const n = linea.nombre || "Producto";
+      const n = linea.nombreCompleto || linea.nombre || "Producto";
       unidades += c;
       ranking[n] = (ranking[n] || 0) + c;
     });
@@ -1483,7 +1636,6 @@ function obtenerUltimosSeisMeses() {
 
 function crearGraficoBarras(titulo, datos, sufijo = "") {
   if (!datos.length) return `<div class="tarjeta"><h3>${escapar(titulo)}</h3><p class="texto-vacio">Sin datos.</p></div>`;
-
   const max = Math.max(...datos.map(i => Number(i.valor) || 0), 1);
   const barras = datos.map(item => {
     const v = Number(item.valor) || 0;
@@ -1500,7 +1652,6 @@ function crearGraficoBarras(titulo, datos, sufijo = "") {
       </div>
     `;
   }).join("");
-
   return `<div class="tarjeta"><h3 style="margin-bottom:15px">${escapar(titulo)}</h3>${barras}</div>`;
 }
 
@@ -1567,9 +1718,8 @@ function cargarConteoEfectivo() {
     if (!conteoEfectivo || typeof conteoEfectivo !== "object" || Array.isArray(conteoEfectivo)) {
       conteoEfectivo = {};
     }
-  } catch (_) {
-    conteoEfectivo = {};
-  }
+  } catch (_) { conteoEfectivo = {}; }
+
   denominacionesEfectivo.forEach(v => {
     const c = Number(conteoEfectivo[v]);
     conteoEfectivo[v] = Number.isFinite(c) && c >= 0 ? c : 0;
@@ -1594,9 +1744,7 @@ function mostrarEfectivo() {
     <div class="producto">
       <div class="producto-info">
         <h3>${formato(v)} CUP</h3>
-        <small style="color:#777">
-          Subtotal: <strong id="subtotalEfectivo${v}">${formato(v * conteoEfectivo[v])} CUP</strong>
-        </small>
+        <small style="color:#777">Subtotal: <strong id="subtotalEfectivo${v}">${formato(v * conteoEfectivo[v])} CUP</strong></small>
       </div>
       <div style="width:100px;flex-shrink:0">
         <label for="billetes${v}">Cantidad</label>
@@ -1610,13 +1758,13 @@ function mostrarEfectivo() {
   cont.innerHTML = `
     <div class="tarjeta">
       <h3 style="margin-bottom:8px">Conteo de efectivo</h3>
-      <p style="font-size:13px;color:#777">Introduce la cantidad de billetes. El total se calcula automáticamente.</p>
+      <p style="font-size:13px;color:#777">Introduce la cantidad de billetes.</p>
     </div>
     ${filas}
     <div class="resumen">
       <div>Total en efectivo</div>
       <div class="total" id="totalEfectivo">${formato(calcularTotalEfectivo())} CUP</div>
-      <p style="font-size:12px;color:#ccc">Guardado automáticamente en este dispositivo.</p>
+      <p style="font-size:12px;color:#ccc">Guardado automáticamente.</p>
     </div>
     <button type="button" class="btn-secundario" style="width:100%;margin-top:15px"
             onclick="limpiarConteoEfectivo()">LIMPIAR CONTEO</button>
@@ -1631,7 +1779,6 @@ function actualizarConteoEfectivo(valor, cantidad) {
     conteoEfectivo[valor] = n;
   }
   guardarConteoEfectivo();
-
   const sub = document.getElementById("subtotalEfectivo" + valor);
   if (sub) sub.textContent = formato(valor * conteoEfectivo[valor]) + " CUP";
   const tot = document.getElementById("totalEfectivo");
@@ -1651,7 +1798,6 @@ function limpiarConteoEfectivo() {
 
 function actualizarInicio() {
   const r = obtenerResumenEstadisticas();
-
   const cont = document.getElementById("resumenRapidoInicio");
   if (cont) {
     cont.innerHTML = `
@@ -1661,10 +1807,8 @@ function actualizarInicio() {
       <div class="resumen-rapido-item"><small>Salarios</small><strong>${formato(r.salarioTotal)}</strong></div>
     `;
   }
-
   const t = document.getElementById("textoEstadisticasInicio");
   if (t) t.textContent = `${r.operaciones} operaciones registradas. Consulta tus estadísticas.`;
-
   actualizarInventarioInicio();
 }
 
@@ -1681,6 +1825,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     console.log("CAJA iniciada.");
   } catch (e) {
     console.error(e);
-    alert("No se pudo iniciar la aplicación.\n\nComprueba la base de datos y vuelve a cargar.");
+    alert("No se pudo iniciar la aplicación.");
   }
 });
