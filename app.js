@@ -1,5 +1,5 @@
 // ==========================================
-// CAJA - APLICACIÓN PRINCIPAL (con variantes + editar/eliminar en inventario)
+// CAJA - APLICACIÓN PRINCIPAL
 // ==========================================
 
 let productos = [];
@@ -80,15 +80,9 @@ function normalizarVariantes(producto) {
 
   const pCUP = Number(producto.precioCUP ?? producto.precio) || 0;
   const pUSD = Number(producto.precioUSD) || 0;
-
   if (pCUP === 0 && pUSD === 0) return [];
 
-  return [{
-    id: generarIdVariante(),
-    etiqueta: "Único",
-    precioCUP: pCUP,
-    precioUSD: pUSD
-  }];
+  return [{ id: generarIdVariante(), etiqueta: "Único", precioCUP: pCUP, precioUSD: pUSD }];
 }
 
 function adaptarProducto(producto) {
@@ -100,10 +94,7 @@ function adaptarProducto(producto) {
     id: producto.id,
     nombre: String(producto.nombre || ""),
     descripcion: String(producto.descripcion || ""),
-    stock: {
-      tienda: Number(stock.tienda) || 0,
-      casa: Number(stock.casa) || 0
-    },
+    stock: { tienda: Number(stock.tienda) || 0, casa: Number(stock.casa) || 0 },
     variantes: normalizarVariantes(producto)
   };
 }
@@ -125,10 +116,7 @@ function adaptarVenta(venta) {
           idVariante: linea.idVariante || null,
           etiquetaVariante: String(linea.etiquetaVariante || ""),
           nombre: String(linea.nombre || "Producto"),
-          cantidad,
-          precio,
-          precioCUP,
-          subtotal
+          cantidad, precio, precioCUP, subtotal
         };
       })
     : [];
@@ -173,9 +161,7 @@ function precioProducto(producto, moneda = monedaVenta) {
   return precioVariante(producto.variantes[0], moneda);
 }
 
-function precioCUPProducto(producto) {
-  return precioProducto(producto, "CUP");
-}
+function precioCUPProducto(producto) { return precioProducto(producto, "CUP"); }
 
 function nombreConVariante(nombre, etiqueta) {
   if (!etiqueta || etiqueta === "Único") return nombre;
@@ -234,9 +220,7 @@ async function iniciarAplicacion() {
 
   try {
     entradas = (await obtenerTodos("entradas")).map(adaptarEntrada).filter(Boolean);
-  } catch (_) {
-    entradas = [];
-  }
+  } catch (_) { entradas = []; }
 
   for (const p of productos) await guardarDato("productos", p);
   for (const v of ventas) await guardarDato("ventas", v);
@@ -308,10 +292,7 @@ function irPantalla(n) { navegar(n); }
 // PRODUCTOS - CATÁLOGO
 // ==========================================
 
-function mostrarProductos() {
-  dibujarCatalogo();
-  cancelarEdicion();
-}
+function mostrarProductos() { dibujarCatalogo(); cancelarEdicion(); }
 
 function dibujarCatalogo() {
   const lista = document.getElementById("listaCatalogo");
@@ -371,7 +352,6 @@ function crearFilaVarianteHTML(variante = null) {
     <div class="variante-fila" data-id="${escapar(id)}">
       <input type="text" class="variante-input-etiqueta"
              placeholder="Presentación (ej. 1 kg)" value="${escapar(etiqueta)}">
-
       <div class="variante-fila-precios">
         <div>
           <label style="font-size:11px">Precio CUP</label>
@@ -394,35 +374,27 @@ function crearFilaVarianteHTML(variante = null) {
 function agregarVarianteFormulario(variante = null) {
   const cont = document.getElementById("listaVariantesFormulario");
   if (!cont) return;
-
   const aviso = cont.querySelector(".sin-variantes-aviso");
   if (aviso) aviso.remove();
-
   cont.insertAdjacentHTML("beforeend", crearFilaVarianteHTML(variante));
 }
 
 function leerVariantesFormulario() {
   const cont = document.getElementById("listaVariantesFormulario");
   if (!cont) return [];
-
   const filas = cont.querySelectorAll(".variante-fila");
   const variantes = [];
-
   filas.forEach(fila => {
     const etiqueta = fila.querySelector(".variante-input-etiqueta").value.trim();
     const cup = Number(fila.querySelector(".variante-input-cup").value) || 0;
     const usd = Number(fila.querySelector(".variante-input-usd").value) || 0;
-
     if (!etiqueta && cup === 0 && usd === 0) return;
-
     variantes.push({
       id: fila.dataset.id || generarIdVariante(),
       etiqueta: etiqueta || "Único",
-      precioCUP: cup,
-      precioUSD: usd
+      precioCUP: cup, precioUSD: usd
     });
   });
-
   return variantes;
 }
 
@@ -447,24 +419,13 @@ async function guardarProducto() {
   const stockTienda = Math.max(0, Math.floor(Number(stockTiendaInput?.value) || 0));
   const stockCasa = Math.max(0, Math.floor(Number(stockCasaInput?.value) || 0));
 
-  if (!nombre) {
-    alert("Escribe el nombre del producto.");
-    nombreInput.focus();
-    return;
-  }
+  if (!nombre) { alert("Escribe el nombre del producto."); nombreInput.focus(); return; }
 
   const variantes = leerVariantesFormulario();
-
-  if (!variantes.length) {
-    alert("Añade al menos una presentación con precio.");
-    return;
-  }
+  if (!variantes.length) { alert("Añade al menos una presentación con precio."); return; }
 
   const conPrecio = variantes.some(v => v.precioCUP > 0 || v.precioUSD > 0);
-  if (!conPrecio) {
-    alert("Al menos una presentación debe tener un precio mayor que 0.");
-    return;
-  }
+  if (!conPrecio) { alert("Al menos una presentación debe tener precio > 0."); return; }
 
   const producto = {
     nombre,
@@ -475,9 +436,7 @@ async function guardarProducto() {
   if (estabaEditando) {
     producto.id = productoEnEdicion.id;
     Object.assign(producto, productoEnEdicion, {
-      nombre,
-      stock: { tienda: stockTienda, casa: stockCasa },
-      variantes
+      nombre, stock: { tienda: stockTienda, casa: stockCasa }, variantes
     });
   }
 
@@ -497,7 +456,6 @@ async function guardarProducto() {
     dibujarProductosCaja();
     dibujarInventario();
     actualizarInicio();
-
     alert(estabaEditando ? "Producto actualizado." : "Producto guardado.");
   } catch (e) {
     console.error(e);
@@ -526,27 +484,20 @@ function editarProducto(id) {
   document.getElementById("btnCancelarEdicion").style.display = "block";
   document.getElementById("tituloFormularioProducto").textContent = "Editar producto";
 
-  // Si estamos en Inventario, saltar a Productos para que el formulario esté visible.
-  if (pantallaActual === "inventario") {
-    navegar("productos");
-  }
+  if (pantallaActual === "inventario") navegar("productos");
 
   setTimeout(() => {
-    const nombreInput = document.getElementById("nombreProducto");
-    if (nombreInput) {
-      nombreInput.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    const n = document.getElementById("nombreProducto");
+    if (n) n.scrollIntoView({ behavior: "smooth", block: "center" });
   }, 100);
 }
 
 function cancelarEdicion() {
   productoEnEdicion = null;
-
   ["nombreProducto", "stockTienda", "stockCasa"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
-
   limpiarVariantesFormulario();
 
   const bg = document.getElementById("btnGuardarProducto");
@@ -566,9 +517,7 @@ async function eliminarProducto(id) {
   try {
     await eliminarDato("productos", producto.id);
     productos = productos.filter(p => Number(p.id) !== Number(id));
-
     if (productoEnEdicion && Number(productoEnEdicion.id) === Number(id)) cancelarEdicion();
-
     carrito = carrito.filter(l => Number(l.idProducto) !== Number(id));
 
     dibujarCatalogo();
@@ -576,7 +525,6 @@ async function eliminarProducto(id) {
     dibujarCarrito();
     dibujarInventario();
     actualizarInicio();
-
     alert("Producto eliminado.");
   } catch (e) {
     console.error(e);
@@ -603,7 +551,6 @@ function actualizarInventarioInicio() {
   if (!productos.length) { cont.innerHTML = ""; return; }
 
   const totales = calcularTotalesInventario();
-
   cont.innerHTML = `
     <h3>📦 Inventario por área</h3>
     <div class="inventario-inicio-totales">
@@ -624,7 +571,6 @@ function mostrarInventario() {
 function cargarOpcionesEntradaProducto() {
   const sel = document.getElementById("entradaProducto");
   if (!sel) return;
-
   const actual = sel.value;
 
   if (!productos.length) {
@@ -637,9 +583,7 @@ function cargarOpcionesEntradaProducto() {
     `<option value="${Number(p.id)}">${escapar(p.nombre)}</option>`
   ).join("");
 
-  if (actual && productos.some(p => String(p.id) === String(actual))) {
-    sel.value = actual;
-  }
+  if (actual && productos.some(p => String(p.id) === String(actual))) sel.value = actual;
 }
 
 async function registrarEntradaInventario() {
@@ -673,8 +617,7 @@ async function registrarEntradaInventario() {
     const entrada = {
       idProducto: producto.id,
       nombre: producto.nombre,
-      area,
-      cantidad,
+      area, cantidad,
       fecha: new Date().toISOString()
     };
 
@@ -701,7 +644,6 @@ function dibujarInventario() {
   if (!lista) return;
 
   const totales = calcularTotalesInventario();
-
   if (resumen) {
     resumen.innerHTML = `
       <div class="inventario-resumen-total almacen"><small>Almacén</small><strong>∞</strong></div>
@@ -750,7 +692,6 @@ function dibujarInventario() {
 function dibujarEntradas() {
   const cont = document.getElementById("listaEntradas");
   if (!cont) return;
-
   if (!entradas.length) {
     cont.innerHTML = `<div class="texto-vacio">Aún no hay entradas registradas.</div>`;
     return;
@@ -877,7 +818,6 @@ function mostrarCaja() {
   if (p) p.value = porcentajeSalario;
   const m = document.getElementById("monedaSeleccionada");
   if (m) m.value = monedaVenta;
-
   dibujarProductosCaja();
   dibujarCarrito();
 }
@@ -970,19 +910,9 @@ function dibujarProductosCaja() {
 function agregarProductoAlCarrito(idProducto) {
   const producto = productos.find(p => Number(p.id) === Number(idProducto));
   if (!producto) return;
-
   const variantes = producto.variantes || [];
-
-  if (!variantes.length) {
-    alert("Este producto no tiene presentaciones con precio.");
-    return;
-  }
-
-  if (variantes.length === 1) {
-    agregarVarianteAlCarrito(producto.id, variantes[0].id);
-    return;
-  }
-
+  if (!variantes.length) { alert("Este producto no tiene presentaciones con precio."); return; }
+  if (variantes.length === 1) { agregarVarianteAlCarrito(producto.id, variantes[0].id); return; }
   abrirModalVariante(producto);
 }
 
@@ -997,7 +927,6 @@ function abrirModalVariante(producto) {
   const titulo = document.getElementById("modalVarianteTitulo");
   const sub = document.getElementById("modalVarianteSubtitulo");
   const lista = document.getElementById("modalVarianteLista");
-
   if (!modal || !lista) return;
 
   if (titulo) titulo.textContent = producto.nombre;
@@ -1098,17 +1027,11 @@ function cambiarCantidadCarrito(idProducto, idVariante, cambio) {
 
   const nueva = linea.cantidad + Number(cambio);
 
-  if (nueva <= 0) {
-    quitarDelCarrito(idProducto, idVariante);
-    return;
-  }
+  if (nueva <= 0) { quitarDelCarrito(idProducto, idVariante); return; }
 
   if (disponible !== Infinity) {
     const nuevoTotal = totalEnCarrito - linea.cantidad + nueva;
-    if (nuevoTotal > disponible) {
-      alert(`No hay stock suficiente en ${lugar}.`);
-      return;
-    }
+    if (nuevoTotal > disponible) { alert(`No hay stock suficiente en ${lugar}.`); return; }
   }
 
   linea.cantidad = nueva;
@@ -1142,7 +1065,6 @@ function calcularTotalesVenta() {
   });
 
   const salario = baseCUP * (Number(porcentajeSalario) || 0) / 100;
-
   return {
     total, baseCUP, salario,
     cantidadProductos: carrito.reduce((s, l) => s + Number(l.cantidad || 0), 0)
@@ -1164,7 +1086,6 @@ function dibujarCarrito() {
 
   cont.innerHTML = carrito.map(linea => {
     const nombreMostrar = nombreConVariante(linea.nombre, linea.etiquetaVariante);
-
     return `
       <div class="producto">
         <div class="producto-info">
@@ -1228,7 +1149,6 @@ function registrarVenta() {
   if (!LUGARES_VENTA.includes(lugar)) { alert("Lugar inválido."); return; }
 
   const t = calcularTotalesVenta();
-
   if (!confirm(
     "¿Confirmar esta venta?\n\n" +
     "Productos: " + t.cantidadProductos + "\n" +
@@ -1249,16 +1169,10 @@ async function confirmarVenta() {
   const fecha = fechaInput ? fechaInput.value : fechaLocal();
   const lugar = lugarInput ? lugarInput.value : "Tienda";
 
-  if (!fecha || !LUGARES_VENTA.includes(lugar)) {
-    alert("Datos de venta inválidos.");
-    return;
-  }
+  if (!fecha || !LUGARES_VENTA.includes(lugar)) { alert("Datos de venta inválidos."); return; }
 
   const t = calcularTotalesVenta();
-  if (!Number.isFinite(t.total) || t.total <= 0) {
-    alert("Importe inválido.");
-    return;
-  }
+  if (!Number.isFinite(t.total) || t.total <= 0) { alert("Importe inválido."); return; }
 
   guardandoVenta = true;
 
@@ -1281,11 +1195,7 @@ async function confirmarVenta() {
         etiquetaVariante: linea.etiquetaVariante || "",
         nombre: linea.nombre,
         nombreCompleto: nombreConVariante(linea.nombre, linea.etiquetaVariante),
-        cantidad,
-        precio,
-        precioCUP,
-        subtotal,
-        subtotalCUP,
+        cantidad, precio, precioCUP, subtotal, subtotalCUP,
         total: subtotal,
         baseCUP,
         totalCUP: monedaVenta === "CUP" ? subtotal : 0,
@@ -1411,6 +1321,182 @@ function obtenerVentasFiltradas() {
   });
 }
 
+// ==========================================
+// REGISTRO - ESTADÍSTICAS DE LOS FILTROS
+// ==========================================
+
+function calcularEstadisticasFiltradas(lista) {
+  const stats = {
+    operaciones: lista.length,
+    unidades: 0,
+    totalCUP: 0,
+    totalUSD: 0,
+    salarioTotal: 0,
+    porLugar: { "Almacén": 0, "Tienda": 0, "Casa": 0, "Sin especificar": 0 },
+    ranking: {},
+    dias: {}
+  };
+
+  lista.forEach(v => {
+    const moneda = v.moneda || "CUP";
+    const total = Number(v.total) || 0;
+
+    if (moneda === "USD") stats.totalUSD += total;
+    else stats.totalCUP += total;
+
+    stats.salarioTotal += Number(v.salario) || 0;
+
+    const lugar = v.lugarVenta || "Sin especificar";
+    if (stats.porLugar[lugar] !== undefined) stats.porLugar[lugar] += 1;
+
+    // Días únicos para calcular promedio diario
+    const fechaDia = fechaParaComparar(v.fecha);
+    if (fechaDia) {
+      stats.dias[fechaDia] = (stats.dias[fechaDia] || 0) + 1;
+    }
+
+    (v.productos || []).forEach(linea => {
+      const c = Number(linea.cantidad) || 0;
+      const n = linea.nombreCompleto || linea.nombre || "Producto";
+      stats.unidades += c;
+      stats.ranking[n] = (stats.ranking[n] || 0) + c;
+    });
+  });
+
+  stats.diasConVentas = Object.keys(stats.dias).length;
+  stats.promedioPorOperacion = stats.operaciones
+    ? (stats.totalCUP + stats.totalUSD) / stats.operaciones
+    : 0;
+  stats.promedioCUP = stats.operaciones ? stats.totalCUP / stats.operaciones : 0;
+  stats.promedioUSD = stats.operaciones ? stats.totalUSD / stats.operaciones : 0;
+
+  // Top producto y top lugar
+  const rankingArr = Object.entries(stats.ranking)
+    .map(([nombre, cantidad]) => ({ nombre, cantidad }))
+    .sort((a, b) => b.cantidad - a.cantidad);
+
+  stats.topProducto = rankingArr[0] || null;
+  stats.topProductos = rankingArr.slice(0, 3);
+
+  const lugaresArr = Object.entries(stats.porLugar)
+    .map(([nombre, cantidad]) => ({ nombre, cantidad }))
+    .sort((a, b) => b.cantidad - a.cantidad);
+
+  stats.topLugar = lugaresArr.find(l => l.cantidad > 0) || null;
+
+  // Rango de fechas
+  const fechas = lista.map(v => fechaParaComparar(v.fecha)).filter(Boolean).sort();
+  stats.fechaMin = fechas[0] || null;
+  stats.fechaMax = fechas[fechas.length - 1] || null;
+
+  return stats;
+}
+
+function actualizarResumenRegistro(lista) {
+  const cont = document.getElementById("resumenRegistro");
+  if (!cont) return;
+
+  const s = calcularEstadisticasFiltradas(lista);
+
+  const topProductosHtml = s.topProductos.length
+    ? s.topProductos.map((p, i) => `
+        <div class="resumen-ranking-item">
+          <span class="resumen-ranking-num">${i + 1}</span>
+          <span class="resumen-ranking-nombre">${escapar(p.nombre)}</span>
+          <span class="resumen-ranking-cant">${p.cantidad} uds</span>
+        </div>
+      `).join("")
+    : `<p class="texto-vacio" style="padding:10px 0">Sin datos.</p>`;
+
+  const rangoFechas = s.fechaMin && s.fechaMax
+    ? (s.fechaMin === s.fechaMax
+        ? mostrarFecha(s.fechaMin)
+        : `${mostrarFecha(s.fechaMin)} → ${mostrarFecha(s.fechaMax)}`)
+    : "—";
+
+  cont.innerHTML = `
+    <div class="tarjeta resumen-filtrado">
+      <div class="resumen-filtrado-header">
+        <h3>Estadísticas del filtro actual</h3>
+        <small>${s.operaciones} operación${s.operaciones === 1 ? "" : "es"}</small>
+      </div>
+
+      <div class="resumen-filtrado-grid">
+        <div class="resumen-filtrado-item">
+          <small>Operaciones</small>
+          <strong>${s.operaciones}</strong>
+        </div>
+        <div class="resumen-filtrado-item">
+          <small>Unidades vendidas</small>
+          <strong>${s.unidades}</strong>
+        </div>
+        <div class="resumen-filtrado-item verde">
+          <small>Total CUP</small>
+          <strong>${formato(s.totalCUP)} CUP</strong>
+        </div>
+        <div class="resumen-filtrado-item verde">
+          <small>Total USD</small>
+          <strong>${formato(s.totalUSD)} USD</strong>
+        </div>
+        <div class="resumen-filtrado-item naranja">
+          <small>Salarios</small>
+          <strong>${formato(s.salarioTotal)} CUP</strong>
+        </div>
+        <div class="resumen-filtrado-item">
+          <small>Días con ventas</small>
+          <strong>${s.diasConVentas}</strong>
+        </div>
+      </div>
+
+      <div class="resumen-filtrado-bloque">
+        <h4>Promedios</h4>
+        <div class="resumen-filtrado-grid-2">
+          <div class="resumen-filtrado-item">
+            <small>Promedio por operación (CUP)</small>
+            <strong>${formato(s.promedioCUP)}</strong>
+          </div>
+          <div class="resumen-filtrado-item">
+            <small>Promedio por operación (USD)</small>
+            <strong>${formato(s.promedioUSD)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="resumen-filtrado-bloque">
+        <h4>Distribución por lugar</h4>
+        <div class="resumen-lugares">
+          ${Object.entries(s.porLugar).map(([nombre, cant]) => {
+            const pct = s.operaciones ? Math.round((cant / s.operaciones) * 100) : 0;
+            return `
+              <div class="resumen-lugar-fila">
+                <span class="resumen-lugar-nombre">${escapar(nombre)}</span>
+                <div class="resumen-lugar-barra">
+                  <div class="resumen-lugar-barra-fill" style="width:${pct}%"></div>
+                </div>
+                <span class="resumen-lugar-cant">${cant} <small>(${pct}%)</small></span>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+
+      <div class="resumen-filtrado-bloque">
+        <h4>Productos más vendidos</h4>
+        <div class="resumen-ranking">${topProductosHtml}</div>
+      </div>
+
+      <div class="resumen-filtrado-pie">
+        <span><strong>Rango:</strong> ${escapar(rangoFechas)}</span>
+        ${s.topLugar ? `<span><strong>Top lugar:</strong> ${escapar(s.topLugar.nombre)}</span>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+// ==========================================
+// REGISTRO - LISTADO
+// ==========================================
+
 function dibujarRegistro() {
   const cont = document.getElementById("listaRegistro");
   if (!cont) return;
@@ -1473,24 +1559,6 @@ function dibujarRegistro() {
   actualizarResumenRegistro(filtradas);
 }
 
-function actualizarResumenRegistro(lista) {
-  const cont = document.getElementById("resumenRegistro");
-  if (!cont) return;
-  const cup = lista.filter(v => v.moneda === "CUP").reduce((s, v) => s + v.total, 0);
-  const usd = lista.filter(v => v.moneda === "USD").reduce((s, v) => s + v.total, 0);
-  const sal = lista.reduce((s, v) => s + (Number(v.salario) || 0), 0);
-
-  cont.innerHTML = `
-    <div class="tarjeta">
-      <h3>Resumen de operaciones</h3>
-      <p style="margin-top:10px">Operaciones: <strong>${lista.length}</strong></p>
-      <p style="margin-top:7px">Ventas CUP: <strong>${formato(cup)} CUP</strong></p>
-      <p style="margin-top:7px">Ventas USD: <strong>${formato(usd)} USD</strong></p>
-      <p style="margin-top:7px">Salarios: <strong>${formato(sal)} CUP</strong></p>
-    </div>
-  `;
-}
-
 function aplicarFiltrosRegistro() { dibujarRegistro(); }
 function filtrarRegistro() { dibujarRegistro(); }
 
@@ -1530,9 +1598,7 @@ function exportarRegistroPDF() {
 
   if (!lista.length) { alert("No hay ventas para exportar."); return; }
 
-  const cup = lista.filter(v => v.moneda === "CUP").reduce((s, v) => s + Number(v.total || 0), 0);
-  const usd = lista.filter(v => v.moneda === "USD").reduce((s, v) => s + Number(v.total || 0), 0);
-  const sal = lista.reduce((s, v) => s + Number(v.salario || 0), 0);
+  const s = calcularEstadisticasFiltradas(lista);
 
   const filas = lista.map(venta => {
     const detalle = venta.productos.map(l => {
@@ -1559,29 +1625,63 @@ function exportarRegistroPDF() {
       *{box-sizing:border-box}
       body{font-family:Arial,sans-serif;color:#242424;margin:25px}
       h1{margin-bottom:5px;font-size:25px}
-      .sub{color:#777;margin-bottom:25px;font-size:13px}
+      h2{font-size:14px;margin:22px 0 10px;border-bottom:2px solid #f28c28;padding-bottom:5px}
+      .sub{color:#777;margin-bottom:20px;font-size:13px}
       .r{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
       .r div{border:1px solid #ddd;border-radius:8px;padding:12px;flex:1;min-width:140px}
-      .r strong{display:block;margin-top:6px}
+      .r small{display:block;font-size:10px;color:#777;text-transform:uppercase}
+      .r strong{display:block;margin-top:6px;font-size:16px}
       table{width:100%;border-collapse:collapse;font-size:11px}
       th,td{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}
       th{background:#222;color:white}
       .numero{text-align:right;white-space:nowrap}
       tr{page-break-inside:avoid}
       .pie{margin-top:25px;color:#777;font-size:10px;text-align:center}
+      .lugar-fila{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #eee}
     </style></head><body>
     <h1>CAJA | Registro de ventas</h1>
-    <div class="sub">Generado el ${escapar(mostrarFecha(fechaLocal()))}</div>
+    <div class="sub">Generado el ${escapar(mostrarFechaHora(new Date().toISOString()))}</div>
+
+    <h2>Estadísticas del filtro aplicado</h2>
     <div class="r">
-      <div>Operaciones<strong>${lista.length}</strong></div>
-      <div>Total CUP<strong>${formato(cup)} CUP</strong></div>
-      <div>Total USD<strong>${formato(usd)} USD</strong></div>
-      <div>Salario<strong>${formato(sal)} CUP</strong></div>
+      <div><small>Operaciones</small><strong>${s.operaciones}</strong></div>
+      <div><small>Unidades</small><strong>${s.unidades}</strong></div>
+      <div><small>Total CUP</small><strong>${formato(s.totalCUP)} CUP</strong></div>
+      <div><small>Total USD</small><strong>${formato(s.totalUSD)} USD</strong></div>
+      <div><small>Salarios</small><strong>${formato(s.salarioTotal)} CUP</strong></div>
     </div>
+    <div class="r">
+      <div><small>Promedio CUP/op</small><strong>${formato(s.promedioCUP)}</strong></div>
+      <div><small>Promedio USD/op</small><strong>${formato(s.promedioUSD)}</strong></div>
+      <div><small>Días con ventas</small><strong>${s.diasConVentas}</strong></div>
+      <div><small>Top lugar</small><strong>${s.topLugar ? escapar(s.topLugar.nombre) + " (" + s.topLugar.cantidad + ")" : "—"}</strong></div>
+    </div>
+
+    <h2>Distribución por lugar</h2>
+    ${Object.entries(s.porLugar).map(([nombre, cant]) => `
+      <div class="lugar-fila">
+        <span>${escapar(nombre)}</span>
+        <strong>${cant} ${cant === 1 ? "venta" : "ventas"}</strong>
+      </div>
+    `).join("")}
+
+    <h2>Productos más vendidos (filtro)</h2>
+    ${s.topProductos.length
+      ? s.topProductos.map((p, i) => `
+          <div class="lugar-fila">
+            <span>${i + 1}. ${escapar(p.nombre)}</span>
+            <strong>${p.cantidad} uds</strong>
+          </div>
+        `).join("")
+      : "<p>Sin datos</p>"
+    }
+
+    <h2>Detalle de ventas</h2>
     <table><thead><tr>
       <th>N.º</th><th>Fecha</th><th>Lugar</th><th>Productos</th>
       <th>Moneda</th><th>Total</th><th>Salario</th>
     </tr></thead><tbody>${filas}</tbody></table>
+
     <div class="pie">Sistema de gestión de ventas CAJA</div>
     <script>window.onload=function(){window.print()};<\/script>
     </body></html>
