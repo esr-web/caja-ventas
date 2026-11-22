@@ -57,7 +57,7 @@
         </button>
         <button class="tarjeta-menu" onclick="navegar('estadisticas')">
           <div class="icono-menu">📊</div>
-          <div class="texto-menu"><h3>Estadísticas</h3><p id="textoEstadisticasInicio">Consultar gráficos y resultados de las ventas.</p></div>
+          <div class="texto-menu"><h3>Estadísticas</h3><p id="textoEstadisticasInicio">Consultar gráficos y resultados.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
         <button class="tarjeta-menu" onclick="navegar('efectivo')">
@@ -109,56 +109,40 @@
       <h2 class="titulo-seccion">Productos</h2>
       <div class="tarjeta">
         <h3 style="margin-bottom:12px" id="tituloFormularioProducto">Añadir producto</h3>
-
         <label for="nombreProducto">Nombre del producto</label>
         <input type="text" id="nombreProducto" placeholder="Ej. Azúcar blanca">
-
         <div class="fila-stock">
           <div>
             <label for="stockTienda">Stock en Tienda</label>
-            <input type="number" id="stockTienda" min="0" step="1"
-                   inputmode="numeric" placeholder="0">
+            <input type="number" id="stockTienda" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
           <div>
             <label for="stockCasa">Stock en Casa</label>
-            <input type="number" id="stockCasa" min="0" step="1"
-                   inputmode="numeric" placeholder="0">
+            <input type="number" id="stockCasa" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
         </div>
-
         <p class="nota-stock">ℹ️ El <strong>Almacén</strong> siempre es infinito.</p>
 
-        <!-- VARIANTES DE PRECIO -->
         <div class="variantes-bloque">
           <div class="variantes-cabecera">
             <h4>Precios / presentaciones</h4>
             <button type="button" class="btn-secundario"
                     style="padding:6px 10px;font-size:12px"
-                    onclick="agregarVarianteFormulario()">
-              + Añadir presentación
-            </button>
+                    onclick="agregarVarianteFormulario()">+ Añadir presentación</button>
           </div>
-
           <p class="nota-variantes">
             Ej. "1 kg", "5 kg", "25 kg". Cada presentación tiene su propio precio.
             El stock es compartido entre todas.
           </p>
-
           <div id="listaVariantesFormulario"></div>
         </div>
 
         <button type="button" id="btnGuardarProducto" class="btn-principal"
-                style="margin-top:12px" onclick="guardarProducto()">
-          GUARDAR PRODUCTO
-        </button>
-
+                style="margin-top:12px" onclick="guardarProducto()">GUARDAR PRODUCTO</button>
         <button type="button" id="btnCancelarEdicion" class="btn-secundario"
                 style="width:100%;margin-top:8px;display:none"
-                onclick="cancelarEdicion()">
-          CANCELAR EDICIÓN
-        </button>
+                onclick="cancelarEdicion()">CANCELAR EDICIÓN</button>
       </div>
-
       <h3 style="margin:20px 0 12px">Catálogo</h3>
       <div id="listaCatalogo"></div>
     </section>
@@ -194,7 +178,6 @@
 
       <h3 style="margin:20px 0 12px">Stock actual</h3>
       <div id="listaInventario"></div>
-
       <h3 style="margin:24px 0 12px">Historial de entradas</h3>
       <div id="listaEntradas"></div>
     </section>
@@ -202,6 +185,10 @@
     <!-- REGISTRO -->
     <section id="pantallaRegistro" class="pantalla">
       <h2 class="titulo-seccion">Registro de ventas</h2>
+
+      <!-- RESUMEN ARRIBA (responde a los filtros) -->
+      <div id="resumenRegistro"></div>
+
       <div class="tarjeta">
         <h3 style="margin-bottom:12px">Filtros</h3>
         <label for="filtroPeriodo">Período</label>
@@ -212,14 +199,17 @@
           <option value="mes">Este mes</option>
           <option value="anio">Este año</option>
         </select>
+
         <label for="filtroProducto">Producto</label>
         <select id="filtroProducto" onchange="aplicarFiltrosRegistro()"></select>
+
         <label for="filtroMoneda">Moneda</label>
         <select id="filtroMoneda" onchange="aplicarFiltrosRegistro()">
           <option value="">Todas</option>
           <option value="CUP">CUP</option>
           <option value="USD">USD</option>
         </select>
+
         <label for="filtroLugar">Lugar de venta</label>
         <select id="filtroLugar" onchange="aplicarFiltrosRegistro()">
           <option value="">Todos</option>
@@ -228,6 +218,7 @@
           <option value="Casa">Casa</option>
           <option value="Sin especificar">Sin especificar</option>
         </select>
+
         <div class="fila-stock">
           <div>
             <label for="filtroMinimo">Importe mínimo</label>
@@ -240,11 +231,12 @@
                    oninput="aplicarFiltrosRegistro()" placeholder="∞">
           </div>
         </div>
+
         <button type="button" class="btn-secundario" style="width:100%"
                 onclick="limpiarFiltrosRegistro()">LIMPIAR FILTROS</button>
       </div>
+
       <div id="listaRegistro"></div>
-      <div id="resumenRegistro" style="margin-top:15px"></div>
       <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
               onclick="exportarRegistroPDF()">EXPORTAR A PDF</button>
     </section>
@@ -261,7 +253,7 @@
 
   </main>
 
-  <!-- MODAL DE SELECCIÓN DE VARIANTE -->
+  <!-- MODAL VARIANTE -->
   <div id="modalVariante" class="modal-fondo" style="display:none">
     <div class="modal-caja">
       <h3 id="modalVarianteTitulo">Elige presentación</h3>
