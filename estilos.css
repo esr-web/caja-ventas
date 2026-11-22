@@ -595,3 +595,148 @@ button:focus-visible { outline: 3px solid rgba(242,140,40,.4); outline-offset: 2
   .nav-item span { font-size: 18px; }
   .btn-cantidad { width: 32px; height: 32px; font-size: 18px; }
 }
+/* Caja - acordeón por producto */
+.producto-caja {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--sombra);
+}
+
+.producto-caja-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.producto-caja-header h3 {
+  font-size: 15px;
+  color: var(--negro);
+  margin-bottom: 3px;
+  word-break: break-word;
+}
+
+.producto-caja-header .stock-linea {
+  font-size: 11px;
+  margin-top: 0;
+}
+
+.producto-caja-header > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Filas de precios (solo cuando está abierto) */
+.precio-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--borde);
+}
+
+.precio-fila:last-of-type {
+  border-bottom: none;
+}
+
+.precio-fila-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.precio-fila-info .precio-etiqueta {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--negro);
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.precio-fila-info .precio-valor {
+  font-size: 13px;
+  color: var(--verde);
+  font-weight: bold;
+}
+
+.precio-fila-controles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.precio-fila-controles .cantidad {
+  min-width: 20px;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Carrito */
+.carrito-producto {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 13px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--sombra);
+}
+
+.carrito-producto-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--borde);
+  margin-bottom: 8px;
+}
+
+.carrito-producto-header h3 {
+  font-size: 15px;
+  color: var(--negro);
+  word-break: break-word;
+}
+
+.carrito-producto-total {
+  font-weight: bold;
+  color: var(--verde);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.carrito-presentacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--borde);
+}
+
+.carrito-presentacion:last-child { border-bottom: none; }
+
+.carrito-presentacion-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.carrito-presentacion-etiqueta {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--negro);
+  display: block;
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.carrito-presentacion-subtotal {
+  font-size: 11px;
+  color: var(--gris);
+}
