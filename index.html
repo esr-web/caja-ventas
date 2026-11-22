@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,14 +18,22 @@
 
   <header class="encabezado">
     <div class="marca">
-      <h1>CAJA</h1>
-      <p>Gestión de ventas</p>
+      <div class="marca-icono">₵</div>
+      <div class="marca-texto">
+        <h1>CAJA</h1>
+        <p>Gestión de ventas</p>
+      </div>
+    </div>
+
+    <div class="estado">
+      <span id="puntoConexion"></span>
+      <span id="textoConexion">En línea</span>
     </div>
   </header>
 
   <main id="contenido">
 
-    <!-- INICIO -->
+    <!-- ==================== INICIO ==================== -->
     <section id="pantallaInicio" class="pantalla activa">
 
       <div class="bienvenida">
@@ -34,13 +41,15 @@
         <p>Selecciona una opción para continuar.</p>
       </div>
 
+      <div id="resumenRapidoInicio" class="resumen-rapido"></div>
+
       <div class="menu-principal">
 
-        <button class="tarjeta-menu" onclick="navegar('caja')">
+        <button class="tarjeta-menu tarjeta-caja" onclick="navegar('caja')">
           <div class="icono-menu">🛒</div>
           <div class="texto-menu">
             <h3>Nueva venta</h3>
-            <p>Registrar una venta.</p>
+            <p>Registrar una venta y descontar stock automáticamente.</p>
           </div>
           <span class="flecha-menu">↗</span>
         </button>
@@ -49,7 +58,7 @@
           <div class="icono-menu">📦</div>
           <div class="texto-menu">
             <h3>Productos</h3>
-            <p>Administrar los productos.</p>
+            <p>Administrar productos y stock por área.</p>
           </div>
           <span class="flecha-menu">↗</span>
         </button>
@@ -67,7 +76,7 @@
           <div class="icono-menu">📊</div>
           <div class="texto-menu">
             <h3>Estadísticas</h3>
-            <p>Consultar gráficos y resultados de las ventas.</p>
+            <p id="textoEstadisticasInicio">Consultar gráficos y resultados de las ventas.</p>
           </div>
           <span class="flecha-menu">↗</span>
         </button>
@@ -83,53 +92,223 @@
 
       </div>
 
+      <div id="panelRespaldo"></div>
+
     </section>
 
-    <!-- CAJA -->
-    <section id="pantallaCaja" class="pantalla"></section>
+    <!-- ==================== CAJA ==================== -->
+    <section id="pantallaCaja" class="pantalla">
 
-    <!-- PRODUCTOS -->
-    <section id="pantallaProductos" class="pantalla"></section>
+      <h2 class="titulo-seccion">Nueva venta</h2>
 
-    <!-- REGISTRO -->
-    <section id="pantallaRegistro" class="pantalla"></section>
+      <div class="tarjeta">
+        <label for="fechaVenta">Fecha</label>
+        <input type="date" id="fechaVenta">
 
-    <!-- ESTADÍSTICAS -->
-    <section id="pantallaEstadisticas" class="pantalla"></section>
+        <label for="lugarVenta">Lugar de venta</label>
+        <select id="lugarVenta" onchange="dibujarProductosCaja()">
+          <option value="Almacén">Almacén (stock infinito)</option>
+          <option value="Tienda" selected>Tienda</option>
+          <option value="Casa">Casa</option>
+        </select>
 
-    <!-- EFECTIVO -->
-    <section id="pantallaEfectivo" class="pantalla"></section>
+        <label for="monedaSeleccionada">Moneda</label>
+        <select id="monedaSeleccionada" onchange="cambiarMonedaVenta()">
+          <option value="CUP">CUP</option>
+          <option value="USD">USD</option>
+        </select>
+
+        <label for="porcentajeVenta">% salario</label>
+        <input type="number" id="porcentajeVenta" min="0" max="100" step="0.5"
+               onchange="actualizarPorcentajeSalario()">
+      </div>
+
+      <div class="tarjeta">
+        <label for="buscarProductoCaja">Buscar producto</label>
+        <input type="text" id="buscarProductoCaja" placeholder="Buscar..."
+               oninput="dibujarProductosCaja()">
+
+        <div id="listaProductosCaja"></div>
+      </div>
+
+      <h3 class="titulo-carrito">Carrito de venta</h3>
+
+      <div id="carritoVenta"></div>
+
+      <div id="resumenVenta" class="resumen"></div>
+
+      <button type="button" class="btn-vendido" onclick="registrarVenta()">
+        REGISTRAR VENTA
+      </button>
+
+      <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
+              onclick="cancelarVenta()">
+        CANCELAR VENTA
+      </button>
+
+    </section>
+
+    <!-- ==================== PRODUCTOS ==================== -->
+    <section id="pantallaProductos" class="pantalla">
+
+      <h2 class="titulo-seccion">Productos</h2>
+
+      <div class="tarjeta">
+        <h3 style="margin-bottom:12px" id="tituloFormularioProducto">
+          Añadir producto
+        </h3>
+
+        <label for="nombreProducto">Nombre</label>
+        <input type="text" id="nombreProducto" placeholder="Ej. Azúcar blanca 25 kg">
+
+        <label for="precioProductoCUP">Precio en CUP</label>
+        <input type="number" id="precioProductoCUP" min="0" step="0.01"
+               inputmode="decimal" placeholder="0.00">
+
+        <label for="precioProductoUSD">Precio en USD</label>
+        <input type="number" id="precioProductoUSD" min="0" step="0.01"
+               inputmode="decimal" placeholder="0.00">
+
+        <div class="fila-stock">
+          <div>
+            <label for="stockTienda">Stock en Tienda</label>
+            <input type="number" id="stockTienda" min="0" step="1"
+                   inputmode="numeric" placeholder="0">
+          </div>
+          <div>
+            <label for="stockCasa">Stock en Casa</label>
+            <input type="number" id="stockCasa" min="0" step="1"
+                   inputmode="numeric" placeholder="0">
+          </div>
+        </div>
+
+        <p class="nota-stock">
+          ℹ️ El <strong>Almacén</strong> siempre es infinito y no necesita stock.
+        </p>
+
+        <button type="button" id="btnGuardarProducto" class="btn-principal"
+                onclick="guardarProducto()">
+          GUARDAR PRODUCTO
+        </button>
+
+        <button type="button" id="btnCancelarEdicion" class="btn-secundario"
+                style="width:100%;margin-top:8px;display:none"
+                onclick="cancelarEdicion()">
+          CANCELAR EDICIÓN
+        </button>
+      </div>
+
+      <h3 style="margin:20px 0 12px">Catálogo</h3>
+
+      <div id="listaCatalogo"></div>
+
+    </section>
+
+    <!-- ==================== REGISTRO ==================== -->
+    <section id="pantallaRegistro" class="pantalla">
+
+      <h2 class="titulo-seccion">Registro de ventas</h2>
+
+      <div class="tarjeta">
+        <h3 style="margin-bottom:12px">Filtros</h3>
+
+        <label for="filtroPeriodo">Período</label>
+        <select id="filtroPeriodo" onchange="aplicarFiltrosRegistro()">
+          <option value="">Todos</option>
+          <option value="hoy">Hoy</option>
+          <option value="semana">Esta semana</option>
+          <option value="mes">Este mes</option>
+          <option value="anio">Este año</option>
+        </select>
+
+        <label for="filtroProducto">Producto</label>
+        <select id="filtroProducto" onchange="aplicarFiltrosRegistro()"></select>
+
+        <label for="filtroMoneda">Moneda</label>
+        <select id="filtroMoneda" onchange="aplicarFiltrosRegistro()">
+          <option value="">Todas</option>
+          <option value="CUP">CUP</option>
+          <option value="USD">USD</option>
+        </select>
+
+        <label for="filtroLugar">Lugar de venta</label>
+        <select id="filtroLugar" onchange="aplicarFiltrosRegistro()">
+          <option value="">Todos</option>
+          <option value="Almacén">Almacén</option>
+          <option value="Tienda">Tienda</option>
+          <option value="Casa">Casa</option>
+          <option value="Sin especificar">Sin especificar</option>
+        </select>
+
+        <div class="fila-stock">
+          <div>
+            <label for="filtroMinimo">Importe mínimo</label>
+            <input type="number" id="filtroMinimo" min="0" step="0.01"
+                   oninput="aplicarFiltrosRegistro()" placeholder="0">
+          </div>
+          <div>
+            <label for="filtroMaximo">Importe máximo</label>
+            <input type="number" id="filtroMaximo" min="0" step="0.01"
+                   oninput="aplicarFiltrosRegistro()" placeholder="∞">
+          </div>
+        </div>
+
+        <button type="button" class="btn-secundario" style="width:100%"
+                onclick="limpiarFiltrosRegistro()">
+          LIMPIAR FILTROS
+        </button>
+      </div>
+
+      <div id="listaRegistro"></div>
+
+      <div id="resumenRegistro" style="margin-top:15px"></div>
+
+      <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
+              onclick="exportarRegistroPDF()">
+        EXPORTAR A PDF
+      </button>
+
+    </section>
+
+    <!-- ==================== ESTADÍSTICAS ==================== -->
+    <section id="pantallaEstadisticas" class="pantalla">
+      <h2 class="titulo-seccion">Estadísticas</h2>
+      <div id="contenidoEstadisticas"></div>
+    </section>
+
+    <!-- ==================== EFECTIVO ==================== -->
+    <section id="pantallaEfectivo" class="pantalla">
+      <h2 class="titulo-seccion">Conteo de efectivo</h2>
+      <div id="contenidoEfectivo"></div>
+    </section>
 
   </main>
 
-  <!-- NAVEGACIÓN INFERIOR -->
   <nav class="navegacion-inferior">
-
-    <button onclick="navegar('inicio')" class="nav-item">
+    <button onclick="navegar('inicio')" class="nav-item" data-pantalla="inicio" aria-label="Inicio">
       <span>⌂</span>
       <small>Inicio</small>
     </button>
 
-    <button onclick="navegar('caja')" class="nav-item">
+    <button onclick="navegar('caja')" class="nav-item" data-pantalla="caja" aria-label="Caja">
       <span>＋</span>
       <small>Caja</small>
     </button>
 
-    <button onclick="navegar('productos')" class="nav-item">
+    <button onclick="navegar('productos')" class="nav-item" data-pantalla="productos" aria-label="Productos">
       <span>▣</span>
       <small>Productos</small>
     </button>
 
-    <button onclick="navegar('registro')" class="nav-item">
+    <button onclick="navegar('registro')" class="nav-item" data-pantalla="registro" aria-label="Registro">
       <span>☷</span>
       <small>Registro</small>
     </button>
 
-    <button onclick="navegar('efectivo')" class="nav-item">
+    <button onclick="navegar('efectivo')" class="nav-item" data-pantalla="efectivo" aria-label="Efectivo">
       <span>＄</span>
       <small>Efectivo</small>
     </button>
-
   </nav>
 
   <script src="./database.js"></script>
