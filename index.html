@@ -5,26 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#151515">
   <meta name="description" content="Sistema de caja y control de ventas offline">
-
   <title>CAJA | Gestión de ventas</title>
-
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icono.png">
   <link rel="apple-touch-icon" href="./icono.png">
   <link rel="stylesheet" href="./estilos.css">
 </head>
-
 <body>
 
   <header class="encabezado">
     <div class="marca">
       <div class="marca-icono">₵</div>
-      <div class="marca-texto">
-        <h1>CAJA</h1>
-        <p>Gestión de ventas</p>
-      </div>
+      <div class="marca-texto"><h1>CAJA</h1><p>Gestión de ventas</p></div>
     </div>
-
     <div class="estado">
       <span id="puntoConexion"></span>
       <span id="textoConexion">En línea</span>
@@ -33,152 +26,92 @@
 
   <main id="contenido">
 
-    <!-- ==================== INICIO ==================== -->
+    <!-- INICIO -->
     <section id="pantallaInicio" class="pantalla activa">
-
       <div class="bienvenida">
         <h2>Panel principal</h2>
         <p>Selecciona una opción para continuar.</p>
       </div>
-
       <div id="resumenRapidoInicio" class="resumen-rapido"></div>
-
       <div id="inventarioInicio" class="inventario-inicio"></div>
-
       <div class="menu-principal">
-
         <button class="tarjeta-menu tarjeta-caja" onclick="navegar('caja')">
           <div class="icono-menu">🛒</div>
-          <div class="texto-menu">
-            <h3>Nueva venta</h3>
-            <p>Registrar una venta y descontar stock automáticamente.</p>
-          </div>
+          <div class="texto-menu"><h3>Nueva venta</h3><p>Registrar una venta y descontar stock automáticamente.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
-
         <button class="tarjeta-menu" onclick="navegar('productos')">
           <div class="icono-menu">📦</div>
-          <div class="texto-menu">
-            <h3>Productos</h3>
-            <p>Administrar productos y stock por área.</p>
-          </div>
+          <div class="texto-menu"><h3>Productos</h3><p>Administrar productos, variantes y stock.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
-
         <button class="tarjeta-menu" onclick="navegar('inventario')">
           <div class="icono-menu">🏷️</div>
-          <div class="texto-menu">
-            <h3>Inventario</h3>
-            <p>Entradas de stock y cantidades por área.</p>
-          </div>
+          <div class="texto-menu"><h3>Inventario</h3><p>Entradas de stock y cantidades por área.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
-
         <button class="tarjeta-menu" onclick="navegar('registro')">
           <div class="icono-menu">📋</div>
-          <div class="texto-menu">
-            <h3>Registro de ventas</h3>
-            <p>Consultar, filtrar y eliminar ventas.</p>
-          </div>
+          <div class="texto-menu"><h3>Registro de ventas</h3><p>Consultar, filtrar y eliminar ventas.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
-
         <button class="tarjeta-menu" onclick="navegar('estadisticas')">
           <div class="icono-menu">📊</div>
-          <div class="texto-menu">
-            <h3>Estadísticas</h3>
-            <p id="textoEstadisticasInicio">Consultar gráficos y resultados de las ventas.</p>
-          </div>
+          <div class="texto-menu"><h3>Estadísticas</h3><p id="textoEstadisticasInicio">Consultar gráficos y resultados de las ventas.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
-
         <button class="tarjeta-menu" onclick="navegar('efectivo')">
           <div class="icono-menu">💵</div>
-          <div class="texto-menu">
-            <h3>Conteo de efectivo</h3>
-            <p>Calcular el dinero disponible en caja.</p>
-          </div>
+          <div class="texto-menu"><h3>Conteo de efectivo</h3><p>Calcular el dinero disponible en caja.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
-
       </div>
-
       <div id="panelRespaldo"></div>
-
     </section>
 
-    <!-- ==================== CAJA ==================== -->
+    <!-- CAJA -->
     <section id="pantallaCaja" class="pantalla">
-
       <h2 class="titulo-seccion">Nueva venta</h2>
-
       <div class="tarjeta">
         <label for="fechaVenta">Fecha</label>
         <input type="date" id="fechaVenta">
-
         <label for="lugarVenta">Lugar de venta</label>
         <select id="lugarVenta" onchange="dibujarProductosCaja()">
           <option value="Almacén">Almacén (stock infinito)</option>
           <option value="Tienda" selected>Tienda</option>
           <option value="Casa">Casa</option>
         </select>
-
         <label for="monedaSeleccionada">Moneda</label>
         <select id="monedaSeleccionada" onchange="cambiarMonedaVenta()">
           <option value="CUP">CUP</option>
           <option value="USD">USD</option>
         </select>
-
         <label for="porcentajeVenta">% salario</label>
         <input type="number" id="porcentajeVenta" min="0" max="100" step="0.5"
                onchange="actualizarPorcentajeSalario()">
       </div>
-
       <div class="tarjeta">
         <label for="buscarProductoCaja">Buscar producto</label>
         <input type="text" id="buscarProductoCaja" placeholder="Buscar..."
                oninput="dibujarProductosCaja()">
-
         <div id="listaProductosCaja"></div>
       </div>
-
       <h3 class="titulo-carrito">Carrito de venta</h3>
-
       <div id="carritoVenta"></div>
-
       <div id="resumenVenta" class="resumen"></div>
-
-      <button type="button" class="btn-vendido" onclick="registrarVenta()">
-        REGISTRAR VENTA
-      </button>
-
+      <button type="button" class="btn-vendido" onclick="registrarVenta()">REGISTRAR VENTA</button>
       <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
-              onclick="cancelarVenta()">
-        CANCELAR VENTA
-      </button>
-
+              onclick="cancelarVenta()">CANCELAR VENTA</button>
     </section>
 
-    <!-- ==================== PRODUCTOS ==================== -->
+    <!-- PRODUCTOS -->
     <section id="pantallaProductos" class="pantalla">
-
       <h2 class="titulo-seccion">Productos</h2>
-
       <div class="tarjeta">
-        <h3 style="margin-bottom:12px" id="tituloFormularioProducto">
-          Añadir producto
-        </h3>
+        <h3 style="margin-bottom:12px" id="tituloFormularioProducto">Añadir producto</h3>
 
-        <label for="nombreProducto">Nombre</label>
-        <input type="text" id="nombreProducto" placeholder="Ej. Azúcar blanca 25 kg">
-
-        <label for="precioProductoCUP">Precio en CUP</label>
-        <input type="number" id="precioProductoCUP" min="0" step="0.01"
-               inputmode="decimal" placeholder="0.00">
-
-        <label for="precioProductoUSD">Precio en USD</label>
-        <input type="number" id="precioProductoUSD" min="0" step="0.01"
-               inputmode="decimal" placeholder="0.00">
+        <label for="nombreProducto">Nombre del producto</label>
+        <input type="text" id="nombreProducto" placeholder="Ej. Azúcar blanca">
 
         <div class="fila-stock">
           <div>
@@ -193,12 +126,29 @@
           </div>
         </div>
 
-        <p class="nota-stock">
-          ℹ️ El <strong>Almacén</strong> siempre es infinito y no necesita stock.
-        </p>
+        <p class="nota-stock">ℹ️ El <strong>Almacén</strong> siempre es infinito.</p>
+
+        <!-- VARIANTES DE PRECIO -->
+        <div class="variantes-bloque">
+          <div class="variantes-cabecera">
+            <h4>Precios / presentaciones</h4>
+            <button type="button" class="btn-secundario"
+                    style="padding:6px 10px;font-size:12px"
+                    onclick="agregarVarianteFormulario()">
+              + Añadir presentación
+            </button>
+          </div>
+
+          <p class="nota-variantes">
+            Ej. "1 kg", "5 kg", "25 kg". Cada presentación tiene su propio precio.
+            El stock es compartido entre todas.
+          </p>
+
+          <div id="listaVariantesFormulario"></div>
+        </div>
 
         <button type="button" id="btnGuardarProducto" class="btn-principal"
-                onclick="guardarProducto()">
+                style="margin-top:12px" onclick="guardarProducto()">
           GUARDAR PRODUCTO
         </button>
 
@@ -210,71 +160,50 @@
       </div>
 
       <h3 style="margin:20px 0 12px">Catálogo</h3>
-
       <div id="listaCatalogo"></div>
-
     </section>
 
-    <!-- ==================== INVENTARIO ==================== -->
+    <!-- INVENTARIO -->
     <section id="pantallaInventario" class="pantalla">
-
       <h2 class="titulo-seccion">Inventario por área</h2>
-
       <div id="resumenInventario" class="inventario-resumen"></div>
 
-      <!-- ===== ENTRADA DE PRODUCTOS ===== -->
       <div class="tarjeta">
         <h3 style="margin-bottom:12px">➕ Entrada de producto</h3>
-
         <label for="entradaProducto">Producto</label>
         <select id="entradaProducto"></select>
-
         <label for="entradaArea">Área destino</label>
         <select id="entradaArea">
           <option value="Tienda" selected>Tienda</option>
           <option value="Casa">Casa</option>
         </select>
-
         <label for="entradaCantidad">Cantidad a añadir</label>
         <input type="number" id="entradaCantidad" min="1" step="1"
                inputmode="numeric" placeholder="0" value="1">
-
         <button type="button" class="btn-principal"
-                onclick="registrarEntradaInventario()">
-          AGREGAR AL STOCK
-        </button>
+                onclick="registrarEntradaInventario()">AGREGAR AL STOCK</button>
       </div>
 
-      <!-- ===== BUSCADOR + EXPORTAR ===== -->
       <div class="tarjeta">
         <label for="buscarInventario">Buscar producto</label>
         <input type="text" id="buscarInventario" placeholder="Buscar..."
                oninput="dibujarInventario()">
-
         <button type="button" class="btn-secundario" style="width:100%"
-                onclick="exportarInventarioPDF()">
-          📄 EXPORTAR INVENTARIO PDF
-        </button>
+                onclick="exportarInventarioPDF()">📄 EXPORTAR INVENTARIO PDF</button>
       </div>
 
-      <!-- ===== LISTA DE STOCK ACTUAL ===== -->
       <h3 style="margin:20px 0 12px">Stock actual</h3>
       <div id="listaInventario"></div>
 
-      <!-- ===== HISTORIAL DE ENTRADAS ===== -->
       <h3 style="margin:24px 0 12px">Historial de entradas</h3>
       <div id="listaEntradas"></div>
-
     </section>
 
-    <!-- ==================== REGISTRO ==================== -->
+    <!-- REGISTRO -->
     <section id="pantallaRegistro" class="pantalla">
-
       <h2 class="titulo-seccion">Registro de ventas</h2>
-
       <div class="tarjeta">
         <h3 style="margin-bottom:12px">Filtros</h3>
-
         <label for="filtroPeriodo">Período</label>
         <select id="filtroPeriodo" onchange="aplicarFiltrosRegistro()">
           <option value="">Todos</option>
@@ -283,17 +212,14 @@
           <option value="mes">Este mes</option>
           <option value="anio">Este año</option>
         </select>
-
         <label for="filtroProducto">Producto</label>
         <select id="filtroProducto" onchange="aplicarFiltrosRegistro()"></select>
-
         <label for="filtroMoneda">Moneda</label>
         <select id="filtroMoneda" onchange="aplicarFiltrosRegistro()">
           <option value="">Todas</option>
           <option value="CUP">CUP</option>
           <option value="USD">USD</option>
         </select>
-
         <label for="filtroLugar">Lugar de venta</label>
         <select id="filtroLugar" onchange="aplicarFiltrosRegistro()">
           <option value="">Todos</option>
@@ -302,7 +228,6 @@
           <option value="Casa">Casa</option>
           <option value="Sin especificar">Sin especificar</option>
         </select>
-
         <div class="fila-stock">
           <div>
             <label for="filtroMinimo">Importe mínimo</label>
@@ -315,31 +240,20 @@
                    oninput="aplicarFiltrosRegistro()" placeholder="∞">
           </div>
         </div>
-
         <button type="button" class="btn-secundario" style="width:100%"
-                onclick="limpiarFiltrosRegistro()">
-          LIMPIAR FILTROS
-        </button>
+                onclick="limpiarFiltrosRegistro()">LIMPIAR FILTROS</button>
       </div>
-
       <div id="listaRegistro"></div>
-
       <div id="resumenRegistro" style="margin-top:15px"></div>
-
       <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
-              onclick="exportarRegistroPDF()">
-        EXPORTAR A PDF
-      </button>
-
+              onclick="exportarRegistroPDF()">EXPORTAR A PDF</button>
     </section>
 
-    <!-- ==================== ESTADÍSTICAS ==================== -->
     <section id="pantallaEstadisticas" class="pantalla">
       <h2 class="titulo-seccion">Estadísticas</h2>
       <div id="contenidoEstadisticas"></div>
     </section>
 
-    <!-- ==================== EFECTIVO ==================== -->
     <section id="pantallaEfectivo" class="pantalla">
       <h2 class="titulo-seccion">Conteo de efectivo</h2>
       <div id="contenidoEfectivo"></div>
@@ -347,39 +261,24 @@
 
   </main>
 
-  <!-- NAV INFERIOR -->
+  <!-- MODAL DE SELECCIÓN DE VARIANTE -->
+  <div id="modalVariante" class="modal-fondo" style="display:none">
+    <div class="modal-caja">
+      <h3 id="modalVarianteTitulo">Elige presentación</h3>
+      <p id="modalVarianteSubtitulo" class="modal-sub"></p>
+      <div id="modalVarianteLista"></div>
+      <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
+              onclick="cerrarModalVariante()">CANCELAR</button>
+    </div>
+  </div>
+
   <nav class="navegacion-inferior">
-
-    <button onclick="navegar('inicio')" class="nav-item" data-pantalla="inicio" aria-label="Inicio">
-      <span>⌂</span>
-      <small>Inicio</small>
-    </button>
-
-    <button onclick="navegar('caja')" class="nav-item" data-pantalla="caja" aria-label="Caja">
-      <span>＋</span>
-      <small>Caja</small>
-    </button>
-
-    <button onclick="navegar('productos')" class="nav-item" data-pantalla="productos" aria-label="Productos">
-      <span>▣</span>
-      <small>Productos</small>
-    </button>
-
-    <button onclick="navegar('inventario')" class="nav-item" data-pantalla="inventario" aria-label="Inventario">
-      <span>🏷️</span>
-      <small>Inventario</small>
-    </button>
-
-    <button onclick="navegar('registro')" class="nav-item" data-pantalla="registro" aria-label="Registro">
-      <span>☷</span>
-      <small>Registro</small>
-    </button>
-
-    <button onclick="navegar('efectivo')" class="nav-item" data-pantalla="efectivo" aria-label="Efectivo">
-      <span>＄</span>
-      <small>Efectivo</small>
-    </button>
-
+    <button onclick="navegar('inicio')" class="nav-item" data-pantalla="inicio"><span>⌂</span><small>Inicio</small></button>
+    <button onclick="navegar('caja')" class="nav-item" data-pantalla="caja"><span>＋</span><small>Caja</small></button>
+    <button onclick="navegar('productos')" class="nav-item" data-pantalla="productos"><span>▣</span><small>Productos</small></button>
+    <button onclick="navegar('inventario')" class="nav-item" data-pantalla="inventario"><span>🏷️</span><small>Inventario</small></button>
+    <button onclick="navegar('registro')" class="nav-item" data-pantalla="registro"><span>☷</span><small>Registro</small></button>
+    <button onclick="navegar('efectivo')" class="nav-item" data-pantalla="efectivo"><span>＄</span><small>Efectivo</small></button>
   </nav>
 
   <script src="./database.js"></script>
