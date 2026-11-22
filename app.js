@@ -77,18 +77,15 @@ function normalizarVariantes(producto) {
       precioUSD: Number(v.precioUSD) || 0
     }));
   }
-
   const pCUP = Number(producto.precioCUP ?? producto.precio) || 0;
   const pUSD = Number(producto.precioUSD) || 0;
   if (pCUP === 0 && pUSD === 0) return [];
-
   return [{ id: generarIdVariante(), etiqueta: "Único", precioCUP: pCUP, precioUSD: pUSD }];
 }
 
 function adaptarProducto(producto) {
   if (!producto || typeof producto !== "object") return null;
   const stock = producto.stock || {};
-
   return {
     ...producto,
     id: producto.id,
@@ -101,7 +98,6 @@ function adaptarProducto(producto) {
 
 function adaptarVenta(venta) {
   if (!venta || typeof venta !== "object") return null;
-
   const productosNorm = Array.isArray(venta.productos)
     ? venta.productos.map(linea => {
         const idProducto = linea.idProducto ?? linea.productoId ?? linea.id ?? null;
@@ -109,10 +105,8 @@ function adaptarVenta(venta) {
         const precio = Number(linea.precio) || 0;
         const precioCUP = Number(linea.precioCUP) || 0;
         const subtotal = Number(linea.subtotal) || (cantidad * precio);
-
         return {
-          ...linea,
-          idProducto,
+          ...linea, idProducto,
           idVariante: linea.idVariante || null,
           etiquetaVariante: String(linea.etiquetaVariante || ""),
           nombre: String(linea.nombre || "Producto"),
@@ -120,10 +114,8 @@ function adaptarVenta(venta) {
         };
       })
     : [];
-
   return {
-    ...venta,
-    id: venta.id,
+    ...venta, id: venta.id,
     fecha: venta.fecha || "",
     moneda: venta.moneda || "CUP",
     total: Number(venta.total) || 0,
@@ -137,8 +129,7 @@ function adaptarVenta(venta) {
 function adaptarEntrada(e) {
   if (!e || typeof e !== "object") return null;
   return {
-    ...e,
-    id: e.id,
+    ...e, id: e.id,
     idProducto: e.idProducto ?? null,
     nombre: String(e.nombre || "Producto"),
     area: e.area === "Casa" ? "Casa" : "Tienda",
@@ -189,20 +180,16 @@ function stockDisponible(producto, lugar) {
 async function descontarStockVenta(lineas, lugar) {
   const clave = claveStockLugar(lugar);
   if (!clave) return;
-
   const porProducto = {};
   for (const linea of lineas) {
     const idP = Number(linea.idProducto);
     porProducto[idP] = (porProducto[idP] || 0) + Number(linea.cantidad || 0);
   }
-
   for (const idP in porProducto) {
     const producto = productos.find(p => Number(p.id) === Number(idP));
     if (!producto) continue;
-
     const actual = Number(producto.stock?.[clave]) || 0;
     producto.stock[clave] = Math.max(0, actual - porProducto[idP]);
-
     try { await guardarDato("productos", producto); }
     catch (e) { console.warn(e); }
   }
@@ -214,17 +201,12 @@ async function descontarStockVenta(lineas, lugar) {
 
 async function iniciarAplicacion() {
   await abrirBaseDatos();
-
   productos = (await obtenerTodos("productos")).map(adaptarProducto).filter(Boolean);
   ventas = (await obtenerTodos("ventas")).map(adaptarVenta).filter(Boolean);
-
-  try {
-    entradas = (await obtenerTodos("entradas")).map(adaptarEntrada).filter(Boolean);
-  } catch (_) { entradas = []; }
-
+  try { entradas = (await obtenerTodos("entradas")).map(adaptarEntrada).filter(Boolean); }
+  catch (_) { entradas = []; }
   for (const p of productos) await guardarDato("productos", p);
   for (const v of ventas) await guardarDato("ventas", v);
-
   navegar("inicio");
   actualizarEstadoConexion();
 }
@@ -259,7 +241,6 @@ function navegar(nombre) {
     estadisticas: "pantallaEstadisticas",
     efectivo: "pantallaEfectivo"
   };
-
   const id = pantallas[nombre];
   if (!id) return;
   const destino = document.getElementById(id);
@@ -289,7 +270,7 @@ function cambiarPantalla(n) { navegar(n); }
 function irPantalla(n) { navegar(n); }
 
 // ==========================================
-// PRODUCTOS - CATÁLOGO
+// PRODUCTOS
 // ==========================================
 
 function mostrarProductos() { dibujarCatalogo(); cancelarEdicion(); }
@@ -297,20 +278,16 @@ function mostrarProductos() { dibujarCatalogo(); cancelarEdicion(); }
 function dibujarCatalogo() {
   const lista = document.getElementById("listaCatalogo");
   if (!lista) return;
-
   if (!productos.length) {
     lista.innerHTML = `<div class="texto-vacio">No hay productos registrados.</div>`;
     return;
   }
-
   lista.innerHTML = productos.map(producto => {
     const variantesHtml = producto.variantes.length
       ? producto.variantes.map(v => `
           <div class="variante-linea">
             <span class="variante-etiqueta">${escapar(v.etiqueta || "Único")}</span>
-            <span class="variante-precios">
-              ${formato(v.precioCUP)} CUP · ${formato(v.precioUSD)} USD
-            </span>
+            <span class="variante-precios">${formato(v.precioCUP)} CUP · ${formato(v.precioUSD)} USD</span>
           </div>
         `).join("")
       : `<div class="variante-linea"><em>Sin variantes</em></div>`;
@@ -326,7 +303,6 @@ function dibujarCatalogo() {
           </p>
           <div class="variantes-lista">${variantesHtml}</div>
         </div>
-
         <div class="acciones-producto">
           <button type="button" class="btn-secundario"
                   onclick="editarProducto(${Number(producto.id)})">EDITAR</button>
@@ -337,10 +313,6 @@ function dibujarCatalogo() {
     `;
   }).join("");
 }
-
-// ==========================================
-// PRODUCTOS - FORMULARIO VARIANTES
-// ==========================================
 
 function crearFilaVarianteHTML(variante = null) {
   const id = variante?.id || generarIdVariante();
@@ -403,46 +375,29 @@ function limpiarVariantesFormulario() {
   if (cont) cont.innerHTML = "";
 }
 
-// ==========================================
-// PRODUCTOS - GUARDAR
-// ==========================================
-
 async function guardarProducto() {
   const nombreInput = document.getElementById("nombreProducto");
   const stockTiendaInput = document.getElementById("stockTienda");
   const stockCasaInput = document.getElementById("stockCasa");
-
   if (!nombreInput) return;
-
   const estabaEditando = productoEnEdicion !== null;
   const nombre = nombreInput.value.trim();
   const stockTienda = Math.max(0, Math.floor(Number(stockTiendaInput?.value) || 0));
   const stockCasa = Math.max(0, Math.floor(Number(stockCasaInput?.value) || 0));
-
   if (!nombre) { alert("Escribe el nombre del producto."); nombreInput.focus(); return; }
-
   const variantes = leerVariantesFormulario();
   if (!variantes.length) { alert("Añade al menos una presentación con precio."); return; }
-
   const conPrecio = variantes.some(v => v.precioCUP > 0 || v.precioUSD > 0);
   if (!conPrecio) { alert("Al menos una presentación debe tener precio > 0."); return; }
-
-  const producto = {
-    nombre,
-    stock: { tienda: stockTienda, casa: stockCasa },
-    variantes
-  };
-
+  const producto = { nombre, stock: { tienda: stockTienda, casa: stockCasa }, variantes };
   if (estabaEditando) {
     producto.id = productoEnEdicion.id;
     Object.assign(producto, productoEnEdicion, {
       nombre, stock: { tienda: stockTienda, casa: stockCasa }, variantes
     });
   }
-
   try {
     const id = await guardarDato("productos", producto);
-
     if (!estabaEditando) {
       producto.id = id;
       productos.push(adaptarProducto(producto));
@@ -450,7 +405,6 @@ async function guardarProducto() {
       const idx = productos.findIndex(p => Number(p.id) === Number(producto.id));
       if (idx !== -1) productos[idx] = adaptarProducto(producto);
     }
-
     cancelarEdicion();
     dibujarCatalogo();
     dibujarProductosCaja();
@@ -463,29 +417,19 @@ async function guardarProducto() {
   }
 }
 
-// ==========================================
-// PRODUCTOS - EDITAR / CANCELAR / ELIMINAR
-// ==========================================
-
 function editarProducto(id) {
   const producto = productos.find(p => Number(p.id) === Number(id));
   if (!producto) return;
-
   productoEnEdicion = { ...producto };
-
   document.getElementById("nombreProducto").value = producto.nombre || "";
   document.getElementById("stockTienda").value = producto.stock.tienda || 0;
   document.getElementById("stockCasa").value = producto.stock.casa || 0;
-
   limpiarVariantesFormulario();
   producto.variantes.forEach(v => agregarVarianteFormulario(v));
-
   document.getElementById("btnGuardarProducto").textContent = "ACTUALIZAR PRODUCTO";
   document.getElementById("btnCancelarEdicion").style.display = "block";
   document.getElementById("tituloFormularioProducto").textContent = "Editar producto";
-
   if (pantallaActual === "inventario") navegar("productos");
-
   setTimeout(() => {
     const n = document.getElementById("nombreProducto");
     if (n) n.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -499,11 +443,9 @@ function cancelarEdicion() {
     if (el) el.value = "";
   });
   limpiarVariantesFormulario();
-
   const bg = document.getElementById("btnGuardarProducto");
   const bc = document.getElementById("btnCancelarEdicion");
   const t = document.getElementById("tituloFormularioProducto");
-
   if (bg) bg.textContent = "GUARDAR PRODUCTO";
   if (bc) bc.style.display = "none";
   if (t) t.textContent = "Añadir producto";
@@ -513,13 +455,11 @@ async function eliminarProducto(id) {
   const producto = productos.find(p => Number(p.id) === Number(id));
   if (!producto) return;
   if (!confirm("¿Deseas eliminar el producto " + producto.nombre + "?")) return;
-
   try {
     await eliminarDato("productos", producto.id);
     productos = productos.filter(p => Number(p.id) !== Number(id));
     if (productoEnEdicion && Number(productoEnEdicion.id) === Number(id)) cancelarEdicion();
     carrito = carrito.filter(l => Number(l.idProducto) !== Number(id));
-
     dibujarCatalogo();
     dibujarProductosCaja();
     dibujarCarrito();
@@ -549,7 +489,6 @@ function actualizarInventarioInicio() {
   const cont = document.getElementById("inventarioInicio");
   if (!cont) return;
   if (!productos.length) { cont.innerHTML = ""; return; }
-
   const totales = calcularTotalesInventario();
   cont.innerHTML = `
     <h3>📦 Inventario por área</h3>
@@ -572,17 +511,14 @@ function cargarOpcionesEntradaProducto() {
   const sel = document.getElementById("entradaProducto");
   if (!sel) return;
   const actual = sel.value;
-
   if (!productos.length) {
     sel.innerHTML = `<option value="">— Sin productos —</option>`;
     sel.value = "";
     return;
   }
-
   sel.innerHTML = productos.map(p =>
     `<option value="${Number(p.id)}">${escapar(p.nombre)}</option>`
   ).join("");
-
   if (actual && productos.some(p => String(p.id) === String(actual))) sel.value = actual;
 }
 
@@ -590,13 +526,10 @@ async function registrarEntradaInventario() {
   const selProducto = document.getElementById("entradaProducto");
   const selArea = document.getElementById("entradaArea");
   const inputCantidad = document.getElementById("entradaCantidad");
-
   if (!selProducto || !selArea || !inputCantidad) return;
-
   const idProducto = Number(selProducto.value);
   const area = selArea.value;
   const cantidad = Math.floor(Number(inputCantidad.value));
-
   if (!idProducto) { alert("Selecciona un producto."); return; }
   if (area !== "Tienda" && area !== "Casa") { alert("Área inválida."); return; }
   if (!Number.isFinite(cantidad) || cantidad <= 0) {
@@ -604,32 +537,23 @@ async function registrarEntradaInventario() {
     inputCantidad.focus();
     return;
   }
-
   const producto = productos.find(p => Number(p.id) === idProducto);
   if (!producto) { alert("Producto no encontrado."); return; }
-
   const clave = claveStockLugar(area);
-
   try {
     producto.stock[clave] = (Number(producto.stock[clave]) || 0) + cantidad;
     await guardarDato("productos", producto);
-
     const entrada = {
-      idProducto: producto.id,
-      nombre: producto.nombre,
-      area, cantidad,
-      fecha: new Date().toISOString()
+      idProducto: producto.id, nombre: producto.nombre,
+      area, cantidad, fecha: new Date().toISOString()
     };
-
     const id = await guardarDato("entradas", entrada);
     entrada.id = id;
     entradas.push(adaptarEntrada(entrada));
-
     dibujarInventario();
     dibujarEntradas();
     dibujarCatalogo();
     actualizarInicio();
-
     inputCantidad.value = "1";
     alert(`Entrada registrada: +${cantidad} de "${producto.nombre}" en ${area}.`);
   } catch (e) {
@@ -642,7 +566,6 @@ function dibujarInventario() {
   const lista = document.getElementById("listaInventario");
   const resumen = document.getElementById("resumenInventario");
   if (!lista) return;
-
   const totales = calcularTotalesInventario();
   if (resumen) {
     resumen.innerHTML = `
@@ -651,24 +574,19 @@ function dibujarInventario() {
       <div class="inventario-resumen-total casa"><small>Casa</small><strong>${totales.casa}</strong></div>
     `;
   }
-
   const busquedaInput = document.getElementById("buscarInventario");
   const busqueda = busquedaInput ? busquedaInput.value.trim().toLowerCase() : "";
-
   const filtrados = productos.filter(p =>
     String(p.nombre || "").toLowerCase().includes(busqueda)
   );
-
   if (!filtrados.length) {
     lista.innerHTML = `<div class="texto-vacio">No hay productos${busqueda ? " que coincidan" : ""}.</div>`;
     return;
   }
-
   lista.innerHTML = filtrados.map(p => {
     const variantesTxt = p.variantes.length
       ? p.variantes.map(v => v.etiqueta || "Único").join(" · ")
       : "—";
-
     return `
       <div class="inventario-fila inventario-fila-con-acciones">
         <div class="inventario-fila-nombre">
@@ -696,11 +614,9 @@ function dibujarEntradas() {
     cont.innerHTML = `<div class="texto-vacio">Aún no hay entradas registradas.</div>`;
     return;
   }
-
   const lista = entradas.slice()
     .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))
     .slice(0, 100);
-
   cont.innerHTML = lista.map(e => `
     <div class="entrada-fila">
       <div class="entrada-info">
@@ -718,7 +634,6 @@ function dibujarEntradas() {
 
 function exportarInventarioPDF() {
   if (!productos.length) { alert("No hay productos para exportar."); return; }
-
   const totales = calcularTotalesInventario();
   const generado = mostrarFechaHora(new Date().toISOString());
 
@@ -726,7 +641,6 @@ function exportarInventarioPDF() {
     const variantesTxt = p.variantes.map(v =>
       `${escapar(v.etiqueta || "Único")}: ${formato(v.precioCUP)} CUP / ${formato(v.precioUSD)} USD`
     ).join("<br>") || "—";
-
     return `
       <tr>
         <td>${escapar(p.nombre)}</td>
@@ -779,24 +693,15 @@ function exportarInventarioPDF() {
       <div><small>Total Tienda</small><strong>${totales.tienda} uds</strong></div>
       <div><small>Total Casa</small><strong>${totales.casa} uds</strong></div>
     </div>
-
     <h2>Stock actual por producto</h2>
-    <table>
-      <thead><tr>
-        <th>Producto</th><th>Presentaciones / precios</th>
-        <th>Almacén</th><th>Tienda</th><th>Casa</th>
-      </tr></thead>
-      <tbody>${filasStock}</tbody>
-    </table>
-
+    <table><thead><tr>
+      <th>Producto</th><th>Presentaciones / precios</th>
+      <th>Almacén</th><th>Tienda</th><th>Casa</th>
+    </tr></thead><tbody>${filasStock}</tbody></table>
     <h2>Historial de entradas</h2>
-    <table>
-      <thead><tr>
-        <th>Fecha y hora</th><th>Producto</th><th>Área</th><th>Cantidad</th>
-      </tr></thead>
-      <tbody>${filasEntradas}</tbody>
-    </table>
-
+    <table><thead><tr>
+      <th>Fecha y hora</th><th>Producto</th><th>Área</th><th>Cantidad</th>
+    </tr></thead><tbody>${filasEntradas}</tbody></table>
     <div class="pie">Sistema de gestión de ventas CAJA</div>
     <script>window.onload=function(){window.print()};<\/script>
     </body></html>
@@ -825,11 +730,9 @@ function mostrarCaja() {
 function cambiarMonedaVenta() {
   const selector = document.getElementById("monedaSeleccionada");
   if (!selector) return;
-
   const anterior = monedaVenta;
   const nueva = selector.value;
   if (nueva !== "CUP" && nueva !== "USD") { selector.value = anterior; return; }
-
   const precios = [];
   for (const linea of carrito) {
     const producto = productos.find(p => Number(p.id) === Number(linea.idProducto));
@@ -847,13 +750,11 @@ function cambiarMonedaVenta() {
     }
     precios.push(np);
   }
-
   monedaVenta = nueva;
   carrito.forEach((l, i) => {
     l.precio = precios[i];
     l.subtotal = l.precio * Number(l.cantidad);
   });
-
   dibujarProductosCaja();
   dibujarCarrito();
 }
@@ -861,31 +762,25 @@ function cambiarMonedaVenta() {
 function dibujarProductosCaja() {
   const lista = document.getElementById("listaProductosCaja");
   if (!lista) return;
-
   const busquedaInput = document.getElementById("buscarProductoCaja");
   const busqueda = busquedaInput ? busquedaInput.value.trim().toLowerCase() : "";
   const lugarInput = document.getElementById("lugarVenta");
   const lugar = lugarInput ? lugarInput.value : "Tienda";
-
   const filtrados = productos.filter(p =>
     String(p.nombre || "").toLowerCase().includes(busqueda)
   );
-
   if (!filtrados.length) {
     lista.innerHTML = `<div class="texto-vacio">No hay productos disponibles.</div>`;
     return;
   }
-
   lista.innerHTML = filtrados.map(producto => {
     const stock = stockDisponible(producto, lugar);
     const stockTexto = stock === Infinity ? "∞" : stock;
     const sinStock = stock !== Infinity && stock <= 0;
-
     const variantes = producto.variantes || [];
     const preciosHtml = variantes.length === 1
       ? `<div class="precio">${formato(precioVariante(variantes[0], monedaVenta))} ${monedaVenta} <small>(${escapar(variantes[0].etiqueta)})</small></div>`
       : `<div class="precio">Desde ${formato(Math.min(...variantes.map(v => precioVariante(v, monedaVenta))))} ${monedaVenta}</div>`;
-
     return `
       <div class="producto">
         <div class="producto-info">
@@ -895,7 +790,6 @@ function dibujarProductosCaja() {
             Stock ${lugar}: <strong>${stockTexto}</strong>
           </small>
         </div>
-
         <button type="button" class="btn-principal"
                 style="width:auto;min-width:100px;padding:12px 14px;font-size:13px"
                 ${sinStock ? "disabled" : ""}
@@ -916,22 +810,15 @@ function agregarProductoAlCarrito(idProducto) {
   abrirModalVariante(producto);
 }
 
-// ==========================================
-// MODAL DE VARIANTE
-// ==========================================
-
 function abrirModalVariante(producto) {
   variantePendienteProductoId = producto.id;
-
   const modal = document.getElementById("modalVariante");
   const titulo = document.getElementById("modalVarianteTitulo");
   const sub = document.getElementById("modalVarianteSubtitulo");
   const lista = document.getElementById("modalVarianteLista");
   if (!modal || !lista) return;
-
   if (titulo) titulo.textContent = producto.nombre;
   if (sub) sub.textContent = "Elige la presentación que se vende:";
-
   lista.innerHTML = producto.variantes.map(v => `
     <button type="button" class="btn-secundario"
             style="width:100%;margin-bottom:8px;text-align:left;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:10px"
@@ -940,7 +827,6 @@ function abrirModalVariante(producto) {
       <span style="color:#16834a;font-weight:bold">${formato(precioVariante(v, monedaVenta))} ${monedaVenta}</span>
     </button>
   `).join("");
-
   modal.style.display = "flex";
 }
 
@@ -957,41 +843,29 @@ function seleccionarVariante(idVariante) {
   agregarVarianteAlCarrito(idP, idVariante);
 }
 
-// ==========================================
-// CARRITO
-// ==========================================
-
 function agregarVarianteAlCarrito(idProducto, idVariante) {
   const producto = productos.find(p => Number(p.id) === Number(idProducto));
   if (!producto) return;
-
   const variante = producto.variantes.find(v => v.id === idVariante);
   if (!variante) { alert("Variante no encontrada."); return; }
-
   const lugarInput = document.getElementById("lugarVenta");
   const lugar = lugarInput ? lugarInput.value : "Tienda";
-
   const precio = Number(precioVariante(variante, monedaVenta));
   if (!Number.isFinite(precio) || precio <= 0) {
     alert(`La presentación "${variante.etiqueta}" no tiene precio en ${monedaVenta}.`);
     return;
   }
-
   const existente = carrito.find(l =>
     Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante
   );
-
   const totalEnCarrito = carrito
     .filter(l => Number(l.idProducto) === Number(idProducto))
     .reduce((s, l) => s + Number(l.cantidad), 0);
-
   const disponible = stockDisponible(producto, lugar);
-
   if (disponible !== Infinity && totalEnCarrito + 1 > disponible) {
     alert(`No hay stock suficiente en ${lugar}.`);
     return;
   }
-
   if (existente) {
     existente.cantidad += 1;
     existente.subtotal = existente.precio * existente.cantidad;
@@ -1002,11 +876,9 @@ function agregarVarianteAlCarrito(idProducto, idVariante) {
       etiquetaVariante: variante.etiqueta,
       nombre: producto.nombre,
       cantidad: 1,
-      precio,
-      subtotal: precio
+      precio, subtotal: precio
     });
   }
-
   dibujarCarrito();
 }
 
@@ -1015,25 +887,19 @@ function cambiarCantidadCarrito(idProducto, idVariante, cambio) {
     Number(l.idProducto) === Number(idProducto) && l.idVariante === idVariante
   );
   if (!linea) return;
-
   const producto = productos.find(p => Number(p.id) === Number(idProducto));
   const lugarInput = document.getElementById("lugarVenta");
   const lugar = lugarInput ? lugarInput.value : "Tienda";
   const disponible = producto ? stockDisponible(producto, lugar) : Infinity;
-
   const totalEnCarrito = carrito
     .filter(l => Number(l.idProducto) === Number(idProducto))
     .reduce((s, l) => s + Number(l.cantidad), 0);
-
   const nueva = linea.cantidad + Number(cambio);
-
   if (nueva <= 0) { quitarDelCarrito(idProducto, idVariante); return; }
-
   if (disponible !== Infinity) {
     const nuevoTotal = totalEnCarrito - linea.cantidad + nueva;
     if (nuevoTotal > disponible) { alert(`No hay stock suficiente en ${lugar}.`); return; }
   }
-
   linea.cantidad = nueva;
   linea.subtotal = linea.precio * linea.cantidad;
   dibujarCarrito();
@@ -1048,13 +914,11 @@ function quitarDelCarrito(idProducto, idVariante) {
 
 function calcularTotalesVenta() {
   let total = 0, baseCUP = 0;
-
   carrito.forEach(linea => {
     const cantidad = Number(linea.cantidad) || 0;
     const precio = Number(linea.precio) || 0;
     const subtotal = cantidad * precio;
     total += subtotal;
-
     if (monedaVenta === "CUP") {
       baseCUP += subtotal;
     } else {
@@ -1063,7 +927,6 @@ function calcularTotalesVenta() {
       baseCUP += cantidad * (Number(variante?.precioCUP) || 0);
     }
   });
-
   const salario = baseCUP * (Number(porcentajeSalario) || 0) / 100;
   return {
     total, baseCUP, salario,
@@ -1075,7 +938,6 @@ function dibujarCarrito() {
   const cont = document.getElementById("carritoVenta");
   const resumen = document.getElementById("resumenVenta");
   if (!cont) return;
-
   if (!carrito.length) {
     cont.innerHTML = `<div class="texto-vacio">No hay productos en la venta.</div>`;
     if (resumen) resumen.innerHTML = `
@@ -1083,7 +945,6 @@ function dibujarCarrito() {
       <div class="salario">Salario: 0 CUP</div>`;
     return;
   }
-
   cont.innerHTML = carrito.map(linea => {
     const nombreMostrar = nombreConVariante(linea.nombre, linea.etiquetaVariante);
     return `
@@ -1093,7 +954,6 @@ function dibujarCarrito() {
           <p>${formato(linea.precio)} ${monedaVenta} × ${linea.cantidad}</p>
           <strong>${formato(linea.subtotal)} ${monedaVenta}</strong>
         </div>
-
         <div class="controles-cantidad">
           <button type="button" class="btn-cantidad"
                   onclick="cambiarCantidadCarrito(${Number(linea.idProducto)},'${escapar(linea.idVariante)}',-1)">−</button>
@@ -1107,7 +967,6 @@ function dibujarCarrito() {
       </div>
     `;
   }).join("");
-
   if (resumen) {
     const t = calcularTotalesVenta();
     resumen.innerHTML = `
@@ -1139,15 +998,12 @@ let guardandoVenta = false;
 
 function registrarVenta() {
   if (!carrito.length) { alert("Agrega productos antes de registrar."); return; }
-
   const fechaInput = document.getElementById("fechaVenta");
   const lugarInput = document.getElementById("lugarVenta");
   const fecha = fechaInput ? fechaInput.value : fechaLocal();
   const lugar = lugarInput ? lugarInput.value : "Tienda";
-
   if (!fecha) { alert("Selecciona la fecha."); return; }
   if (!LUGARES_VENTA.includes(lugar)) { alert("Lugar inválido."); return; }
-
   const t = calcularTotalesVenta();
   if (!confirm(
     "¿Confirmar esta venta?\n\n" +
@@ -1156,26 +1012,20 @@ function registrarVenta() {
     "Lugar: " + lugar + "\n" +
     "Salario: " + formato(t.salario) + " CUP"
   )) return;
-
   confirmarVenta();
 }
 
 async function confirmarVenta() {
   if (guardandoVenta) return;
   if (!carrito.length) return;
-
   const fechaInput = document.getElementById("fechaVenta");
   const lugarInput = document.getElementById("lugarVenta");
   const fecha = fechaInput ? fechaInput.value : fechaLocal();
   const lugar = lugarInput ? lugarInput.value : "Tienda";
-
-  if (!fecha || !LUGARES_VENTA.includes(lugar)) { alert("Datos de venta inválidos."); return; }
-
+  if (!fecha || !LUGARES_VENTA.includes(lugar)) { alert("Datos inválidos."); return; }
   const t = calcularTotalesVenta();
   if (!Number.isFinite(t.total) || t.total <= 0) { alert("Importe inválido."); return; }
-
   guardandoVenta = true;
-
   try {
     const lineasVenta = carrito.map(linea => {
       const cantidad = Number(linea.cantidad) || 0;
@@ -1183,12 +1033,10 @@ async function confirmarVenta() {
       const subtotal = cantidad * precio;
       const producto = productos.find(p => Number(p.id) === Number(linea.idProducto));
       const variante = producto?.variantes?.find(v => v.id === linea.idVariante);
-
       const precioCUP = Number(variante?.precioCUP) || 0;
       const subtotalCUP = cantidad * precioCUP;
       const baseCUP = monedaVenta === "CUP" ? subtotal : subtotalCUP;
       const salarioLinea = baseCUP * Number(porcentajeSalario) / 100;
-
       return {
         idProducto: linea.idProducto,
         idVariante: linea.idVariante,
@@ -1196,40 +1044,30 @@ async function confirmarVenta() {
         nombre: linea.nombre,
         nombreCompleto: nombreConVariante(linea.nombre, linea.etiquetaVariante),
         cantidad, precio, precioCUP, subtotal, subtotalCUP,
-        total: subtotal,
-        baseCUP,
+        total: subtotal, baseCUP,
         totalCUP: monedaVenta === "CUP" ? subtotal : 0,
-        porcentajeSalario,
-        salario: salarioLinea
+        porcentajeSalario, salario: salarioLinea
       };
     });
-
     const venta = {
-      fecha,
-      fechaRegistro: new Date().toISOString(),
-      moneda: monedaVenta,
-      lugarVenta: lugar,
+      fecha, fechaRegistro: new Date().toISOString(),
+      moneda: monedaVenta, lugarVenta: lugar,
       productos: lineasVenta,
       total: t.total,
       totalCUP: monedaVenta === "CUP" ? t.total : 0,
       baseCUP: t.baseCUP,
-      porcentajeSalario,
-      salario: t.salario
+      porcentajeSalario, salario: t.salario
     };
-
     const id = await guardarDato("ventas", venta);
     venta.id = id;
     ventas.push(adaptarVenta(venta));
-
     await descontarStockVenta(lineasVenta, lugar);
-
     carrito = [];
     dibujarCarrito();
     dibujarProductosCaja();
     dibujarCatalogo();
     dibujarInventario();
     actualizarInicio();
-
     alert(
       "Venta registrada.\n\n" +
       "Total: " + formato(venta.total) + " " + venta.moneda + "\n" +
@@ -1322,172 +1160,70 @@ function obtenerVentasFiltradas() {
 }
 
 // ==========================================
-// REGISTRO - ESTADÍSTICAS DE LOS FILTROS
+// REGISTRO - RESUMEN AL INICIO (5 métricas)
 // ==========================================
-
-function calcularEstadisticasFiltradas(lista) {
-  const stats = {
-    operaciones: lista.length,
-    unidades: 0,
-    totalCUP: 0,
-    totalUSD: 0,
-    salarioTotal: 0,
-    porLugar: { "Almacén": 0, "Tienda": 0, "Casa": 0, "Sin especificar": 0 },
-    ranking: {},
-    dias: {}
-  };
-
-  lista.forEach(v => {
-    const moneda = v.moneda || "CUP";
-    const total = Number(v.total) || 0;
-
-    if (moneda === "USD") stats.totalUSD += total;
-    else stats.totalCUP += total;
-
-    stats.salarioTotal += Number(v.salario) || 0;
-
-    const lugar = v.lugarVenta || "Sin especificar";
-    if (stats.porLugar[lugar] !== undefined) stats.porLugar[lugar] += 1;
-
-    // Días únicos para calcular promedio diario
-    const fechaDia = fechaParaComparar(v.fecha);
-    if (fechaDia) {
-      stats.dias[fechaDia] = (stats.dias[fechaDia] || 0) + 1;
-    }
-
-    (v.productos || []).forEach(linea => {
-      const c = Number(linea.cantidad) || 0;
-      const n = linea.nombreCompleto || linea.nombre || "Producto";
-      stats.unidades += c;
-      stats.ranking[n] = (stats.ranking[n] || 0) + c;
-    });
-  });
-
-  stats.diasConVentas = Object.keys(stats.dias).length;
-  stats.promedioPorOperacion = stats.operaciones
-    ? (stats.totalCUP + stats.totalUSD) / stats.operaciones
-    : 0;
-  stats.promedioCUP = stats.operaciones ? stats.totalCUP / stats.operaciones : 0;
-  stats.promedioUSD = stats.operaciones ? stats.totalUSD / stats.operaciones : 0;
-
-  // Top producto y top lugar
-  const rankingArr = Object.entries(stats.ranking)
-    .map(([nombre, cantidad]) => ({ nombre, cantidad }))
-    .sort((a, b) => b.cantidad - a.cantidad);
-
-  stats.topProducto = rankingArr[0] || null;
-  stats.topProductos = rankingArr.slice(0, 3);
-
-  const lugaresArr = Object.entries(stats.porLugar)
-    .map(([nombre, cantidad]) => ({ nombre, cantidad }))
-    .sort((a, b) => b.cantidad - a.cantidad);
-
-  stats.topLugar = lugaresArr.find(l => l.cantidad > 0) || null;
-
-  // Rango de fechas
-  const fechas = lista.map(v => fechaParaComparar(v.fecha)).filter(Boolean).sort();
-  stats.fechaMin = fechas[0] || null;
-  stats.fechaMax = fechas[fechas.length - 1] || null;
-
-  return stats;
-}
 
 function actualizarResumenRegistro(lista) {
   const cont = document.getElementById("resumenRegistro");
   if (!cont) return;
 
-  const s = calcularEstadisticasFiltradas(lista);
+  // 1. Operaciones
+  const operaciones = lista.length;
 
-  const topProductosHtml = s.topProductos.length
-    ? s.topProductos.map((p, i) => `
-        <div class="resumen-ranking-item">
-          <span class="resumen-ranking-num">${i + 1}</span>
-          <span class="resumen-ranking-nombre">${escapar(p.nombre)}</span>
-          <span class="resumen-ranking-cant">${p.cantidad} uds</span>
-        </div>
-      `).join("")
-    : `<p class="texto-vacio" style="padding:10px 0">Sin datos.</p>`;
+  // 2. Sacos vendidos (unidades)
+  const sacosVendidos = lista.reduce((sum, v) => {
+    return sum + (v.productos || []).reduce(
+      (s, l) => s + (Number(l.cantidad) || 0), 0
+    );
+  }, 0);
 
-  const rangoFechas = s.fechaMin && s.fechaMax
-    ? (s.fechaMin === s.fechaMax
-        ? mostrarFecha(s.fechaMin)
-        : `${mostrarFecha(s.fechaMin)} → ${mostrarFecha(s.fechaMax)}`)
-    : "—";
+  // 3. Ventas en CUP
+  const ventasCUP = lista
+    .filter(v => (v.moneda || "CUP") === "CUP")
+    .reduce((s, v) => s + (Number(v.total) || 0), 0);
+
+  // 4. Ventas en USD
+  const ventasUSD = lista
+    .filter(v => v.moneda === "USD")
+    .reduce((s, v) => s + (Number(v.total) || 0), 0);
+
+  // 5. Salario acumulado (siempre en CUP)
+  const salarioAcumulado = lista.reduce(
+    (s, v) => s + (Number(v.salario) || 0), 0
+  );
 
   cont.innerHTML = `
     <div class="tarjeta resumen-filtrado">
       <div class="resumen-filtrado-header">
-        <h3>Estadísticas del filtro actual</h3>
-        <small>${s.operaciones} operación${s.operaciones === 1 ? "" : "es"}</small>
+        <h3>Resumen del filtro actual</h3>
+        <small>${operaciones} operación${operaciones === 1 ? "" : "es"}</small>
       </div>
 
       <div class="resumen-filtrado-grid">
         <div class="resumen-filtrado-item">
           <small>Operaciones</small>
-          <strong>${s.operaciones}</strong>
+          <strong>${operaciones}</strong>
         </div>
+
         <div class="resumen-filtrado-item">
-          <small>Unidades vendidas</small>
-          <strong>${s.unidades}</strong>
+          <small>Sacos vendidos</small>
+          <strong>${sacosVendidos}</strong>
         </div>
+
         <div class="resumen-filtrado-item verde">
-          <small>Total CUP</small>
-          <strong>${formato(s.totalCUP)} CUP</strong>
+          <small>Ventas en CUP</small>
+          <strong>${formato(ventasCUP)} CUP</strong>
         </div>
+
         <div class="resumen-filtrado-item verde">
-          <small>Total USD</small>
-          <strong>${formato(s.totalUSD)} USD</strong>
+          <small>Ventas en USD</small>
+          <strong>${formato(ventasUSD)} USD</strong>
         </div>
+
         <div class="resumen-filtrado-item naranja">
-          <small>Salarios</small>
-          <strong>${formato(s.salarioTotal)} CUP</strong>
+          <small>Salario acumulado</small>
+          <strong>${formato(salarioAcumulado)} CUP</strong>
         </div>
-        <div class="resumen-filtrado-item">
-          <small>Días con ventas</small>
-          <strong>${s.diasConVentas}</strong>
-        </div>
-      </div>
-
-      <div class="resumen-filtrado-bloque">
-        <h4>Promedios</h4>
-        <div class="resumen-filtrado-grid-2">
-          <div class="resumen-filtrado-item">
-            <small>Promedio por operación (CUP)</small>
-            <strong>${formato(s.promedioCUP)}</strong>
-          </div>
-          <div class="resumen-filtrado-item">
-            <small>Promedio por operación (USD)</small>
-            <strong>${formato(s.promedioUSD)}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="resumen-filtrado-bloque">
-        <h4>Distribución por lugar</h4>
-        <div class="resumen-lugares">
-          ${Object.entries(s.porLugar).map(([nombre, cant]) => {
-            const pct = s.operaciones ? Math.round((cant / s.operaciones) * 100) : 0;
-            return `
-              <div class="resumen-lugar-fila">
-                <span class="resumen-lugar-nombre">${escapar(nombre)}</span>
-                <div class="resumen-lugar-barra">
-                  <div class="resumen-lugar-barra-fill" style="width:${pct}%"></div>
-                </div>
-                <span class="resumen-lugar-cant">${cant} <small>(${pct}%)</small></span>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      </div>
-
-      <div class="resumen-filtrado-bloque">
-        <h4>Productos más vendidos</h4>
-        <div class="resumen-ranking">${topProductosHtml}</div>
-      </div>
-
-      <div class="resumen-filtrado-pie">
-        <span><strong>Rango:</strong> ${escapar(rangoFechas)}</span>
-        ${s.topLugar ? `<span><strong>Top lugar:</strong> ${escapar(s.topLugar.nombre)}</span>` : ""}
       </div>
     </div>
   `;
@@ -1515,14 +1251,12 @@ function dibujarRegistro() {
 
   cont.innerHTML = filtradas.map(venta => {
     const moneda = escapar(venta.moneda);
-
     const lineas = venta.productos.map(l => {
       const cantidad = Number(l.cantidad) || 0;
       const precio = Number(l.precio) || 0;
       const subtotal = Number(l.subtotal) || (cantidad * precio);
       const nombre = l.nombreCompleto ||
         nombreConVariante(l.nombre || "Producto", l.etiquetaVariante || "");
-
       return `
         <div class="linea-venta">
           <div class="linea-venta-nombre">${escapar(nombre)} × ${cantidad}</div>
@@ -1572,7 +1306,6 @@ async function eliminarVenta(id) {
   const venta = ventas.find(v => Number(v.id) === Number(id));
   if (!venta) return;
   if (!confirm(`¿Eliminar la venta #${venta.id}?`)) return;
-
   try {
     await eliminarDato("ventas", venta.id);
     ventas = (await obtenerTodos("ventas")).map(adaptarVenta).filter(Boolean);
@@ -1595,17 +1328,22 @@ function exportarRegistroPDF() {
       String(a.fechaRegistro || a.fecha || "")
     )
   );
-
   if (!lista.length) { alert("No hay ventas para exportar."); return; }
 
-  const s = calcularEstadisticasFiltradas(lista);
+  const operaciones = lista.length;
+  const sacos = lista.reduce((s, v) =>
+    s + (v.productos || []).reduce((a, l) => a + (Number(l.cantidad) || 0), 0), 0);
+  const cup = lista.filter(v => (v.moneda || "CUP") === "CUP")
+    .reduce((s, v) => s + Number(v.total || 0), 0);
+  const usd = lista.filter(v => v.moneda === "USD")
+    .reduce((s, v) => s + Number(v.total || 0), 0);
+  const sal = lista.reduce((s, v) => s + Number(v.salario || 0), 0);
 
   const filas = lista.map(venta => {
     const detalle = venta.productos.map(l => {
       const nombre = l.nombreCompleto || nombreConVariante(l.nombre, l.etiquetaVariante);
       return `<div>${escapar(nombre)} × ${Number(l.cantidad) || 0} — ${formato(l.precio)} ${escapar(venta.moneda)}</div>`;
     }).join("");
-
     return `
       <tr>
         <td>${Number(venta.id)}</td>
@@ -1625,8 +1363,7 @@ function exportarRegistroPDF() {
       *{box-sizing:border-box}
       body{font-family:Arial,sans-serif;color:#242424;margin:25px}
       h1{margin-bottom:5px;font-size:25px}
-      h2{font-size:14px;margin:22px 0 10px;border-bottom:2px solid #f28c28;padding-bottom:5px}
-      .sub{color:#777;margin-bottom:20px;font-size:13px}
+      .sub{color:#777;margin-bottom:25px;font-size:13px}
       .r{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
       .r div{border:1px solid #ddd;border-radius:8px;padding:12px;flex:1;min-width:140px}
       .r small{display:block;font-size:10px;color:#777;text-transform:uppercase}
@@ -1637,51 +1374,20 @@ function exportarRegistroPDF() {
       .numero{text-align:right;white-space:nowrap}
       tr{page-break-inside:avoid}
       .pie{margin-top:25px;color:#777;font-size:10px;text-align:center}
-      .lugar-fila{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #eee}
     </style></head><body>
     <h1>CAJA | Registro de ventas</h1>
     <div class="sub">Generado el ${escapar(mostrarFechaHora(new Date().toISOString()))}</div>
-
-    <h2>Estadísticas del filtro aplicado</h2>
     <div class="r">
-      <div><small>Operaciones</small><strong>${s.operaciones}</strong></div>
-      <div><small>Unidades</small><strong>${s.unidades}</strong></div>
-      <div><small>Total CUP</small><strong>${formato(s.totalCUP)} CUP</strong></div>
-      <div><small>Total USD</small><strong>${formato(s.totalUSD)} USD</strong></div>
-      <div><small>Salarios</small><strong>${formato(s.salarioTotal)} CUP</strong></div>
+      <div><small>Operaciones</small><strong>${operaciones}</strong></div>
+      <div><small>Sacos vendidos</small><strong>${sacos}</strong></div>
+      <div><small>Ventas en CUP</small><strong>${formato(cup)} CUP</strong></div>
+      <div><small>Ventas en USD</small><strong>${formato(usd)} USD</strong></div>
+      <div><small>Salario acumulado</small><strong>${formato(sal)} CUP</strong></div>
     </div>
-    <div class="r">
-      <div><small>Promedio CUP/op</small><strong>${formato(s.promedioCUP)}</strong></div>
-      <div><small>Promedio USD/op</small><strong>${formato(s.promedioUSD)}</strong></div>
-      <div><small>Días con ventas</small><strong>${s.diasConVentas}</strong></div>
-      <div><small>Top lugar</small><strong>${s.topLugar ? escapar(s.topLugar.nombre) + " (" + s.topLugar.cantidad + ")" : "—"}</strong></div>
-    </div>
-
-    <h2>Distribución por lugar</h2>
-    ${Object.entries(s.porLugar).map(([nombre, cant]) => `
-      <div class="lugar-fila">
-        <span>${escapar(nombre)}</span>
-        <strong>${cant} ${cant === 1 ? "venta" : "ventas"}</strong>
-      </div>
-    `).join("")}
-
-    <h2>Productos más vendidos (filtro)</h2>
-    ${s.topProductos.length
-      ? s.topProductos.map((p, i) => `
-          <div class="lugar-fila">
-            <span>${i + 1}. ${escapar(p.nombre)}</span>
-            <strong>${p.cantidad} uds</strong>
-          </div>
-        `).join("")
-      : "<p>Sin datos</p>"
-    }
-
-    <h2>Detalle de ventas</h2>
     <table><thead><tr>
       <th>N.º</th><th>Fecha</th><th>Lugar</th><th>Productos</th>
       <th>Moneda</th><th>Total</th><th>Salario</th>
     </tr></thead><tbody>${filas}</tbody></table>
-
     <div class="pie">Sistema de gestión de ventas CAJA</div>
     <script>window.onload=function(){window.print()};<\/script>
     </body></html>
@@ -1706,10 +1412,8 @@ function obtenerResumenEstadisticas() {
     salarioTotal += Number(v.salario) || 0;
     if (v.moneda === "USD") totalUSD += Number(v.total) || 0;
     else totalCUP += Number(v.total) || 0;
-
     const l = v.lugarVenta || "Sin especificar";
     if (porLugar[l] !== undefined) porLugar[l] += 1;
-
     (v.productos || []).forEach(linea => {
       const c = Number(linea.cantidad) || 0;
       const n = linea.nombreCompleto || linea.nombre || "Producto";
@@ -1766,7 +1470,6 @@ function crearGraficoBarras(titulo, datos, sufijo = "") {
 function mostrarEstadisticas() {
   const cont = document.getElementById("contenidoEstadisticas");
   if (!cont) return;
-
   const d = obtenerResumenEstadisticas();
   const m = obtenerUltimosSeisMeses();
   const lugares = Object.entries(d.porLugar).map(([n, v]) => ({ nombre: n, valor: v }));
@@ -1801,12 +1504,10 @@ function mostrarEstadisticas() {
         </div>
       </div>
     </div>
-
     ${crearGraficoBarras("Operaciones por lugar", lugares, "ventas")}
     ${crearGraficoBarras("Ingresos CUP - 6 meses", m.map(x => ({ nombre: x.etiqueta, valor: x.CUP })), "CUP")}
     ${crearGraficoBarras("Ingresos USD - 6 meses", m.map(x => ({ nombre: x.etiqueta, valor: x.USD })), "USD")}
     ${crearGraficoBarras("Productos más vendidos", top, "unidades")}
-
     <button type="button" class="btn-secundario" style="width:100%;margin-bottom:20px"
             onclick="mostrarEstadisticas()">ACTUALIZAR ESTADÍSTICAS</button>
   `;
@@ -1827,7 +1528,6 @@ function cargarConteoEfectivo() {
       conteoEfectivo = {};
     }
   } catch (_) { conteoEfectivo = {}; }
-
   denominacionesEfectivo.forEach(v => {
     const c = Number(conteoEfectivo[v]);
     conteoEfectivo[v] = Number.isFinite(c) && c >= 0 ? c : 0;
@@ -1847,7 +1547,6 @@ function mostrarEfectivo() {
   cargarConteoEfectivo();
   const cont = document.getElementById("contenidoEfectivo");
   if (!cont) return;
-
   const filas = denominacionesEfectivo.map(v => `
     <div class="producto">
       <div class="producto-info">
@@ -1862,7 +1561,6 @@ function mostrarEfectivo() {
       </div>
     </div>
   `).join("");
-
   cont.innerHTML = `
     <div class="tarjeta">
       <h3 style="margin-bottom:8px">Conteo de efectivo</h3>
