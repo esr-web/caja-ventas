@@ -207,7 +207,8 @@
 
       <div class="tarjeta">
         <h3 style="margin-bottom:12px">Filtros</h3>
-        <label for="filtroPeriodo">Período</label>
+
+        <label for="filtroPeriodo">Período rápido</label>
         <select id="filtroPeriodo" onchange="aplicarFiltrosRegistro()">
           <option value="">Todos</option>
           <option value="hoy">Hoy</option>
@@ -215,6 +216,21 @@
           <option value="mes">Este mes</option>
           <option value="anio">Este año</option>
         </select>
+
+        <label for="filtroDia">Día concreto</label>
+        <input type="date" id="filtroDia" onchange="aplicarFiltrosRegistro()">
+
+        <label>Rango de fechas</label>
+        <div class="fila-stock">
+          <div>
+            <label for="filtroFechaDesde" style="font-size:11px;font-weight:normal">Desde</label>
+            <input type="date" id="filtroFechaDesde" onchange="aplicarFiltrosRegistro()">
+          </div>
+          <div>
+            <label for="filtroFechaHasta" style="font-size:11px;font-weight:normal">Hasta</label>
+            <input type="date" id="filtroFechaHasta" onchange="aplicarFiltrosRegistro()">
+          </div>
+        </div>
 
         <label for="filtroProducto">Producto</label>
         <select id="filtroProducto" onchange="aplicarFiltrosRegistro()"></select>
