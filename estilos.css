@@ -34,7 +34,6 @@ body {
   background: var(--fondo);
   color: var(--texto);
   min-height: 100vh;
-  /* Reserva espacio para el nav inferior + margen */
   padding-bottom: 100px;
   overflow-x: hidden;
 }
@@ -159,8 +158,6 @@ main {
   font-size: 14px;
 }
 
-/* --- Resumen rápido --- */
-
 .resumen-rapido {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -194,8 +191,6 @@ main {
   font-size: 14px;
   color: var(--negro);
 }
-
-/* --- Inventario en inicio --- */
 
 .inventario-inicio {
   background: var(--blanco);
@@ -246,17 +241,9 @@ main {
   color: var(--negro);
 }
 
-.inventario-inicio-total.almacen strong {
-  color: var(--naranja);
-}
-
-.inventario-inicio-total.tienda strong {
-  color: var(--verde);
-}
-
-.inventario-inicio-total.casa strong {
-  color: #2a6db0;
-}
+.inventario-inicio-total.almacen strong { color: var(--naranja); }
+.inventario-inicio-total.tienda strong  { color: var(--verde); }
+.inventario-inicio-total.casa strong    { color: #2a6db0; }
 
 .inventario-inicio .ver-todos {
   display: block;
@@ -269,8 +256,6 @@ main {
   padding: 10px;
   border-radius: 9px;
 }
-
-/* --- Menú principal --- */
 
 .menu-principal {
   display: flex;
@@ -629,7 +614,7 @@ button:focus-visible {
 }
 
 /* ============================================================
-   INVENTARIO (pantalla)
+   INVENTARIO
    ============================================================ */
 
 .inventario-resumen {
@@ -724,6 +709,60 @@ button:focus-visible {
 .inventario-col.tienda strong  { color: var(--verde); }
 .inventario-col.casa strong    { color: #2a6db0; }
 
+/* --- Historial de entradas --- */
+
+.entrada-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  padding: 12px 14px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--sombra);
+}
+
+.entrada-info {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.entrada-info h4 {
+  font-size: 13px;
+  color: var(--negro);
+  margin-bottom: 3px;
+  font-weight: bold;
+}
+
+.entrada-info small {
+  display: block;
+  color: var(--gris);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.entrada-cantidad {
+  flex-shrink: 0;
+  text-align: right;
+  font-weight: bold;
+  color: var(--verde);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.entrada-cantidad small {
+  display: block;
+  font-size: 10px;
+  color: var(--gris);
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-top: 2px;
+}
+
 /* ============================================================
    RESUMEN (carrito)
    ============================================================ */
@@ -762,7 +801,7 @@ button:focus-visible {
 }
 
 /* ============================================================
-   REGISTRO - líneas de producto
+   REGISTRO
    ============================================================ */
 
 .linea-venta {
@@ -855,13 +894,8 @@ button:focus-visible {
   main { padding: 17px 12px; }
   .tarjeta-menu { padding: 15px; }
 
-  .nav-item small {
-    font-size: 8px;
-  }
-
-  .nav-item span {
-    font-size: 18px;
-  }
+  .nav-item small { font-size: 8px; }
+  .nav-item span { font-size: 18px; }
 
   .btn-cantidad {
     width: 32px;
