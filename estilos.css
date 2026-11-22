@@ -1,16 +1,22 @@
+/* ============================================================
+   CAJA - ESTILOS (SIEMPRE MODO CLARO)
+   ============================================================ */
+
 :root {
   --negro: #151515;
   --negro-suave: #222222;
   --naranja: #f28c28;
   --naranja-claro: #fff1e2;
   --verde: #16834a;
+  --verde-claro: #eaf5ee;
   --rojo: #c52e2e;
+  --rojo-claro: #fff0f0;
   --fondo: #f5f6f8;
   --blanco: #ffffff;
   --texto: #242424;
   --gris: #777777;
   --borde: #e9e9e9;
-  --sombra: 0 5px 20px rgba(0,0,0,.045);
+  --sombra: 0 5px 20px rgba(0,0,0,.05);
 }
 
 * {
@@ -19,24 +25,34 @@
   padding: 0;
 }
 
+html {
+  background: var(--fondo);
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
   background: var(--fondo);
   color: var(--texto);
   min-height: 100vh;
-  padding-bottom: 85px;
+  /* Reserva espacio para el nav inferior + margen */
+  padding-bottom: 100px;
+  overflow-x: hidden;
 }
 
 button, input, select {
   font: inherit;
+  color: var(--texto);
 }
 
 button {
   cursor: pointer;
   border: none;
+  background: transparent;
 }
 
-/* ============================ ENCABEZADO ============================ */
+/* ============================================================
+   ENCABEZADO
+   ============================================================ */
 
 .encabezado {
   background: var(--negro);
@@ -48,18 +64,20 @@ button {
   position: sticky;
   top: 0;
   z-index: 20;
-  box-shadow: 0 3px 12px #0002;
+  box-shadow: 0 3px 12px rgba(0,0,0,.15);
 }
 
 .marca {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .marca-icono {
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   background: var(--naranja);
   border-radius: 12px;
   display: grid;
@@ -72,6 +90,7 @@ button {
 .marca-texto h1 {
   font-size: 23px;
   letter-spacing: 2px;
+  color: white;
 }
 
 .marca-texto p {
@@ -87,6 +106,7 @@ button {
   gap: 7px;
   font-size: 11px;
   color: #cccccc;
+  flex-shrink: 0;
 }
 
 #puntoConexion {
@@ -96,7 +116,9 @@ button {
   background: #58c985;
 }
 
-/* ============================ MAIN ============================ */
+/* ============================================================
+   MAIN
+   ============================================================ */
 
 main {
   max-width: 760px;
@@ -118,7 +140,9 @@ main {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ============================ INICIO ============================ */
+/* ============================================================
+   INICIO
+   ============================================================ */
 
 .bienvenida {
   margin: 12px 0 20px;
@@ -135,11 +159,13 @@ main {
   font-size: 14px;
 }
 
+/* --- Resumen rápido --- */
+
 .resumen-rapido {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .resumen-rapido:empty {
@@ -147,11 +173,12 @@ main {
 }
 
 .resumen-rapido-item {
-  background: white;
+  background: var(--blanco);
   border: 1px solid var(--borde);
   border-radius: 10px;
   padding: 10px 8px;
   text-align: center;
+  box-shadow: var(--sombra);
 }
 
 .resumen-rapido-item small {
@@ -159,12 +186,91 @@ main {
   font-size: 10px;
   color: var(--gris);
   margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
 }
 
 .resumen-rapido-item strong {
   font-size: 14px;
   color: var(--negro);
 }
+
+/* --- Inventario en inicio --- */
+
+.inventario-inicio {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 15px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: var(--sombra);
+}
+
+.inventario-inicio:empty {
+  display: none;
+}
+
+.inventario-inicio h3 {
+  font-size: 14px;
+  color: var(--negro);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inventario-inicio-totales {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.inventario-inicio-total {
+  text-align: center;
+  padding: 12px 6px;
+  border-radius: 10px;
+  background: var(--naranja-claro);
+}
+
+.inventario-inicio-total small {
+  display: block;
+  font-size: 10px;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 5px;
+}
+
+.inventario-inicio-total strong {
+  font-size: 18px;
+  color: var(--negro);
+}
+
+.inventario-inicio-total.almacen strong {
+  color: var(--naranja);
+}
+
+.inventario-inicio-total.tienda strong {
+  color: var(--verde);
+}
+
+.inventario-inicio-total.casa strong {
+  color: #2a6db0;
+}
+
+.inventario-inicio .ver-todos {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: var(--fondo);
+  color: var(--texto);
+  font-size: 12px;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 9px;
+}
+
+/* --- Menú principal --- */
 
 .menu-principal {
   display: flex;
@@ -211,11 +317,12 @@ main {
 }
 
 .tarjeta-caja .icono-menu {
-  background: #ffffff30;
+  background: rgba(255,255,255,.19);
 }
 
 .texto-menu {
   flex: 1;
+  min-width: 0;
 }
 
 .texto-menu h3 {
@@ -236,9 +343,12 @@ main {
 .flecha-menu {
   font-size: 23px;
   font-weight: bold;
+  flex-shrink: 0;
 }
 
-/* ============================ NAV INFERIOR ============================ */
+/* ============================================================
+   NAV INFERIOR
+   ============================================================ */
 
 .navegacion-inferior {
   position: fixed;
@@ -246,34 +356,40 @@ main {
   left: 0;
   width: 100%;
   height: 70px;
-  background: white;
+  background: var(--blanco);
   border-top: 1px solid var(--borde);
   display: flex;
   justify-content: space-around;
   align-items: center;
   z-index: 30;
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -4px 15px #00000008;
+  box-shadow: 0 -4px 15px rgba(0,0,0,.04);
 }
 
 .nav-item {
   flex: 1;
   height: 100%;
-  background: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
   color: #888888;
+  padding: 0 2px;
+  min-width: 0;
 }
 
 .nav-item span {
-  font-size: 21px;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .nav-item small {
-  font-size: 10px;
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .nav-item.activo {
@@ -281,10 +397,12 @@ main {
   font-weight: bold;
 }
 
-/* ============================ TARJETAS ============================ */
+/* ============================================================
+   TARJETAS GENERALES
+   ============================================================ */
 
 .tarjeta {
-  background: white;
+  background: var(--blanco);
   border-radius: 15px;
   padding: 16px;
   margin-bottom: 14px;
@@ -295,23 +413,28 @@ main {
 h2.titulo-seccion {
   font-size: 24px;
   margin: 8px 0 18px;
+  color: var(--negro);
 }
 
 h3 {
   font-size: 16px;
+  color: var(--negro);
 }
 
 .titulo-carrito {
   margin: 20px 0 10px;
 }
 
-/* ============================ FORMULARIOS ============================ */
+/* ============================================================
+   FORMULARIOS
+   ============================================================ */
 
 label {
   display: block;
   font-size: 13px;
   font-weight: bold;
   margin-bottom: 6px;
+  color: var(--texto);
 }
 
 input, select {
@@ -321,20 +444,24 @@ input, select {
   padding: 12px;
   border: 1px solid #dddddd;
   border-radius: 10px;
-  background: white;
+  background: var(--blanco);
   color: var(--texto);
   margin-bottom: 15px;
   outline: none;
   font-size: 15px;
 }
 
+input::placeholder {
+  color: #aaa;
+}
+
 input:focus, select:focus {
   border-color: var(--naranja);
-  box-shadow: 0 0 0 3px #f28c2820;
+  box-shadow: 0 0 0 3px rgba(242,140,40,.15);
 }
 
 button:focus-visible {
-  outline: 3px solid #f28c2860;
+  outline: 3px solid rgba(242,140,40,.4);
   outline-offset: 2px;
 }
 
@@ -344,20 +471,23 @@ button:focus-visible {
   gap: 12px;
 }
 
-.fila-stock label {
-  margin-top: 4px;
+.fila-stock > div {
+  min-width: 0;
 }
 
 .nota-stock {
   font-size: 12px;
-  color: var(--gris);
+  color: #8a5a1f;
   background: var(--naranja-claro);
-  padding: 9px 11px;
+  padding: 10px 12px;
   border-radius: 8px;
   margin-bottom: 15px;
+  line-height: 1.4;
 }
 
-/* ============================ BOTONES ============================ */
+/* ============================================================
+   BOTONES
+   ============================================================ */
 
 .btn-principal {
   background: var(--naranja);
@@ -367,6 +497,7 @@ button:focus-visible {
   border-radius: 11px;
   font-weight: bold;
   font-size: 15px;
+  display: block;
 }
 
 .btn-principal:disabled {
@@ -380,13 +511,19 @@ button:focus-visible {
   color: var(--texto);
   padding: 12px;
   border-radius: 10px;
+  font-weight: bold;
+  display: block;
+  text-align: center;
 }
 
 .btn-peligro {
-  background: #fff0f0;
+  background: var(--rojo-claro);
   color: var(--rojo);
   padding: 10px;
   border-radius: 9px;
+  font-weight: bold;
+  display: block;
+  text-align: center;
 }
 
 .btn-vendido {
@@ -398,30 +535,43 @@ button:focus-visible {
   border-radius: 11px;
   font-size: 16px;
   font-weight: bold;
+  display: block;
 }
 
-/* ============================ PRODUCTOS ============================ */
+/* ============================================================
+   PRODUCTOS
+   ============================================================ */
 
 .producto {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  background: white;
+  gap: 12px;
+  background: var(--blanco);
   border: 1px solid var(--borde);
   padding: 14px;
   border-radius: 13px;
   margin-bottom: 10px;
+  box-shadow: var(--sombra);
 }
 
 .producto-info {
   flex: 1;
   min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .producto-info h3 {
   font-size: 15px;
   margin-bottom: 5px;
+  line-height: 1.3;
+}
+
+.producto-info p {
+  font-size: 12px;
+  color: var(--gris);
+  line-height: 1.45;
+  margin-top: 2px;
 }
 
 .precio {
@@ -434,7 +584,7 @@ button:focus-visible {
   display: block;
   font-size: 11px;
   color: var(--gris);
-  margin-top: 3px;
+  margin-top: 4px;
 }
 
 .stock-linea.sin-stock {
@@ -444,26 +594,139 @@ button:focus-visible {
 .controles-cantidad {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .btn-cantidad {
   background: #f0f0f0;
-  color: #222;
+  color: var(--negro);
   width: 36px;
   height: 36px;
   border-radius: 10px;
   font-size: 20px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
 }
 
 .cantidad {
   font-weight: bold;
-  min-width: 20px;
+  min-width: 22px;
   text-align: center;
+  font-size: 14px;
 }
 
-/* ============================ RESUMEN ============================ */
+.acciones-producto {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.acciones-producto button {
+  min-width: 92px;
+}
+
+/* ============================================================
+   INVENTARIO (pantalla)
+   ============================================================ */
+
+.inventario-resumen {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.inventario-resumen:empty {
+  display: none;
+}
+
+.inventario-resumen-total {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: var(--sombra);
+}
+
+.inventario-resumen-total small {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--gris);
+  margin-bottom: 6px;
+}
+
+.inventario-resumen-total strong {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.inventario-resumen-total.almacen strong { color: var(--naranja); }
+.inventario-resumen-total.tienda strong  { color: var(--verde); }
+.inventario-resumen-total.casa strong    { color: #2a6db0; }
+
+.inventario-fila {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  padding: 12px 14px;
+  border-radius: 13px;
+  margin-bottom: 10px;
+  box-shadow: var(--sombra);
+}
+
+.inventario-fila-nombre {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.inventario-fila-nombre h3 {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inventario-fila-nombre small {
+  display: block;
+  color: var(--gris);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.inventario-col {
+  text-align: center;
+  min-width: 55px;
+}
+
+.inventario-col small {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--gris);
+  margin-bottom: 3px;
+}
+
+.inventario-col strong {
+  font-size: 15px;
+}
+
+.inventario-col.almacen strong { color: var(--naranja); }
+.inventario-col.tienda strong  { color: var(--verde); }
+.inventario-col.casa strong    { color: #2a6db0; }
+
+/* ============================================================
+   RESUMEN (carrito)
+   ============================================================ */
 
 .resumen {
   background: var(--negro);
@@ -474,18 +737,22 @@ button:focus-visible {
 }
 
 .total {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: bold;
   margin: 10px 0;
+  color: white;
 }
 
 .salario {
   color: #75df9a;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: bold;
+  margin-top: 4px;
 }
 
-/* ============================ VACÍO ============================ */
+/* ============================================================
+   VACÍO
+   ============================================================ */
 
 .texto-vacio {
   color: var(--gris);
@@ -494,12 +761,49 @@ button:focus-visible {
   font-size: 13px;
 }
 
-/* ============================ RESPONSIVE ============================ */
+/* ============================================================
+   REGISTRO - líneas de producto
+   ============================================================ */
+
+.linea-venta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--borde);
+  font-size: 12px;
+  color: #555;
+}
+
+.linea-venta:last-child {
+  border-bottom: none;
+}
+
+.linea-venta-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.linea-venta-precio {
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.linea-venta-precio small {
+  display: block;
+  color: #999;
+  font-size: 10px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 
 @media (min-width: 600px) {
-  main {
-    padding: 30px;
-  }
+  main { padding: 30px; }
 
   .menu-principal {
     display: grid;
@@ -515,62 +819,53 @@ button:focus-visible {
   .resumen-rapido {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .inventario-inicio-totales {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .inventario-inicio-total strong {
+    font-size: 15px;
+  }
+
+  .inventario-fila {
+    grid-template-columns: 1fr auto auto auto;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .inventario-col {
+    min-width: 42px;
+  }
+
+  .inventario-col strong {
+    font-size: 13px;
+  }
+
+  .acciones-producto button {
+    min-width: 78px;
+    font-size: 12px;
+  }
 }
 
 @media (max-width: 380px) {
-  .encabezado {
-    padding: 14px;
+  .encabezado { padding: 14px; }
+  .marca-texto h1 { font-size: 20px; }
+  .estado { font-size: 9px; }
+  main { padding: 17px 12px; }
+  .tarjeta-menu { padding: 15px; }
+
+  .nav-item small {
+    font-size: 8px;
   }
 
-  .marca-texto h1 {
-    font-size: 20px;
+  .nav-item span {
+    font-size: 18px;
   }
 
-  .estado {
-    font-size: 9px;
-  }
-
-  main {
-    padding: 17px 12px;
-  }
-
-  .tarjeta-menu {
-    padding: 15px;
-  }
-}
-
-/* ============================ MODO OSCURO ============================ */
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fondo: #0f0f0f;
-    --blanco: #1b1b1b;
-    --texto: #eeeeee;
-    --borde: #2a2a2a;
-    --gris: #9a9a9a;
-    --naranja-claro: #3a2a1a;
-  }
-
-  input, select {
-    background: #1b1b1b;
-    border-color: #333;
-    color: var(--texto);
-  }
-
-  .btn-secundario {
-    background: #2a2a2a;
-    color: var(--texto);
-  }
-
-  .resumen-rapido-item,
-  .tarjeta-menu,
-  .producto,
-  .tarjeta {
-    background: #1b1b1b;
-  }
-
-  .btn-peligro {
-    background: #3a1a1a;
-    color: #ff7a7a;
+  .btn-cantidad {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
   }
 }
