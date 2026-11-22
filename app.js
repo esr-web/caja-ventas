@@ -5,6 +5,7 @@
 let productos = [];
 let carrito = [];
 let ventas = [];
+let entradas = [];
 
 let productoEnEdicion = null;
 
@@ -59,6 +60,18 @@ function mostrarFecha(fecha) {
   return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : String(fecha);
 }
 
+function mostrarFechaHora(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${yy} ${hh}:${mi}`;
+}
+
 // ==========================================
 // ADAPTADORES
 // ==========================================
@@ -86,14 +99,11 @@ function adaptarVenta(venta) {
 
   const productosNorm = Array.isArray(venta.productos)
     ? venta.productos.map(linea => {
-        const idProducto =
-          linea.idProducto ?? linea.productoId ?? linea.id ?? null;
-
+        const idProducto = linea.idProducto ?? linea.productoId ?? linea.id ?? null;
         const cantidad = Number(linea.cantidad) || 0;
         const precio = Number(linea.precio) || 0;
         const precioCUP = Number(linea.precioCUP) || 0;
-        const subtotal =
-          Number(linea.subtotal) || (cantidad * precio);
+        const subtotal = Number(linea.subtotal) || (cantidad * precio);
 
         return {
           ...linea,
@@ -120,6 +130,19 @@ function adaptarVenta(venta) {
   };
 }
 
+function adaptarEntrada(e) {
+  if (!e || typeof e !== "object") return null;
+  return {
+    ...e,
+    id: e.id,
+    idProducto: e.idProducto ?? null,
+    nombre: String(e.nombre || "Producto"),
+    area: e.area === "Casa" ? "Casa" : "Tienda",
+    cantidad: Number(e.cantidad) || 0,
+    fecha: e.fecha || new Date().toISOString()
+  };
+}
+
 // ==========================================
 // PRECIOS Y STOCK
 // ==========================================
@@ -138,7 +161,7 @@ function precioCUPProducto(producto) {
 function claveStockLugar(lugar) {
   if (lugar === "Tienda") return "tienda";
   if (lugar === "Casa") return "casa";
-  return null; // Almacén = infinito
+  return null;
 }
 
 function stockDisponible(producto, lugar) {
@@ -154,9 +177,7 @@ async function descontarStockVenta(lineas, lugar) {
   if (!clave) return;
 
   for (const linea of lineas) {
-    const producto = productos.find(
-      p => Number(p.id) === Number(linea.idProducto)
-    );
+    const producto = productos.find(p => Number(p.id) === Number(linea.idProducto));
     if (!producto) continue;
 
     const actual = Number(producto.stock?.[clave]) || 0;
@@ -179,6 +200,12 @@ async function iniciarAplicacion() {
 
   productos = (await obtenerTodos("productos")).map(adaptarProducto).filter(Boolean);
   ventas = (await obtenerTodos("ventas")).map(adaptarVenta).filter(Boolean);
+
+  try {
+    entradas = (await obtenerTodos("entradas")).map(adaptarEntrada).filter(Boolean);
+  } catch (_) {
+    entradas = [];
+  }
 
   for (const p of productos) await guardarDato("productos", p);
   for (const v of ventas) await guardarDato("ventas", v);
@@ -420,7 +447,7 @@ async function eliminarProducto(id) {
 }
 
 // ==========================================
-// INVENTARIO (pantalla + resumen inicio)
+// INVENTARIO
 // ==========================================
 
 function calcularTotalesInventario() {
@@ -446,18 +473,9 @@ function actualizarInventarioInicio() {
   cont.innerHTML = `
     <h3>📦 Inventario por área</h3>
     <div class="inventario-inicio-totales">
-      <div class="inventario-inicio-total almacen">
-        <small>Almacén</small>
-        <strong>∞</strong>
-      </div>
-      <div class="inventario-inicio-total tienda">
-        <small>Tienda</small>
-        <strong>${totales.tienda}</strong>
-      </div>
-      <div class="inventario-inicio-total casa">
-        <small>Casa</small>
-        <strong>${totales.casa}</strong>
-      </div>
+      <div class="inventario-inicio-total almacen"><small>Almacén</small><strong>∞</strong></div>
+      <div class="inventario-inicio-total tienda"><small>Tienda</small><strong>${totales.tienda}</strong></div>
+      <div class="inventario-inicio-total casa"><small>Casa</small><strong>${totales.casa}</strong></div>
     </div>
     <button type="button" class="ver-todos" onclick="navegar('inventario')">
       Ver inventario detallado →
@@ -466,7 +484,99 @@ function actualizarInventarioInicio() {
 }
 
 function mostrarInventario() {
+  cargarOpcionesEntradaProducto();
   dibujarInventario();
+  dibujarEntradas();
+}
+
+function cargarOpcionesEntradaProducto() {
+  const sel = document.getElementById("entradaProducto");
+  if (!sel) return;
+
+  const actual = sel.value;
+
+  if (!productos.length) {
+    sel.innerHTML = `<option value="">— Sin productos —</option>`;
+    sel.value = "";
+    return;
+  }
+
+  sel.innerHTML = productos.map(p =>
+    `<option value="${Number(p.id)}">${escapar(p.nombre)}</option>`
+  ).join("");
+
+  if (actual && productos.some(p => String(p.id) === String(actual))) {
+    sel.value = actual;
+  }
+}
+
+async function registrarEntradaInventario() {
+  const selProducto = document.getElementById("entradaProducto");
+  const selArea = document.getElementById("entradaArea");
+  const inputCantidad = document.getElementById("entradaCantidad");
+
+  if (!selProducto || !selArea || !inputCantidad) return;
+
+  const idProducto = Number(selProducto.value);
+  const area = selArea.value;
+  const cantidad = Math.floor(Number(inputCantidad.value));
+
+  if (!idProducto) {
+    alert("Selecciona un producto.");
+    return;
+  }
+
+  if (area !== "Tienda" && area !== "Casa") {
+    alert("Área inválida. Elige Tienda o Casa.");
+    return;
+  }
+
+  if (!Number.isFinite(cantidad) || cantidad <= 0) {
+    alert("La cantidad debe ser mayor que 0.");
+    inputCantidad.focus();
+    return;
+  }
+
+  const producto = productos.find(p => Number(p.id) === idProducto);
+  if (!producto) {
+    alert("No se encontró el producto.");
+    return;
+  }
+
+  const clave = claveStockLugar(area);
+
+  try {
+    // 1. Sumar stock al producto.
+    producto.stock[clave] = (Number(producto.stock[clave]) || 0) + cantidad;
+    await guardarDato("productos", producto);
+
+    // 2. Registrar la entrada con fecha/hora.
+    const entrada = {
+      idProducto: producto.id,
+      nombre: producto.nombre,
+      area,
+      cantidad,
+      fecha: new Date().toISOString()
+    };
+
+    const id = await guardarDato("entradas", entrada);
+    entrada.id = id;
+    entradas.push(adaptarEntrada(entrada));
+
+    // 3. Refrescar UI.
+    dibujarInventario();
+    dibujarEntradas();
+    dibujarCatalogo();
+    actualizarInicio();
+
+    inputCantidad.value = "1";
+
+    alert(`Entrada registrada: +${cantidad} de "${producto.nombre}" en ${area}.`);
+
+  } catch (e) {
+    console.error(e);
+    alert("No se pudo registrar la entrada.");
+  }
 }
 
 function dibujarInventario() {
@@ -478,18 +588,9 @@ function dibujarInventario() {
 
   if (resumen) {
     resumen.innerHTML = `
-      <div class="inventario-resumen-total almacen">
-        <small>Almacén</small>
-        <strong>∞</strong>
-      </div>
-      <div class="inventario-resumen-total tienda">
-        <small>Tienda</small>
-        <strong>${totales.tienda}</strong>
-      </div>
-      <div class="inventario-resumen-total casa">
-        <small>Casa</small>
-        <strong>${totales.casa}</strong>
-      </div>
+      <div class="inventario-resumen-total almacen"><small>Almacén</small><strong>∞</strong></div>
+      <div class="inventario-resumen-total tienda"><small>Tienda</small><strong>${totales.tienda}</strong></div>
+      <div class="inventario-resumen-total casa"><small>Casa</small><strong>${totales.casa}</strong></div>
     `;
   }
 
@@ -511,20 +612,168 @@ function dibujarInventario() {
         <h3>${escapar(p.nombre)}</h3>
         <small>CUP ${formato(p.precioCUP)} · USD ${formato(p.precioUSD)}</small>
       </div>
-      <div class="inventario-col almacen">
-        <small>Almacén</small>
-        <strong>∞</strong>
+      <div class="inventario-col almacen"><small>Almacén</small><strong>∞</strong></div>
+      <div class="inventario-col tienda"><small>Tienda</small><strong>${p.stock.tienda}</strong></div>
+      <div class="inventario-col casa"><small>Casa</small><strong>${p.stock.casa}</strong></div>
+    </div>
+  `).join("");
+}
+
+function dibujarEntradas() {
+  const cont = document.getElementById("listaEntradas");
+  if (!cont) return;
+
+  if (!entradas.length) {
+    cont.innerHTML = `<div class="texto-vacio">Aún no hay entradas registradas.</div>`;
+    return;
+  }
+
+  const lista = entradas
+    .slice()
+    .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))
+    .slice(0, 100);
+
+  cont.innerHTML = lista.map(e => `
+    <div class="entrada-fila">
+      <div class="entrada-info">
+        <h4>${escapar(e.nombre)}</h4>
+        <small>${escapar(e.area)} · ${escapar(mostrarFechaHora(e.fecha))}</small>
       </div>
-      <div class="inventario-col tienda">
-        <small>Tienda</small>
-        <strong>${p.stock.tienda}</strong>
-      </div>
-      <div class="inventario-col casa">
-        <small>Casa</small>
-        <strong>${p.stock.casa}</strong>
+      <div class="entrada-cantidad">
+        +${e.cantidad}
+        <small>uds</small>
       </div>
     </div>
   `).join("");
+}
+
+// ==========================================
+// EXPORTAR INVENTARIO A PDF
+// ==========================================
+
+function exportarInventarioPDF() {
+  if (!productos.length) {
+    alert("No hay productos para exportar.");
+    return;
+  }
+
+  const totales = calcularTotalesInventario();
+  const generado = mostrarFechaHora(new Date().toISOString());
+
+  // --- Filas del stock actual ---
+  const filasStock = productos.map(p => `
+    <tr>
+      <td>${escapar(p.nombre)}</td>
+      <td class="numero">${formato(p.precioCUP)}</td>
+      <td class="numero">${formato(p.precioUSD)}</td>
+      <td class="numero">∞</td>
+      <td class="numero">${p.stock.tienda}</td>
+      <td class="numero">${p.stock.casa}</td>
+    </tr>
+  `).join("");
+
+  // --- Filas del historial de entradas (ordenadas por fecha desc) ---
+  const entradasOrdenadas = entradas
+    .slice()
+    .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+
+  const filasEntradas = entradasOrdenadas.length
+    ? entradasOrdenadas.map(e => `
+        <tr>
+          <td>${escapar(mostrarFechaHora(e.fecha))}</td>
+          <td>${escapar(e.nombre)}</td>
+          <td>${escapar(e.area)}</td>
+          <td class="numero">+${e.cantidad}</td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="4" style="text-align:center;color:#999">Sin entradas registradas</td></tr>`;
+
+  const documento = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <title>Inventario - CAJA</title>
+      <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; color: #242424; margin: 25px; }
+        h1 { margin-bottom: 5px; font-size: 25px; }
+        h2 { font-size: 16px; margin: 22px 0 10px; color: #242424; border-bottom: 2px solid #f28c28; padding-bottom: 5px; }
+        .subtitulo { color: #777; margin-bottom: 20px; font-size: 13px; }
+        .resumen { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .resumen div { border: 1px solid #ddd; border-radius: 8px; padding: 12px; flex: 1; min-width: 120px; }
+        .resumen small { display: block; font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: .4px; }
+        .resumen strong { display: block; margin-top: 6px; font-size: 18px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+        th { background: #222; color: white; }
+        .numero { text-align: right; white-space: nowrap; }
+        tr { page-break-inside: avoid; }
+        .pie { margin-top: 30px; color: #777; font-size: 10px; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <h1>CAJA | Inventario</h1>
+      <div class="subtitulo">Informe generado el ${escapar(generado)}</div>
+
+      <div class="resumen">
+        <div><small>Productos</small><strong>${totales.productos}</strong></div>
+        <div><small>Almacén</small><strong>∞</strong></div>
+        <div><small>Total Tienda</small><strong>${totales.tienda} uds</strong></div>
+        <div><small>Total Casa</small><strong>${totales.casa} uds</strong></div>
+      </div>
+
+      <h2>Stock actual por producto</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Precio CUP</th>
+            <th>Precio USD</th>
+            <th>Almacén</th>
+            <th>Tienda</th>
+            <th>Casa</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filasStock}
+        </tbody>
+      </table>
+
+      <h2>Historial de entradas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha y hora</th>
+            <th>Producto</th>
+            <th>Área</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filasEntradas}
+        </tbody>
+      </table>
+
+      <div class="pie">Sistema de gestión de ventas CAJA</div>
+
+      <script>
+        window.onload = function() { window.print(); };
+      <\/script>
+    </body>
+    </html>
+  `;
+
+  const ventana = window.open("", "_blank");
+
+  if (!ventana) {
+    alert("El navegador bloqueó la ventana de impresión.\n\nPermite las ventanas emergentes.");
+    return;
+  }
+
+  ventana.document.open();
+  ventana.document.write(documento);
+  ventana.document.close();
 }
 
 // ==========================================
@@ -915,7 +1164,7 @@ function cancelarVenta() {
 }
 
 // ==========================================
-// REGISTRO (con precio por línea)
+// REGISTRO
 // ==========================================
 
 function mostrarRegistro() {
@@ -1011,7 +1260,6 @@ function dibujarRegistro() {
   cont.innerHTML = filtradas.map(venta => {
     const moneda = escapar(venta.moneda);
 
-    // Cada línea: nombre, cantidad, precio unitario, subtotal.
     const lineas = venta.productos.map(l => {
       const cantidad = Number(l.cantidad) || 0;
       const precio = Number(l.precio) || 0;
@@ -1110,7 +1358,7 @@ async function eliminarVenta(id) {
 }
 
 // ==========================================
-// EXPORTAR PDF
+// EXPORTAR REGISTRO PDF
 // ==========================================
 
 function exportarRegistroPDF() {
@@ -1417,7 +1665,6 @@ function actualizarInicio() {
   const t = document.getElementById("textoEstadisticasInicio");
   if (t) t.textContent = `${r.operaciones} operaciones registradas. Consulta tus estadísticas.`;
 
-  // Inventario en inicio
   actualizarInventarioInicio();
 }
 
