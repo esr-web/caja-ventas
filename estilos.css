@@ -1501,24 +1501,96 @@ th {
   }
 }
 
-
 /* =====================================================
-   AJUSTE PUNTUAL: RESUMEN DEL REGISTRO DE VENTAS
-   Mantiene intactos los demás estilos de la aplicación.
-   Contempla tanto el resumen antiguo como el actual.
+   CORRECCIONES ESPECÍFICAS DE INVENTARIO Y REGISTRO
+   Se usan las clases reales generadas por app.js.
+   El resto de los estilos se conserva sin cambios.
    ===================================================== */
 
-#resumenCompletoVentas,
+/* INVENTARIO: cada producto ocupa una tarjeta vertical. */
+#listaInventario .inventario-fila,
+#resumenInventario .inventario-fila,
+.inventario-fila {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 10px;
+  overflow: hidden;
+  background: var(--blanco);
+  color: var(--texto);
+  border: 1px solid #e9eaed;
+  border-radius: 15px;
+  box-shadow: var(--sombra);
+}
+
+.inventario-fila-nombre {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex: none;
+  color: var(--negro);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.inventario-col {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  gap: 8px;
+  color: var(--gris);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.inventario-col strong,
+.inventario-col b {
+  flex: 0 0 auto;
+  color: var(--verde);
+  font-size: 18px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.inventario-acciones {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.inventario-acciones button {
+  flex: 0 1 auto;
+  min-width: 105px;
+  min-height: 43px;
+}
+
+/* RESUMEN DEL REGISTRO: panel exterior y contenido interior. */
 #resumenRegistro {
+  display: block;
   width: 100%;
   min-width: 0;
   max-width: 100%;
   padding: 16px;
   margin: 0 0 16px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 10px;
   overflow: hidden;
   color: var(--blanco);
   background: var(--negro);
@@ -1527,154 +1599,145 @@ th {
   box-shadow: 0 6px 18px rgba(0, 0, 0, .10);
 }
 
-/* Título del resumen: siempre ocupa el ancho completo. */
-#resumenCompletoVentas > h2,
-#resumenCompletoVentas > h3,
-#resumenCompletoVentas > p:first-child,
-#resumenRegistro > h2,
-#resumenRegistro > h3,
-#resumenRegistro > p:first-child {
-  grid-column: 1 / -1;
-  min-width: 0;
-  margin: 0 0 2px;
-  color: var(--blanco);
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1.3;
-}
-
-/*
-  Si el HTML agrupa el título y las estadísticas dentro de un div,
-  ese div funciona como rejilla transparente, no como una tarjeta
-  estrecha que contiene todo el resumen.
-*/
-#resumenCompletoVentas > div:has(> h2),
-#resumenCompletoVentas > div:has(> h3),
-#resumenCompletoVentas > div:has(> p:first-child),
-#resumenRegistro > div:has(> h2),
-#resumenRegistro > div:has(> h3),
-#resumenRegistro > div:has(> p:first-child) {
-  grid-column: 1 / -1;
-  min-width: 0;
+#resumenRegistro > .resumen-filtrado,
+#resumenRegistro .resumen-filtrado {
+  display: block;
   width: 100%;
+  min-width: 0;
   max-width: 100%;
   padding: 0;
   margin: 0;
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 10px;
-  color: inherit;
+  color: var(--blanco);
   background: transparent;
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
-/* Si el título está dentro del contenedor agrupador. */
-#resumenCompletoVentas > div:has(> h2) > h2,
-#resumenCompletoVentas > div:has(> h3) > h3,
-#resumenCompletoVentas > div:has(> p:first-child) > p:first-child,
-#resumenRegistro > div:has(> h2) > h2,
-#resumenRegistro > div:has(> h3) > h3,
-#resumenRegistro > div:has(> p:first-child) > p:first-child {
-  grid-column: 1 / -1;
-  margin: 0 0 2px;
+#resumenRegistro .resumen-filtrado-header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 0 0 13px;
+  color: var(--blanco);
+}
+
+#resumenRegistro .resumen-filtrado-header h2,
+#resumenRegistro .resumen-filtrado-header h3,
+#resumenRegistro .resumen-filtrado-header strong {
+  min-width: 0;
+  margin: 0;
   color: var(--blanco);
   font-size: 18px;
   font-weight: 800;
   line-height: 1.3;
+  overflow-wrap: break-word;
 }
 
-/* Tarjetas de cada indicador, tanto directas como agrupadas. */
-#resumenCompletoVentas > div:not(:has(> h2, > h3, > p:first-child)),
-#resumenRegistro > div:not(:has(> h2, > h3, > p:first-child)),
-#resumenCompletoVentas > div:has(> h2, > h3, > p:first-child) > div,
-#resumenCompletoVentas > div:has(> h2, > h3, > p:first-child) > article,
-#resumenRegistro > div:has(> h2, > h3, > p:first-child) > div,
-#resumenRegistro > div:has(> h2, > h3, > p:first-child) > article {
+#resumenRegistro .resumen-filtrado-header span,
+#resumenRegistro .resumen-filtrado-header p {
+  min-width: 0;
+  margin: 0;
+  color: #e5e5e5;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+#resumenRegistro .resumen-filtrado-grid {
+  display: grid;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
-  min-height: 82px;
-  padding: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+#resumenRegistro .resumen-filtrado-grid > *,
+#resumenRegistro .resumen-filtrado-item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 82px;
+  padding: 12px;
   gap: 5px;
   overflow: hidden;
-  color: #eeeeee;
+  color: #e5e5e5;
   background: #242424;
   border: 1px solid #383838;
   border-radius: 13px;
   box-shadow: none;
 }
 
-/* Etiquetas y cifras de los indicadores. */
-#resumenCompletoVentas p,
-#resumenRegistro p {
+#resumenRegistro .resumen-filtrado-grid p,
+#resumenRegistro .resumen-filtrado-grid span,
+#resumenRegistro .resumen-filtrado-item p,
+#resumenRegistro .resumen-filtrado-item span {
+  display: block;
+  width: 100%;
   min-width: 0;
   margin: 0;
   color: #e1e1e1;
   font-size: 12px;
+  font-weight: 600;
   line-height: 1.35;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
-#resumenCompletoVentas strong,
-#resumenCompletoVentas b,
-#resumenRegistro strong,
-#resumenRegistro b {
+#resumenRegistro .resumen-filtrado-grid strong,
+#resumenRegistro .resumen-filtrado-grid b,
+#resumenRegistro .resumen-filtrado-item strong,
+#resumenRegistro .resumen-filtrado-item b {
   display: block;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   margin: 0;
   color: var(--naranja);
-  font-size: clamp(15px, 4vw, 21px);
+  font-size: clamp(16px, 4vw, 21px);
   font-weight: 900;
   line-height: 1.25;
+  white-space: normal;
   overflow-wrap: anywhere;
   word-break: normal;
 }
 
-#resumenCompletoVentas .salario,
-#resumenRegistro .salario {
-  color: var(--naranja);
-}
-
 @media (max-width: 400px) {
-  #resumenCompletoVentas,
   #resumenRegistro {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 13px;
-    gap: 8px;
   }
 
-  #resumenCompletoVentas > div:has(> h2, > h3, > p:first-child),
-  #resumenRegistro > div:has(> h2, > h3, > p:first-child) {
+  #resumenRegistro .resumen-filtrado-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
-  #resumenCompletoVentas > div:not(:has(> h2, > h3, > p:first-child)),
-  #resumenRegistro > div:not(:has(> h2, > h3, > p:first-child)),
-  #resumenCompletoVentas > div:has(> h2, > h3, > p:first-child) > div,
-  #resumenCompletoVentas > div:has(> h2, > h3, > p:first-child) > article,
-  #resumenRegistro > div:has(> h2, > h3, > p:first-child) > div,
-  #resumenRegistro > div:has(> h2, > h3, > p:first-child) > article {
+  #resumenRegistro .resumen-filtrado-grid > *,
+  #resumenRegistro .resumen-filtrado-item {
     min-height: 76px;
     padding: 10px;
+  }
+
+  .inventario-fila {
+    padding: 13px;
+  }
+
+  .inventario-fila-nombre {
+    font-size: 16px;
   }
 }
 
 @media (max-width: 340px) {
-  #resumenCompletoVentas,
-  #resumenRegistro {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  #resumenCompletoVentas > div:has(> h2, > h3, > p:first-child),
-  #resumenRegistro > div:has(> h2, > h3, > p:first-child) {
+  #resumenRegistro .resumen-filtrado-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
