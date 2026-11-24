@@ -1,3 +1,978 @@
+
+/* ==========================================
+   CAJA - ESTILOS GENERALES
+   Sistema de caja y control de ventas
+   Diseño adaptable para Android y PC
+   ========================================== */
+
+:root {
+  --fondo: #f3f4f6;
+  --negro: #151515;
+  --negro-suave: #222222;
+  --naranja: #f28c28;
+  --naranja-claro: #fff1e2;
+  --verde: #16834a;
+  --verde-claro: #e8f5ed;
+  --rojo: #d93025;
+  --rojo-claro: #fdecea;
+  --texto: #222222;
+  --gris: #777777;
+  --gris-claro: #eeeeee;
+  --blanco: #ffffff;
+  --borde: #e5e5e5;
+  --sombra: 0 3px 12px rgba(0, 0, 0, 0.06);
+  --radio: 14px;
+}
+
+/* ==========================================
+   RESET Y CONFIGURACIÓN GENERAL
+   ========================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  padding-bottom: 85px;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+/* ==========================================
+   ENCABEZADO
+   ========================================== */
+
+.encabezado {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  min-height: 75px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  background: var(--negro);
+  color: var(--blanco);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.marca h1 {
+  color: var(--naranja);
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  line-height: 1.1;
+}
+
+.marca p {
+  color: #dddddd;
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+/* ==========================================
+   CONTENIDO PRINCIPAL
+   ========================================== */
+
+#contenido {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 18px 14px;
+}
+
+.pantalla {
+  display: none;
+  width: 100%;
+  animation: aparecer 0.2s ease;
+}
+
+.pantalla.activa {
+  display: block;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================
+   BIENVENIDA
+   ========================================== */
+
+.bienvenida {
+  margin: 8px 0 22px;
+}
+
+.bienvenida h2 {
+  color: var(--negro);
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.bienvenida p {
+  color: var(--gris);
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+/* ==========================================
+   MENÚ PRINCIPAL
+   ========================================== */
+
+.menu-principal {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.tarjeta-menu {
+  width: 100%;
+  min-height: 85px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  background: var(--blanco);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.tarjeta-menu:active {
+  transform: scale(0.98);
+}
+
+.icono-menu {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--naranja-claro);
+  border-radius: 12px;
+  font-size: 24px;
+}
+
+.texto-menu {
+  flex: 1;
+  min-width: 0;
+}
+
+.texto-menu h3 {
+  color: var(--negro);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.texto-menu p {
+  color: var(--gris);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.flecha-menu {
+  color: var(--naranja);
+  font-size: 23px;
+  font-weight: bold;
+}
+
+/* ==========================================
+   TARJETAS GENERALES
+   ========================================== */
+
+.tarjeta {
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 14px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.tarjeta h2,
+.tarjeta h3 {
+  color: var(--negro);
+}
+
+.tarjeta h2 {
+  font-size: 19px;
+  margin-bottom: 12px;
+}
+
+.tarjeta h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+/* ==========================================
+   TÍTULOS Y SECCIONES
+   ========================================== */
+
+.titulo-seccion {
+  margin: 8px 0 15px;
+  color: var(--negro);
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.subtitulo {
+  margin: 15px 0 10px;
+  color: var(--negro);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.texto-secundario {
+  color: var(--gris);
+  font-size: 13px;
+}
+
+/* ==========================================
+   FORMULARIOS
+   ========================================== */
+
+.grupo-formulario,
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 13px;
+}
+
+label {
+  color: var(--texto);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--texto);
+  background: var(--blanco);
+  border: 1px solid #d7d7d7;
+  border-radius: 9px;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--naranja);
+  box-shadow: 0 0 0 3px rgba(242, 140, 40, 0.13);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #999999;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  min-height: auto;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* ==========================================
+   BOTONES
+   ========================================== */
+
+button {
+  border: none;
+}
+
+.btn,
+.btn-principal,
+.btn-guardar,
+button[type="submit"] {
+  min-height: 44px;
+  padding: 11px 16px;
+  color: var(--blanco);
+  background: var(--naranja);
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+.btn-principal,
+.btn-guardar {
+  width: 100%;
+}
+
+.btn-secundario {
+  min-height: 42px;
+  padding: 10px 14px;
+  color: var(--negro);
+  background: var(--gris-claro);
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+.btn-eliminar {
+  padding: 8px 12px;
+  color: var(--blanco);
+  background: var(--rojo);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.btn-editar {
+  padding: 8px 12px;
+  color: var(--negro);
+  background: var(--naranja-claro);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.btn-vendido {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  color: var(--blanco);
+  background: var(--verde);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.btn-cancelar {
+  color: var(--blanco);
+  background: var(--gris);
+}
+
+/* ==========================================
+   LISTA DE PRODUCTOS
+   ========================================== */
+
+#listaCatalogo,
+#listaProductosCaja {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.producto {
+  width: 100%;
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+}
+
+.producto-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.producto-info h3,
+.producto-info h4 {
+  color: var(--negro);
+  font-size: 15px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.producto-info p {
+  color: var(--gris);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.precio {
+  color: var(--verde);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.producto-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+/* ==========================================
+   CANTIDADES
+   ========================================== */
+
+.controles-cantidad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.btn-cantidad {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--negro);
+  background: var(--naranja-claro);
+  border-radius: 8px;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.cantidad {
+  min-width: 25px;
+  text-align: center;
+  font-weight: 800;
+}
+
+/* ==========================================
+   CARRITO Y RESUMEN DE VENTA
+   ========================================== */
+
+#carritoVenta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resumen {
+  padding: 15px;
+  margin-top: 15px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.resumen p,
+.resumen div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.total {
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid var(--borde);
+  color: var(--verde);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.salario {
+  color: var(--naranja);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* ==========================================
+   REGISTRO DE VENTAS
+   ========================================== */
+
+#listaRegistro {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.venta,
+.tarjeta-venta {
+  padding: 15px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+}
+
+.venta h3,
+.tarjeta-venta h3 {
+  color: var(--negro);
+  font-size: 16px;
+  margin-bottom: 7px;
+}
+
+.venta p,
+.tarjeta-venta p {
+  color: var(--gris);
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.venta .total,
+.tarjeta-venta .total {
+  color: var(--verde);
+  font-size: 17px;
+}
+
+/* ==========================================
+   FILTROS
+   ========================================== */
+
+.filtros,
+.contenedor-filtros {
+  padding: 14px;
+  margin-bottom: 15px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.filtros input,
+.filtros select,
+.contenedor-filtros input,
+.contenedor-filtros select {
+  margin-bottom: 9px;
+}
+
+.filtros button,
+.contenedor-filtros button {
+  margin-top: 5px;
+}
+
+/* ==========================================
+   RESUMEN DE REGISTRO
+   ========================================== */
+
+#resumenRegistro {
+  padding: 15px;
+  margin-bottom: 15px;
+  background: var(--negro);
+  color: var(--blanco);
+  border-radius: 12px;
+}
+
+#resumenRegistro p,
+#resumenRegistro div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+#resumenRegistro strong {
+  color: var(--naranja);
+}
+
+/* ==========================================
+   ESTADÍSTICAS
+   ========================================== */
+
+#contenidoEstadisticas,
+#estadisticasContenido {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.estadistica,
+.tarjeta-estadistica,
+.stat-card {
+  padding: 15px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+}
+
+.estadistica h3,
+.tarjeta-estadistica h3,
+.stat-card h3 {
+  color: var(--gris);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.estadistica strong,
+.tarjeta-estadistica strong,
+.stat-card strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--negro);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.grafico,
+.grafico-barras {
+  width: 100%;
+  padding: 15px;
+  background: var(--blanco);
+  border-radius: 12px;
+  border: 1px solid var(--borde);
+}
+
+.barra-grafico {
+  min-height: 10px;
+  background: var(--naranja);
+  border-radius: 5px;
+}
+
+/* ==========================================
+   INVENTARIO Y EXISTENCIAS
+   ========================================== */
+
+.inventario,
+.tarjeta-inventario,
+.producto-inventario {
+  padding: 14px;
+  margin-bottom: 11px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+}
+
+.inventario h3,
+.tarjeta-inventario h3,
+.producto-inventario h3 {
+  color: var(--negro);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.existencia {
+  color: var(--verde);
+  font-weight: 800;
+}
+
+.existencia-baja {
+  color: var(--rojo);
+  font-weight: 800;
+}
+
+.entrada-inventario {
+  color: var(--verde);
+  font-weight: 700;
+}
+
+.salida-inventario {
+  color: var(--rojo);
+  font-weight: 700;
+}
+
+/* ==========================================
+   CONTEO DE EFECTIVO
+   ========================================== */
+
+.conteo-efectivo,
+.fila-efectivo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.conteo-efectivo label,
+.fila-efectivo label {
+  flex: 1;
+  font-weight: 700;
+}
+
+.conteo-efectivo input,
+.fila-efectivo input {
+  width: 90px;
+  min-height: 38px;
+  text-align: center;
+}
+
+.total-efectivo {
+  padding: 15px;
+  margin-top: 15px;
+  color: var(--blanco);
+  background: var(--negro);
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: 900;
+  text-align: center;
+}
+
+/* ==========================================
+   MENSAJES Y ESTADOS
+   ========================================== */
+
+.texto-vacio {
+  padding: 22px 12px;
+  color: var(--gris);
+  text-align: center;
+  font-size: 14px;
+}
+
+.mensaje-error {
+  padding: 12px;
+  color: var(--rojo);
+  background: var(--rojo-claro);
+  border-radius: 9px;
+}
+
+.mensaje-exito {
+  padding: 12px;
+  color: var(--verde);
+  background: var(--verde-claro);
+  border-radius: 9px;
+}
+
+#puntoConexion {
+  font-size: 12px;
+}
+
+/* ==========================================
+   NAVEGACIÓN INFERIOR
+   ========================================== */
+
+.navegacion-inferior {
+  position: fixed;
+  z-index: 200;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 67px;
+  padding: 7px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--blanco);
+  border-top: 1px solid var(--borde);
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.07);
+}
+
+.nav-item {
+  flex: 1;
+  min-width: 0;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--gris);
+  background: transparent;
+}
+
+.nav-item span {
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.nav-item small {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.nav-item.activo {
+  color: var(--naranja);
+}
+
+/* ==========================================
+   TABLAS
+   ========================================== */
+
+.tabla-contenedor {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--blanco);
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--borde);
+}
+
+th {
+  color: var(--blanco);
+  background: var(--negro);
+  font-weight: 700;
+}
+
+/* ==========================================
+   SEPARADORES Y UTILIDADES
+   ========================================== */
+
+hr {
+  border: none;
+  border-top: 1px solid var(--borde);
+  margin: 14px 0;
+}
+
+.oculto {
+  display: none !important;
+}
+
+.texto-verde {
+  color: var(--verde);
+}
+
+.texto-naranja {
+  color: var(--naranja);
+}
+
+.texto-rojo {
+  color: var(--rojo);
+}
+
+.texto-centro {
+  text-align: center;
+}
+
+.ancho-completo {
+  width: 100%;
+}
+
+/* ==========================================
+   RESPONSIVE - TABLET Y COMPUTADORA
+   ========================================== */
+
+@media (min-width: 650px) {
+  #contenido {
+    padding: 25px 22px;
+  }
+
+  .menu-principal {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #contenidoEstadisticas,
+  #estadisticasContenido {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tarjeta-menu {
+    min-height: 100px;
+  }
+}
+
+/* ==========================================
+   RESPONSIVE - TELÉFONOS PEQUEÑOS
+   ========================================== */
+
+@media (max-width: 400px) {
+  body {
+    font-size: 14px;
+  }
+
+  #contenido {
+    padding: 14px 10px;
+  }
+
+  .encabezado {
+    min-height: 68px;
+  }
+
+  .marca h1 {
+    font-size: 24px;
+  }
+
+  .bienvenida h2 {
+    font-size: 21px;
+  }
+
+  .tarjeta-menu {
+    min-height: 78px;
+    padding: 11px;
+    gap: 10px;
+  }
+
+  .icono-menu {
+    width: 42px;
+    height: 42px;
+    font-size: 21px;
+  }
+
+  .texto-menu h3 {
+    font-size: 14px;
+  }
+
+  .texto-menu p {
+    font-size: 11px;
+  }
+
+  .producto {
+    padding: 10px;
+    gap: 7px;
+  }
+
+  .precio {
+    font-size: 13px;
+  }
+
+  .nav-item small {
+    font-size: 9px;
+  }
+
+  .nav-item span {
+    font-size: 19px;
+  }
+}
+
 /* ============================================================
    COMPRA USD
    ============================================================ */
