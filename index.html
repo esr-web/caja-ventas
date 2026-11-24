@@ -50,6 +50,11 @@
           <div class="texto-menu"><h3>Inventario</h3><p>Entradas de stock y cantidades por área.</p></div>
           <span class="flecha-menu">↗</span>
         </button>
+        <button class="tarjeta-menu" onclick="navegar('compraUSD')">
+          <div class="icono-menu">💱</div>
+          <div class="texto-menu"><h3>Compra de USD</h3><p>Registrar compras de dólares y su desglose.</p></div>
+          <span class="flecha-menu">↗</span>
+        </button>
         <button class="tarjeta-menu" onclick="navegar('registro')">
           <div class="icono-menu">📋</div>
           <div class="texto-menu"><h3>Registro de ventas</h3><p>Consultar, filtrar y eliminar ventas.</p></div>
@@ -199,6 +204,96 @@
       <div id="listaEntradas"></div>
     </section>
 
+    <!-- COMPRA USD -->
+    <section id="pantallaCompraUSD" class="pantalla">
+      <h2 class="titulo-seccion">Compra de USD</h2>
+
+      <div id="resumenComprasUSD"></div>
+
+      <div class="tarjeta">
+        <h3 style="margin-bottom:12px">Registrar compra</h3>
+
+        <div class="fila-stock">
+          <div>
+            <label for="compraUSD_fecha">Fecha</label>
+            <input type="date" id="compraUSD_fecha">
+          </div>
+          <div>
+            <label for="compraUSD_tasa">Precio del USD (CUP)</label>
+            <input type="number" id="compraUSD_tasa" min="0" step="0.01"
+                   inputmode="decimal" placeholder="0.00">
+          </div>
+        </div>
+
+        <label for="compraUSD_cantidad">Cantidad de USD comprada</label>
+        <input type="number" id="compraUSD_cantidad" min="0" step="0.01"
+               inputmode="decimal" placeholder="0.00">
+
+        <label>Desglose de billetes usados (CUP)</label>
+        <p class="nota-variantes" style="margin-bottom:12px">
+          Indica cuántos billetes de cada denominación entregaste para pagar la compra.
+        </p>
+
+        <div id="compraUSD_desglose"></div>
+
+        <div class="resumen" style="margin-top:12px">
+          <div>Total pagado en CUP</div>
+          <div class="total" id="compraUSD_totalPagado">0.00 CUP</div>
+          <p style="font-size:12px;color:#ccc">
+            El total se calcula como <strong>tasa × USD</strong> y también como
+            la suma de los billetes entregados.
+          </p>
+          <p id="compraUSD_aviso" style="font-size:12px;color:#ff9f9f;margin-top:6px"></p>
+        </div>
+
+        <button type="button" class="btn-principal" style="margin-top:12px"
+                onclick="registrarCompraUSD()">REGISTRAR COMPRA</button>
+      </div>
+
+      <div class="tarjeta">
+        <h3 style="margin-bottom:12px">Filtros</h3>
+
+        <label for="filtroCompraUSD_dia">Día concreto</label>
+        <input type="date" id="filtroCompraUSD_dia"
+               onchange="aplicarFiltrosComprasUSD()">
+
+        <label>Rango de fechas</label>
+        <div class="fila-stock">
+          <div>
+            <label for="filtroCompraUSD_desde" style="font-size:11px;font-weight:normal">Desde</label>
+            <input type="date" id="filtroCompraUSD_desde"
+                   onchange="aplicarFiltrosComprasUSD()">
+          </div>
+          <div>
+            <label for="filtroCompraUSD_hasta" style="font-size:11px;font-weight:normal">Hasta</label>
+            <input type="date" id="filtroCompraUSD_hasta"
+                   onchange="aplicarFiltrosComprasUSD()">
+          </div>
+        </div>
+
+        <div class="fila-stock">
+          <div>
+            <label for="filtroCompraUSD_tasaMin">Tasa mínima</label>
+            <input type="number" id="filtroCompraUSD_tasaMin" min="0" step="0.01"
+                   oninput="aplicarFiltrosComprasUSD()" placeholder="0">
+          </div>
+          <div>
+            <label for="filtroCompraUSD_tasaMax">Tasa máxima</label>
+            <input type="number" id="filtroCompraUSD_tasaMax" min="0" step="0.01"
+                   oninput="aplicarFiltrosComprasUSD()" placeholder="∞">
+          </div>
+        </div>
+
+        <button type="button" class="btn-secundario" style="width:100%"
+                onclick="limpiarFiltrosComprasUSD()">LIMPIAR FILTROS</button>
+      </div>
+
+      <div id="listaComprasUSD"></div>
+
+      <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
+              onclick="exportarComprasUSDPDF()">📄 EXPORTAR COMPRAS PDF</button>
+    </section>
+
     <!-- REGISTRO -->
     <section id="pantallaRegistro" class="pantalla">
       <h2 class="titulo-seccion">Registro de ventas</h2>
@@ -292,6 +387,7 @@
     <button onclick="navegar('caja')" class="nav-item" data-pantalla="caja"><span>＋</span><small>Caja</small></button>
     <button onclick="navegar('productos')" class="nav-item" data-pantalla="productos"><span>▣</span><small>Productos</small></button>
     <button onclick="navegar('inventario')" class="nav-item" data-pantalla="inventario"><span>🏷️</span><small>Inventario</small></button>
+    <button onclick="navegar('compraUSD')" class="nav-item" data-pantalla="compraUSD"><span>💱</span><small>USD</small></button>
     <button onclick="navegar('registro')" class="nav-item" data-pantalla="registro"><span>☷</span><small>Registro</small></button>
     <button onclick="navegar('efectivo')" class="nav-item" data-pantalla="efectivo"><span>＄</span><small>Efectivo</small></button>
   </nav>
