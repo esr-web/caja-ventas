@@ -24,7 +24,9 @@
   --radio: 16px;
 }
 
-/* RESET */
+/* ==========================================
+   RESET Y CONFIGURACIÓN GENERAL
+   ========================================== */
 
 * {
   box-sizing: border-box;
@@ -33,10 +35,17 @@
 }
 
 html {
+  width: 100%;
+  max-width: 100%;
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 100vh;
   padding-bottom: calc(100px + env(safe-area-inset-bottom));
   background: var(--fondo);
@@ -45,6 +54,7 @@ body {
   font-size: 15px;
   line-height: 1.5;
   letter-spacing: -0.1px;
+  overflow-x: clip;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -65,7 +75,9 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* ENCABEZADO */
+/* ==========================================
+   ENCABEZADO
+   ========================================== */
 
 .encabezado {
   position: sticky;
@@ -77,6 +89,7 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   background: var(--negro);
   color: var(--blanco);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.13);
@@ -86,6 +99,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 11px;
+  min-width: 0;
 }
 
 .marca-icono {
@@ -100,6 +114,10 @@ button:disabled {
   border-radius: 13px;
   font-size: 25px;
   font-weight: 900;
+}
+
+.marca-texto {
+  min-width: 0;
 }
 
 .marca h1 {
@@ -120,6 +138,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 7px;
+  flex-shrink: 0;
   color: #dddddd;
   font-size: 11px;
 }
@@ -128,22 +147,29 @@ button:disabled {
   width: 8px;
   height: 8px;
   display: inline-block;
+  flex-shrink: 0;
   border-radius: 50%;
   background: var(--verde);
 }
 
-/* CONTENIDO PRINCIPAL */
+/* ==========================================
+   CONTENIDO PRINCIPAL
+   ========================================== */
 
 #contenido {
   width: 100%;
   max-width: 760px;
+  min-width: 0;
   margin: 0 auto;
   padding: 20px 16px 35px;
+  overflow-x: clip;
 }
 
 .pantalla {
   display: none;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   animation: aparecer 0.2s ease;
 }
 
@@ -151,18 +177,26 @@ button:disabled {
   display: block;
 }
 
+.pantalla > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
 @keyframes aparecer {
   from {
     opacity: 0;
     transform: translateY(5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* BIENVENIDA */
+/* ==========================================
+   BIENVENIDA
+   ========================================== */
 
 .bienvenida {
   margin: 8px 0 20px;
@@ -181,10 +215,14 @@ button:disabled {
   margin-top: 5px;
 }
 
-/* RESUMEN PRINCIPAL DE INICIO */
+/* ==========================================
+   RESUMEN PRINCIPAL DE INICIO
+   ========================================== */
 
 #resumenRapidoInicio {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 19px;
   margin: 0 0 21px;
   display: grid;
@@ -194,6 +232,7 @@ button:disabled {
   color: var(--blanco);
   border-radius: 19px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
 }
 
 #resumenRapidoInicio .resumen-rapido-item {
@@ -218,7 +257,9 @@ button:disabled {
   font-weight: 700;
 }
 
-/* MENÚ PRINCIPAL */
+/* ==========================================
+   MENÚ PRINCIPAL
+   ========================================== */
 
 .menu-principal {
   display: grid;
@@ -287,10 +328,14 @@ button:disabled {
   display: none;
 }
 
-/* TARJETAS GENERALES */
+/* ==========================================
+   TARJETAS GENERALES
+   ========================================== */
 
 .tarjeta {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 19px;
   margin-bottom: 17px;
   background: var(--blanco);
@@ -314,7 +359,9 @@ button:disabled {
   margin-bottom: 12px;
 }
 
-/* TÍTULOS */
+/* ==========================================
+   TÍTULOS
+   ========================================== */
 
 .titulo-seccion {
   margin: 8px 0 19px;
@@ -343,9 +390,12 @@ button:disabled {
   font-size: 13px;
 }
 
-/* FILAS */
+/* ==========================================
+   FILAS
+   ========================================== */
 
 .fila-stock {
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
@@ -354,9 +404,12 @@ button:disabled {
 
 .fila-stock > div {
   min-width: 0;
+  width: 100%;
 }
 
-/* FORMULARIOS */
+/* ==========================================
+   FORMULARIOS
+   ========================================== */
 
 .grupo-formulario,
 .form-group {
@@ -378,6 +431,7 @@ input,
 select,
 textarea {
   width: 100%;
+  min-width: 0;
   max-width: 100%;
   min-height: 47px;
   padding: 11px 13px;
@@ -412,7 +466,9 @@ textarea {
   resize: vertical;
 }
 
-/* BOTONES */
+/* ==========================================
+   BOTONES
+   ========================================== */
 
 .btn,
 .btn-principal,
@@ -507,7 +563,9 @@ button[type="submit"] {
   margin-top: 12px;
 }
 
-/* PRODUCTOS */
+/* ==========================================
+   PRODUCTOS
+   ========================================== */
 
 #listaCatalogo,
 #listaProductosCaja {
@@ -519,6 +577,7 @@ button[type="submit"] {
 .producto {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   padding: 15px;
   display: flex;
   align-items: center;
@@ -563,7 +622,9 @@ button[type="submit"] {
   margin-top: 9px;
 }
 
-/* CANTIDADES */
+/* ==========================================
+   CANTIDADES
+   ========================================== */
 
 .controles-cantidad {
   display: flex;
@@ -591,7 +652,9 @@ button[type="submit"] {
   font-weight: 800;
 }
 
-/* CARRITO Y RESUMEN */
+/* ==========================================
+   CARRITO Y RESUMEN DE VENTA
+   ========================================== */
 
 #carritoVenta {
   display: flex;
@@ -600,6 +663,7 @@ button[type="submit"] {
 }
 
 .resumen {
+  min-width: 0;
   padding: 18px;
   margin-top: 15px;
   background: var(--blanco);
@@ -631,9 +695,13 @@ button[type="submit"] {
   font-weight: 800;
 }
 
-/* REGISTRO DE VENTAS */
+/* ==========================================
+   REGISTRO DE VENTAS
+   ========================================== */
 
 #listaRegistro {
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -670,10 +738,14 @@ button[type="submit"] {
   font-size: 17px;
 }
 
-/* FILTROS */
+/* ==========================================
+   FILTROS
+   ========================================== */
 
 .filtros,
 .contenedor-filtros {
+  width: 100%;
+  min-width: 0;
   padding: 17px;
   margin-bottom: 15px;
   background: var(--blanco);
@@ -693,29 +765,117 @@ button[type="submit"] {
   margin-top: 5px;
 }
 
-/* RESUMEN REGISTRO */
+/* ==========================================
+   RESUMEN DEL REGISTRO DE VENTAS
+   CORRECCIÓN DEL DESBORDAMIENTO
+   ========================================== */
 
 #resumenRegistro {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 17px;
   margin-bottom: 15px;
+  display: block;
   background: var(--negro);
   color: var(--blanco);
-  border-radius: 15px;
+  border-radius: 18px;
+  overflow: hidden;
 }
 
-#resumenRegistro p,
-#resumenRegistro div {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 7px;
+/*
+  IMPORTANTE:
+  No convertir todos los div y párrafos internos
+  en flex. Eso provocaba el desplazamiento lateral.
+*/
+
+#resumenRegistro > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: inherit;
+  overflow-wrap: anywhere;
 }
+
+/* Los contenedores internos se organizan en bloque */
+
+#resumenRegistro div {
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+}
+
+/* Los textos se mantienen dentro del resumen */
+
+#resumenRegistro p {
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+  margin: 0 0 8px;
+  color: #dddddd;
+  overflow-wrap: anywhere;
+}
+
+/* Encabezados del resumen */
+
+#resumenRegistro h2,
+#resumenRegistro h3,
+#resumenRegistro h4 {
+  color: var(--blanco);
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+
+/* Cifras destacadas */
 
 #resumenRegistro strong {
   color: var(--naranja);
+  font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
-/* ESTADÍSTICAS */
+/* Elementos de resumen que representan cada dato */
+
+#resumenRegistro .resumen-item,
+#resumenRegistro .resumen-registro-item,
+#resumenRegistro .estadistica-resumen {
+  min-width: 0;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 11px;
+}
+
+/* Si el resumen contiene un contenedor con varios indicadores */
+
+#resumenRegistro .resumen-grid,
+#resumenRegistro .resumen-contenido,
+#resumenRegistro .resumen-estadisticas {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* Evitar desbordamientos de textos largos */
+
+#resumenRegistro span,
+#resumenRegistro strong,
+#resumenRegistro small {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================
+   ESTADÍSTICAS
+   ========================================== */
 
 #contenidoEstadisticas,
 #estadisticasContenido {
@@ -727,6 +887,7 @@ button[type="submit"] {
 .estadistica,
 .tarjeta-estadistica,
 .stat-card {
+  min-width: 0;
   padding: 19px;
   background: var(--blanco);
   border: 1px solid #e9eaed;
@@ -755,10 +916,12 @@ button[type="submit"] {
 .grafico,
 .grafico-barras {
   width: 100%;
+  min-width: 0;
   padding: 15px;
   background: var(--blanco);
   border-radius: 12px;
   border: 1px solid var(--borde);
+  overflow: hidden;
 }
 
 .barra-grafico {
@@ -767,7 +930,9 @@ button[type="submit"] {
   border-radius: 5px;
 }
 
-/* INVENTARIO */
+/* ==========================================
+   INVENTARIO
+   ========================================== */
 
 #inventarioInicio {
   display: flex;
@@ -816,7 +981,9 @@ button[type="submit"] {
   font-weight: 700;
 }
 
-/* CONTEO DE EFECTIVO */
+/* ==========================================
+   CONTEO DE EFECTIVO
+   ========================================== */
 
 .conteo-efectivo,
 .fila-efectivo {
@@ -852,7 +1019,9 @@ button[type="submit"] {
   text-align: center;
 }
 
-/* MENSAJES */
+/* ==========================================
+   MENSAJES
+   ========================================== */
 
 .texto-vacio {
   padding: 22px 12px;
@@ -875,10 +1044,13 @@ button[type="submit"] {
   border-radius: 9px;
 }
 
-/* TABLAS */
+/* ==========================================
+   TABLAS
+   ========================================== */
 
 .tabla-contenedor {
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
   background: var(--blanco);
   border-radius: 14px;
@@ -904,7 +1076,9 @@ th {
   font-weight: 700;
 }
 
-/* COMPRA USD */
+/* ==========================================
+   COMPRA USD
+   ========================================== */
 
 .compra-desglose-fila {
   display: flex;
@@ -920,16 +1094,17 @@ th {
 }
 
 .compra-desglose-denom {
+  min-width: 0;
+  flex: 1;
   font-size: 13px;
   font-weight: bold;
   color: var(--negro);
-  flex: 1;
 }
 
 .compra-desglose-subtotal {
+  min-width: 90px;
   font-size: 12px;
   color: var(--gris);
-  min-width: 90px;
   text-align: right;
 }
 
@@ -941,11 +1116,11 @@ th {
 }
 
 .compra-card {
+  padding: 15px;
+  margin-bottom: 12px;
   background: var(--blanco);
   border: 1px solid #e9eaed;
   border-radius: 16px;
-  padding: 15px;
-  margin-bottom: 12px;
   box-shadow: var(--sombra);
 }
 
@@ -1005,7 +1180,9 @@ th {
   color: var(--negro);
 }
 
-/* VARIANTES DE PRODUCTOS */
+/* ==========================================
+   VARIANTES DE PRODUCTOS
+   ========================================== */
 
 .variantes-bloque {
   margin-top: 16px;
@@ -1046,27 +1223,42 @@ th {
   margin-top: 6px;
 }
 
-/* NAVEGACIÓN INFERIOR */
+/* ==========================================
+   NAVEGACIÓN INFERIOR
+   ========================================== */
 
 .navegacion-inferior {
-  position: fixed;
-  z-index: 200;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  position: fixed !important;
+  z-index: 99999 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
   min-height: 76px;
+
+  margin: 0 !important;
   padding: 7px 5px calc(7px + env(safe-area-inset-bottom));
-  display: flex;
+
+  display: flex !important;
   align-items: center;
   justify-content: flex-start;
-  gap: 0;
+
   overflow-x: auto;
   overflow-y: hidden;
-  background: rgba(255, 255, 255, 0.97);
+
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+
+  background: rgba(255, 255, 255, 0.97) !important;
   border-top: 1px solid #e9eaed;
   box-shadow: 0 -5px 22px rgba(0, 0, 0, 0.075);
+
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+
   scrollbar-width: none;
 }
 
@@ -1075,19 +1267,22 @@ th {
 }
 
 .nav-item {
-  flex: 1 0 72px;
+  flex: 0 0 72px;
   min-width: 72px;
   max-width: 130px;
   min-height: 61px;
   padding: 5px 2px;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
+
   color: #858585;
   background: transparent;
   border-radius: 12px;
+
   transition: color 0.2s, background 0.2s;
 }
 
@@ -1100,6 +1295,7 @@ th {
   stroke-linecap: round;
   stroke-linejoin: round;
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .nav-item small {
@@ -1118,7 +1314,9 @@ th {
   stroke-width: 2.3;
 }
 
-/* UTILIDADES */
+/* ==========================================
+   UTILIDADES
+   ========================================== */
 
 hr {
   border: none;
@@ -1150,7 +1348,9 @@ hr {
   width: 100%;
 }
 
-/* TABLET Y COMPUTADORA */
+/* ==========================================
+   TABLET Y COMPUTADORA
+   ========================================== */
 
 @media (min-width: 650px) {
 
@@ -1183,6 +1383,10 @@ hr {
     padding: 23px;
   }
 
+  #resumenRegistro {
+    padding: 22px;
+  }
+
   #contenidoEstadisticas,
   #estadisticasContenido {
     display: grid;
@@ -1198,39 +1402,38 @@ hr {
   }
 }
 
-/* TELÉFONOS PEQUEÑOS */
+/* ==========================================
+   TELÉFONOS PEQUEÑOS
+   ========================================== */
 
-@media (max-width: 400px) {
-
-  body {
-    font-size: 14px;
-  }
+@media (max-width: 500px) {
 
   #contenido {
-    padding: 16px 11px 30px;
+    padding: 16px 12px 30px;
   }
 
   .encabezado {
-    min-height: 68px;
-    padding: 10px 13px;
+    min-height: 76px;
+    padding: 10px 15px;
   }
 
   .marca {
-    gap: 8px;
+    gap: 9px;
   }
 
   .marca h1 {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .marca p {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .marca-icono {
-    width: 39px;
-    height: 39px;
-    font-size: 22px;
+    width: 42px;
+    height: 42px;
+    font-size: 23px;
+    border-radius: 13px;
   }
 
   .estado {
@@ -1238,17 +1441,17 @@ hr {
   }
 
   .bienvenida h2 {
-    font-size: 21px;
+    font-size: 23px;
   }
 
   #resumenRapidoInicio {
-    padding: 15px;
-    gap: 14px 9px;
+    padding: 16px;
+    gap: 14px 10px;
     border-radius: 16px;
   }
 
   #resumenRapidoInicio .resumen-rapido-item strong {
-    font-size: 19px;
+    font-size: 20px;
   }
 
   #resumenRapidoInicio .resumen-rapido-item span {
@@ -1256,6 +1459,7 @@ hr {
   }
 
   .menu-principal {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -1283,10 +1487,11 @@ hr {
 
   .tarjeta {
     padding: 15px;
+    overflow: hidden;
   }
 
   .titulo-seccion {
-    font-size: 21px;
+    font-size: 22px;
   }
 
   .producto {
@@ -1302,8 +1507,19 @@ hr {
     gap: 8px;
   }
 
+  #resumenRegistro {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  #resumenRegistro .resumen-grid,
+  #resumenRegistro .resumen-contenido,
+  #resumenRegistro .resumen-estadisticas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .nav-item {
-    flex-basis: 68px;
+    flex: 0 0 68px;
     min-width: 68px;
   }
 
@@ -1317,7 +1533,9 @@ hr {
   }
 }
 
-/* PANTALLAS MUY ESTRECHAS */
+/* ==========================================
+   TELÉFONOS MUY ESTRECHOS
+   ========================================== */
 
 @media (max-width: 350px) {
 
@@ -1348,11 +1566,18 @@ hr {
   .estado {
     font-size: 9px;
   }
+
+  #resumenRegistro {
+    padding: 12px;
+  }
 }
 
-/* REDUCIR MOVIMIENTO SI EL DISPOSITIVO LO SOLICITA */
+/* ==========================================
+   ACCESIBILIDAD
+   ========================================== */
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1361,261 +1586,3 @@ hr {
     transition-duration: 0.01ms !important;
   }
 }
-
-/* ==========================================
-   CORRECCIÓN DE DESBORDAMIENTO Y MENÚ FIJO
-   ========================================== */
-
-/* Evitar que la página supere el ancho del teléfono */
-
-html,
-body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-body {
-  position: relative;
-}
-
-#contenido,
-.pantalla {
-  width: 100%;
-  min-width: 0;
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.pantalla,
-.tarjeta,
-.tarjeta-menu,
-.producto,
-.venta,
-.tarjeta-venta,
-.filtros,
-.contenedor-filtros {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Evitar que los campos y sus contenedores se desborden */
-
-input,
-select,
-textarea {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Resumen: distribuir las estadísticas sin desbordamiento */
-
-#resumenRapidoInicio {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  overflow: hidden;
-}
-
-#resumenRapidoInicio > *,
-#resumenRapidoInicio .resumen-rapido-item {
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
-/* Formulario: impedir que las columnas excedan su tarjeta */
-
-.fila-stock {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.fila-stock > * {
-  min-width: 0;
-}
-
-/* Menú inferior siempre visible */
-
-.navegacion-inferior {
-  position: fixed !important;
-  z-index: 9999 !important;
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  min-height: 76px;
-  margin: 0 !important;
-  transform: none !important;
-  background: #ffffff;
-  box-shadow: 0 -5px 22px rgba(0, 0, 0, 0.10);
-}
-
-/* Reservar espacio para que el menú no tape los formularios */
-
-body {
-  padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
-}
-
-/* Ajustes para móviles */
-
-@media (max-width: 500px) {
-  #contenido {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .tarjeta {
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .navegacion-inferior {
-    justify-content: flex-start;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-}
-
-/* ==========================================
-   CAJA - CORRECCIÓN DEFINITIVA DE ANCHO
-   Y NAVEGACIÓN INFERIOR
-   ========================================== */
-
-html {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: clip;
-}
-
-body {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: clip;
-}
-
-/* Evitar desbordamientos de elementos */
-
-#contenido {
-  width: 100%;
-  max-width: 760px;
-  min-width: 0;
-  overflow-x: clip;
-}
-
-.pantalla {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.pantalla > * {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Resumen de inicio */
-
-#resumenRapidoInicio {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  overflow: hidden;
-}
-
-#resumenRapidoInicio > * {
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
-/* Tarjetas y formularios */
-
-.tarjeta,
-.filtros,
-.contenedor-filtros,
-.producto,
-.venta,
-.tarjeta-venta {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.fila-stock {
-  width: 100%;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.fila-stock > div {
-  min-width: 0;
-  width: 100%;
-}
-
-.fila-stock input,
-.fila-stock select {
-  width: 100%;
-  min-width: 0;
-}
-
-/* Navegación inferior */
-
-.navegacion-inferior {
-  position: fixed !important;
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  z-index: 99999 !important;
-
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-
-  width: 100% !important;
-  max-width: 100% !important;
-  min-height: 76px;
-
-  margin: 0 !important;
-  transform: none !important;
-
-  overflow-x: auto;
-  overflow-y: hidden;
-
-  background: #ffffff !important;
-  border-top: 1px solid #e5e5e5;
-  box-shadow: 0 -5px 22px rgba(0, 0, 0, 0.10);
-}
-
-/* Reservar espacio para el menú */
-
-body {
-  padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
-}
-
-/* Teléfonos */
-
-@media (max-width: 500px) {
-  #contenido {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .menu-principal {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .nav-item {
-    flex: 0 0 68px;
-    min-width: 68px;
-  }
-}
-
