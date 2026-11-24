@@ -1500,3 +1500,181 @@ th {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* =====================================================
+   AJUSTE PUNTUAL: RESUMEN DEL REGISTRO DE VENTAS
+   Mantiene intactos los demás estilos de la aplicación.
+   Contempla tanto el resumen antiguo como el actual.
+   ===================================================== */
+
+#resumenCompletoVentas,
+#resumenRegistro {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 16px;
+  margin: 0 0 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+  overflow: hidden;
+  color: var(--blanco);
+  background: var(--negro);
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .10);
+}
+
+/* Título del resumen: siempre ocupa el ancho completo. */
+#resumenCompletoVentas > h2,
+#resumenCompletoVentas > h3,
+#resumenCompletoVentas > p:first-child,
+#resumenRegistro > h2,
+#resumenRegistro > h3,
+#resumenRegistro > p:first-child {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0 0 2px;
+  color: var(--blanco);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+/*
+  Si el HTML agrupa el título y las estadísticas dentro de un div,
+  ese div funciona como rejilla transparente, no como una tarjeta
+  estrecha que contiene todo el resumen.
+*/
+#resumenCompletoVentas > div:has(> h2),
+#resumenCompletoVentas > div:has(> h3),
+#resumenCompletoVentas > div:has(> p:first-child),
+#resumenRegistro > div:has(> h2),
+#resumenRegistro > div:has(> h3),
+#resumenRegistro > div:has(> p:first-child) {
+  grid-column: 1 / -1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Si el título está dentro del contenedor agrupador. */
+#resumenCompletoVentas > div:has(> h2) > h2,
+#resumenCompletoVentas > div:has(> h3) > h3,
+#resumenCompletoVentas > div:has(> p:first-child) > p:first-child,
+#resumenRegistro > div:has(> h2) > h2,
+#resumenRegistro > div:has(> h3) > h3,
+#resumenRegistro > div:has(> p:first-child) > p:first-child {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  color: var(--blanco);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+/* Tarjetas de cada indicador, tanto directas como agrupadas. */
+#resumenCompletoVentas > div:not(:has(> h2, > h3, > p:first-child)),
+#resumenRegistro > div:not(:has(> h2, > h3, > p:first-child)),
+#resumenCompletoVentas > div:has(> h2, > h3, > p:first-child) > div,
+#resumenCompletoVentas > div:has(> h2, > h3, > p:first-child) > article,
+#resumenRegistro > div:has(> h2, > h3, > p:first-child) > div,
+#resumenRegistro > div:has(> h2, > h3, > p:first-child) > article {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 82px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 5px;
+  overflow: hidden;
+  color: #eeeeee;
+  background: #242424;
+  border: 1px solid #383838;
+  border-radius: 13px;
+  box-shadow: none;
+}
+
+/* Etiquetas y cifras de los indicadores. */
+#resumenCompletoVentas p,
+#resumenRegistro p {
+  min-width: 0;
+  margin: 0;
+  color: #e1e1e1;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+#resumenCompletoVentas strong,
+#resumenCompletoVentas b,
+#resumenRegistro strong,
+#resumenRegistro b {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  color: var(--naranja);
+  font-size: clamp(15px, 4vw, 21px);
+  font-weight: 900;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+#resumenCompletoVentas .salario,
+#resumenRegistro .salario {
+  color: var(--naranja);
+}
+
+@media (max-width: 400px) {
+  #resumenCompletoVentas,
+  #resumenRegistro {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 13px;
+    gap: 8px;
+  }
+
+  #resumenCompletoVentas > div:has(> h2, > h3, > p:first-child),
+  #resumenRegistro > div:has(> h2, > h3, > p:first-child) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #resumenCompletoVentas > div:not(:has(> h2, > h3, > p:first-child)),
+  #resumenRegistro > div:not(:has(> h2, > h3, > p:first-child)),
+  #resumenCompletoVentas > div:has(> h2, > h3, > p:first-child) > div,
+  #resumenCompletoVentas > div:has(> h2, > h3, > p:first-child) > article,
+  #resumenRegistro > div:has(> h2, > h3, > p:first-child) > div,
+  #resumenRegistro > div:has(> h2, > h3, > p:first-child) > article {
+    min-height: 76px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 340px) {
+  #resumenCompletoVentas,
+  #resumenRegistro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #resumenCompletoVentas > div:has(> h2, > h3, > p:first-child),
+  #resumenRegistro > div:has(> h2, > h3, > p:first-child) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
