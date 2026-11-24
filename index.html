@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,18 +7,25 @@
   <meta name="theme-color" content="#151515">
   <meta name="description" content="Sistema de caja y control de ventas offline">
   <title>CAJA | Gestión de ventas</title>
+
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icono.png">
   <link rel="apple-touch-icon" href="./icono.png">
   <link rel="stylesheet" href="./estilos.css">
 </head>
+
 <body>
 
+  <!-- ENCABEZADO -->
   <header class="encabezado">
     <div class="marca">
       <div class="marca-icono">₵</div>
-      <div class="marca-texto"><h1>CAJA</h1><p>Gestión de ventas</p></div>
+      <div class="marca-texto">
+        <h1>CAJA</h1>
+        <p>Gestión de ventas</p>
+      </div>
     </div>
+
     <div class="estado">
       <span id="puntoConexion"></span>
       <span id="textoConexion">En línea</span>
@@ -28,62 +36,108 @@
 
     <!-- INICIO -->
     <section id="pantallaInicio" class="pantalla activa">
+
       <div class="bienvenida">
         <h2>Panel principal</h2>
         <p>Selecciona una opción para continuar.</p>
       </div>
+
       <div id="resumenRapidoInicio" class="resumen-rapido"></div>
       <div id="inventarioInicio" class="inventario-inicio"></div>
+
       <div class="menu-principal">
-        <button class="tarjeta-menu tarjeta-caja" onclick="navegar('caja')">
+
+        <button type="button" class="tarjeta-menu tarjeta-caja"
+                onclick="navegar('caja')">
           <div class="icono-menu">🛒</div>
-          <div class="texto-menu"><h3>Nueva venta</h3><p>Registrar una venta y descontar stock automáticamente.</p></div>
+          <div class="texto-menu">
+            <h3>Nueva venta</h3>
+            <p>Registrar una venta y descontar stock automáticamente.</p>
+          </div>
           <span class="flecha-menu">↗</span>
         </button>
-        <button class="tarjeta-menu" onclick="navegar('productos')">
+
+        <button type="button" class="tarjeta-menu"
+                onclick="navegar('productos')">
           <div class="icono-menu">📦</div>
-          <div class="texto-menu"><h3>Productos</h3><p>Administrar productos, precios y stock.</p></div>
+          <div class="texto-menu">
+            <h3>Productos</h3>
+            <p>Administrar productos, precios y stock.</p>
+          </div>
           <span class="flecha-menu">↗</span>
         </button>
-        <button class="tarjeta-menu" onclick="navegar('inventario')">
+
+        <button type="button" class="tarjeta-menu"
+                onclick="navegar('inventario')">
           <div class="icono-menu">🏷️</div>
-          <div class="texto-menu"><h3>Inventario</h3><p>Entradas de stock y cantidades por área.</p></div>
+          <div class="texto-menu">
+            <h3>Inventario</h3>
+            <p>Entradas de stock y cantidades por área.</p>
+          </div>
           <span class="flecha-menu">↗</span>
         </button>
-        <button class="tarjeta-menu" onclick="navegar('compraUSD')">
+
+        <button type="button" class="tarjeta-menu"
+                onclick="navegar('compraUSD')">
           <div class="icono-menu">💱</div>
-          <div class="texto-menu"><h3>Compra de USD</h3><p>Registrar compras de dólares y su desglose.</p></div>
+          <div class="texto-menu">
+            <h3>Compra de USD</h3>
+            <p>Registrar compras de dólares y su desglose.</p>
+          </div>
           <span class="flecha-menu">↗</span>
         </button>
-        <button class="tarjeta-menu" onclick="navegar('registro')">
+
+        <button type="button" class="tarjeta-menu"
+                onclick="navegar('registro')">
           <div class="icono-menu">📋</div>
-          <div class="texto-menu"><h3>Registro de ventas</h3><p>Consultar, filtrar y eliminar ventas.</p></div>
+          <div class="texto-menu">
+            <h3>Registro de ventas</h3>
+            <p>Consultar, filtrar y eliminar ventas.</p>
+          </div>
           <span class="flecha-menu">↗</span>
         </button>
-        <button class="tarjeta-menu" onclick="navegar('estadisticas')">
+
+        <button type="button" class="tarjeta-menu"
+                onclick="navegar('estadisticas')">
           <div class="icono-menu">📊</div>
-          <div class="texto-menu"><h3>Estadísticas</h3><p id="textoEstadisticasInicio">Consultar gráficos y resultados.</p></div>
+          <div class="texto-menu">
+            <h3>Estadísticas</h3>
+            <p id="textoEstadisticasInicio">
+              Consultar gráficos y resultados.
+            </p>
+          </div>
           <span class="flecha-menu">↗</span>
         </button>
-        <button class="tarjeta-menu" onclick="navegar('efectivo')">
+
+        <button type="button" class="tarjeta-menu"
+                onclick="navegar('efectivo')">
           <div class="icono-menu">💵</div>
-          <div class="texto-menu"><h3>Conteo de efectivo</h3><p>Calcular el dinero disponible en caja.</p></div>
+          <div class="texto-menu">
+            <h3>Conteo de efectivo</h3>
+            <p>Calcular el dinero disponible en caja.</p>
+          </div>
           <span class="flecha-menu">↗</span>
         </button>
+
       </div>
+
       <div id="panelRespaldo"></div>
+
     </section>
 
     <!-- CAJA -->
     <section id="pantallaCaja" class="pantalla">
+
       <h2 class="titulo-seccion">Nueva venta</h2>
 
       <div class="tarjeta">
+
         <div class="fila-stock">
           <div>
             <label for="fechaVenta">Fecha</label>
             <input type="date" id="fechaVenta">
           </div>
+
           <div>
             <label for="lugarVenta">Lugar de venta</label>
             <select id="lugarVenta" onchange="dibujarProductosCaja()">
@@ -102,170 +156,257 @@
               <option value="USD">USD</option>
             </select>
           </div>
+
           <div>
             <label for="porcentajeVenta">% salario</label>
-            <input type="number" id="porcentajeVenta" min="0" max="100" step="0.5"
+            <input type="number" id="porcentajeVenta"
+                   min="0" max="100" step="0.5"
                    onchange="actualizarPorcentajeSalario()">
           </div>
         </div>
+
       </div>
 
       <div class="tarjeta">
         <label for="buscarProductoCaja">Buscar producto</label>
-        <input type="text" id="buscarProductoCaja" placeholder="Buscar..."
+        <input type="text" id="buscarProductoCaja"
+               placeholder="Buscar..."
                oninput="dibujarProductosCaja()">
+
         <div id="listaProductosCaja"></div>
       </div>
 
       <h3 class="titulo-carrito">Carrito de venta</h3>
+
       <div id="carritoVenta"></div>
       <div id="resumenVenta" class="resumen"></div>
 
-      <button type="button" class="btn-vendido" onclick="registrarVenta()">REGISTRAR VENTA</button>
-      <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
-              onclick="cancelarVenta()">CANCELAR VENTA</button>
+      <button type="button" class="btn-vendido"
+              onclick="registrarVenta()">
+        REGISTRAR VENTA
+      </button>
+
+      <button type="button" class="btn-secundario boton-cancelar-venta"
+              onclick="cancelarVenta()">
+        CANCELAR VENTA
+      </button>
+
     </section>
 
     <!-- PRODUCTOS -->
     <section id="pantallaProductos" class="pantalla">
+
       <h2 class="titulo-seccion">Productos</h2>
+
       <div class="tarjeta">
-        <h3 style="margin-bottom:12px" id="tituloFormularioProducto">Añadir producto</h3>
+
+        <h3 id="tituloFormularioProducto">
+          Añadir producto
+        </h3>
+
         <label for="nombreProducto">Nombre del producto</label>
-        <input type="text" id="nombreProducto" placeholder="Ej. Azúcar blanca">
+        <input type="text" id="nombreProducto"
+               placeholder="Ej. Azúcar blanca">
+
         <div class="fila-stock">
           <div>
             <label for="stockTienda">Stock en Tienda</label>
-            <input type="number" id="stockTienda" min="0" step="1" inputmode="numeric" placeholder="0">
+            <input type="number" id="stockTienda"
+                   min="0" step="1" inputmode="numeric"
+                   placeholder="0">
           </div>
+
           <div>
             <label for="stockCasa">Stock en Casa</label>
-            <input type="number" id="stockCasa" min="0" step="1" inputmode="numeric" placeholder="0">
+            <input type="number" id="stockCasa"
+                   min="0" step="1" inputmode="numeric"
+                   placeholder="0">
           </div>
         </div>
-        <p class="nota-stock">ℹ️ El <strong>Almacén</strong> siempre es infinito.</p>
+
+        <p class="nota-stock">
+          ℹ️ El <strong>Almacén</strong> siempre es infinito.
+        </p>
 
         <div class="variantes-bloque">
+
           <div class="variantes-cabecera">
             <h4>Precios de venta</h4>
-            <button type="button" class="btn-secundario"
-                    style="padding:6px 10px;font-size:12px"
-                    onclick="agregarVarianteFormulario()">+ Añadir precio</button>
+
+            <button type="button" class="btn-secundario boton-anadir-precio"
+                    onclick="agregarVarianteFormulario()">
+              + Añadir precio
+            </button>
           </div>
+
           <p class="nota-variantes">
-            Cada precio tiene un nombre (ej. "1 kg", "5 kg"). El stock es del producto base,
-            compartido entre todas las presentaciones.
+            Cada precio tiene un nombre (ej. "1 kg", "5 kg").
+            El stock es del producto base, compartido entre
+            todas las presentaciones.
           </p>
+
           <div id="listaVariantesFormulario"></div>
+
         </div>
 
-        <button type="button" id="btnGuardarProducto" class="btn-principal"
-                style="margin-top:12px" onclick="guardarProducto()">GUARDAR PRODUCTO</button>
-        <button type="button" id="btnCancelarEdicion" class="btn-secundario"
-                style="width:100%;margin-top:8px;display:none"
-                onclick="cancelarEdicion()">CANCELAR EDICIÓN</button>
+        <button type="button" id="btnGuardarProducto"
+                class="btn-principal boton-guardar-producto"
+                onclick="guardarProducto()">
+          GUARDAR PRODUCTO
+        </button>
+
+        <button type="button" id="btnCancelarEdicion"
+                class="btn-secundario boton-cancelar-edicion"
+                onclick="cancelarEdicion()">
+          CANCELAR EDICIÓN
+        </button>
+
       </div>
-      <h3 style="margin:20px 0 12px">Catálogo</h3>
+
+      <h3 class="subtitulo">Catálogo</h3>
       <div id="listaCatalogo"></div>
+
     </section>
 
     <!-- INVENTARIO -->
     <section id="pantallaInventario" class="pantalla">
+
       <h2 class="titulo-seccion">Inventario por área</h2>
+
       <div id="resumenInventario" class="inventario-resumen"></div>
 
       <div class="tarjeta">
-        <h3 style="margin-bottom:12px">➕ Entrada de producto</h3>
+
+        <h3>➕ Entrada de producto</h3>
+
         <label for="entradaProducto">Producto</label>
         <select id="entradaProducto"></select>
+
         <label for="entradaArea">Área destino</label>
         <select id="entradaArea">
           <option value="Tienda" selected>Tienda</option>
           <option value="Casa">Casa</option>
         </select>
+
         <label for="entradaCantidad">Cantidad a añadir</label>
-        <input type="number" id="entradaCantidad" min="1" step="1"
-               inputmode="numeric" placeholder="0" value="1">
+        <input type="number" id="entradaCantidad"
+               min="1" step="1" inputmode="numeric"
+               placeholder="0" value="1">
+
         <button type="button" class="btn-principal"
-                onclick="registrarEntradaInventario()">AGREGAR AL STOCK</button>
+                onclick="registrarEntradaInventario()">
+          AGREGAR AL STOCK
+        </button>
+
       </div>
 
       <div class="tarjeta">
+
         <label for="buscarInventario">Buscar producto</label>
-        <input type="text" id="buscarInventario" placeholder="Buscar..."
+        <input type="text" id="buscarInventario"
+               placeholder="Buscar..."
                oninput="dibujarInventario()">
-        <button type="button" class="btn-secundario" style="width:100%"
-                onclick="exportarInventarioPDF()">📄 EXPORTAR INVENTARIO PDF</button>
+
+        <button type="button" class="btn-secundario boton-exportar"
+                onclick="exportarInventarioPDF()">
+          📄 EXPORTAR INVENTARIO PDF
+        </button>
+
       </div>
 
-      <h3 style="margin:20px 0 12px">Stock actual</h3>
+      <h3 class="subtitulo">Stock actual</h3>
       <div id="listaInventario"></div>
-      <h3 style="margin:24px 0 12px">Historial de entradas</h3>
+
+      <h3 class="subtitulo">Historial de entradas</h3>
       <div id="listaEntradas"></div>
+
     </section>
 
     <!-- COMPRA USD -->
     <section id="pantallaCompraUSD" class="pantalla">
+
       <h2 class="titulo-seccion">Compra de USD</h2>
 
       <div id="resumenComprasUSD"></div>
 
       <div class="tarjeta">
-        <h3 style="margin-bottom:12px">Registrar compra</h3>
+
+        <h3>Registrar compra</h3>
 
         <div class="fila-stock">
           <div>
             <label for="compraUSD_fecha">Fecha</label>
             <input type="date" id="compraUSD_fecha">
           </div>
+
           <div>
             <label for="compraUSD_tasa">Precio del USD (CUP)</label>
-            <input type="number" id="compraUSD_tasa" min="0" step="0.01"
+            <input type="number" id="compraUSD_tasa"
+                   min="0" step="0.01"
                    inputmode="decimal" placeholder="0.00">
           </div>
         </div>
 
-        <label for="compraUSD_cantidad">Cantidad de USD comprada</label>
-        <input type="number" id="compraUSD_cantidad" min="0" step="0.01"
+        <label for="compraUSD_cantidad">
+          Cantidad de USD comprada
+        </label>
+
+        <input type="number" id="compraUSD_cantidad"
+               min="0" step="0.01"
                inputmode="decimal" placeholder="0.00">
 
         <label>Desglose de billetes usados (CUP)</label>
-        <p class="nota-variantes" style="margin-bottom:12px">
-          Indica cuántos billetes de cada denominación entregaste para pagar la compra.
+
+        <p class="nota-variantes">
+          Indica cuántos billetes de cada denominación
+          entregaste para pagar la compra.
         </p>
 
         <div id="compraUSD_desglose"></div>
 
-        <div class="resumen" style="margin-top:12px">
+        <div class="resumen resumen-compra">
+
           <div>Total pagado en CUP</div>
-          <div class="total" id="compraUSD_totalPagado">0.00 CUP</div>
-          <p style="font-size:12px;color:#ccc">
-            El total se calcula como <strong>tasa × USD</strong> y también como
-            la suma de los billetes entregados.
+
+          <div class="total" id="compraUSD_totalPagado">
+            0.00 CUP
+          </div>
+
+          <p class="texto-ayuda">
+            El total se calcula como tasa × USD y también
+            como la suma de los billetes entregados.
           </p>
-          <p id="compraUSD_aviso" style="font-size:12px;color:#ff9f9f;margin-top:6px"></p>
+
+          <p id="compraUSD_aviso" class="aviso-compra"></p>
+
         </div>
 
-        <button type="button" class="btn-principal" style="margin-top:12px"
-                onclick="registrarCompraUSD()">REGISTRAR COMPRA</button>
+        <button type="button" class="btn-principal boton-registrar-compra"
+                onclick="registrarCompraUSD()">
+          REGISTRAR COMPRA
+        </button>
+
       </div>
 
       <div class="tarjeta">
-        <h3 style="margin-bottom:12px">Filtros</h3>
+
+        <h3>Filtros</h3>
 
         <label for="filtroCompraUSD_dia">Día concreto</label>
         <input type="date" id="filtroCompraUSD_dia"
                onchange="aplicarFiltrosComprasUSD()">
 
         <label>Rango de fechas</label>
+
         <div class="fila-stock">
           <div>
-            <label for="filtroCompraUSD_desde" style="font-size:11px;font-weight:normal">Desde</label>
+            <label for="filtroCompraUSD_desde">Desde</label>
             <input type="date" id="filtroCompraUSD_desde"
                    onchange="aplicarFiltrosComprasUSD()">
           </div>
+
           <div>
-            <label for="filtroCompraUSD_hasta" style="font-size:11px;font-weight:normal">Hasta</label>
+            <label for="filtroCompraUSD_hasta">Hasta</label>
             <input type="date" id="filtroCompraUSD_hasta"
                    onchange="aplicarFiltrosComprasUSD()">
           </div>
@@ -274,34 +415,47 @@
         <div class="fila-stock">
           <div>
             <label for="filtroCompraUSD_tasaMin">Tasa mínima</label>
-            <input type="number" id="filtroCompraUSD_tasaMin" min="0" step="0.01"
-                   oninput="aplicarFiltrosComprasUSD()" placeholder="0">
+            <input type="number" id="filtroCompraUSD_tasaMin"
+                   min="0" step="0.01"
+                   oninput="aplicarFiltrosComprasUSD()"
+                   placeholder="0">
           </div>
+
           <div>
             <label for="filtroCompraUSD_tasaMax">Tasa máxima</label>
-            <input type="number" id="filtroCompraUSD_tasaMax" min="0" step="0.01"
-                   oninput="aplicarFiltrosComprasUSD()" placeholder="∞">
+            <input type="number" id="filtroCompraUSD_tasaMax"
+                   min="0" step="0.01"
+                   oninput="aplicarFiltrosComprasUSD()"
+                   placeholder="∞">
           </div>
         </div>
 
-        <button type="button" class="btn-secundario" style="width:100%"
-                onclick="limpiarFiltrosComprasUSD()">LIMPIAR FILTROS</button>
+        <button type="button" class="btn-secundario boton-exportar"
+                onclick="limpiarFiltrosComprasUSD()">
+          LIMPIAR FILTROS
+        </button>
+
       </div>
 
       <div id="listaComprasUSD"></div>
 
-      <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
-              onclick="exportarComprasUSDPDF()">📄 EXPORTAR COMPRAS PDF</button>
+      <button type="button" class="btn-secundario boton-exportar"
+              onclick="exportarComprasUSDPDF()">
+        📄 EXPORTAR COMPRAS PDF
+      </button>
+
     </section>
 
     <!-- REGISTRO -->
     <section id="pantallaRegistro" class="pantalla">
+
       <h2 class="titulo-seccion">Registro de ventas</h2>
 
       <div id="resumenRegistro"></div>
 
       <div class="tarjeta">
-        <h3 style="margin-bottom:12px">Filtros</h3>
+
+        <h3>Filtros</h3>
 
         <label for="filtroPeriodo">Período rápido</label>
         <select id="filtroPeriodo" onchange="aplicarFiltrosRegistro()">
@@ -313,22 +467,28 @@
         </select>
 
         <label for="filtroDia">Día concreto</label>
-        <input type="date" id="filtroDia" onchange="aplicarFiltrosRegistro()">
+        <input type="date" id="filtroDia"
+               onchange="aplicarFiltrosRegistro()">
 
         <label>Rango de fechas</label>
+
         <div class="fila-stock">
           <div>
-            <label for="filtroFechaDesde" style="font-size:11px;font-weight:normal">Desde</label>
-            <input type="date" id="filtroFechaDesde" onchange="aplicarFiltrosRegistro()">
+            <label for="filtroFechaDesde">Desde</label>
+            <input type="date" id="filtroFechaDesde"
+                   onchange="aplicarFiltrosRegistro()">
           </div>
+
           <div>
-            <label for="filtroFechaHasta" style="font-size:11px;font-weight:normal">Hasta</label>
-            <input type="date" id="filtroFechaHasta" onchange="aplicarFiltrosRegistro()">
+            <label for="filtroFechaHasta">Hasta</label>
+            <input type="date" id="filtroFechaHasta"
+                   onchange="aplicarFiltrosRegistro()">
           </div>
         </div>
 
         <label for="filtroProducto">Producto</label>
-        <select id="filtroProducto" onchange="aplicarFiltrosRegistro()"></select>
+        <select id="filtroProducto"
+                onchange="aplicarFiltrosRegistro()"></select>
 
         <label for="filtroMoneda">Moneda</label>
         <select id="filtroMoneda" onchange="aplicarFiltrosRegistro()">
@@ -349,23 +509,35 @@
         <div class="fila-stock">
           <div>
             <label for="filtroMinimo">Importe mínimo</label>
-            <input type="number" id="filtroMinimo" min="0" step="0.01"
-                   oninput="aplicarFiltrosRegistro()" placeholder="0">
+            <input type="number" id="filtroMinimo"
+                   min="0" step="0.01"
+                   oninput="aplicarFiltrosRegistro()"
+                   placeholder="0">
           </div>
+
           <div>
             <label for="filtroMaximo">Importe máximo</label>
-            <input type="number" id="filtroMaximo" min="0" step="0.01"
-                   oninput="aplicarFiltrosRegistro()" placeholder="∞">
+            <input type="number" id="filtroMaximo"
+                   min="0" step="0.01"
+                   oninput="aplicarFiltrosRegistro()"
+                   placeholder="∞">
           </div>
         </div>
 
-        <button type="button" class="btn-secundario" style="width:100%"
-                onclick="limpiarFiltrosRegistro()">LIMPIAR FILTROS</button>
+        <button type="button" class="btn-secundario boton-exportar"
+                onclick="limpiarFiltrosRegistro()">
+          LIMPIAR FILTROS
+        </button>
+
       </div>
 
       <div id="listaRegistro"></div>
-      <button type="button" class="btn-secundario" style="width:100%;margin-top:10px"
-              onclick="exportarRegistroPDF()">EXPORTAR A PDF</button>
+
+      <button type="button" class="btn-secundario boton-exportar"
+              onclick="exportarRegistroPDF()">
+        EXPORTAR A PDF
+      </button>
+
     </section>
 
     <!-- ESTADÍSTICAS -->
@@ -382,16 +554,95 @@
 
   </main>
 
-  <nav class="navegacion-inferior">
-    <button onclick="navegar('inicio')" class="nav-item" data-pantalla="inicio"><span>⌂</span><small>Inicio</small></button>
-    <button onclick="navegar('caja')" class="nav-item" data-pantalla="caja"><span>＋</span><small>Caja</small></button>
-    <button onclick="navegar('productos')" class="nav-item" data-pantalla="productos"><span>▣</span><small>Productos</small></button>
-    <button onclick="navegar('inventario')" class="nav-item" data-pantalla="inventario"><span>🏷️</span><small>Inventario</small></button>
-    <button onclick="navegar('compraUSD')" class="nav-item" data-pantalla="compraUSD"><span>💱</span><small>USD</small></button>
-    <button onclick="navegar('registro')" class="nav-item" data-pantalla="registro"><span>☷</span><small>Registro</small></button>
-    <button onclick="navegar('efectivo')" class="nav-item" data-pantalla="efectivo"><span>＄</span><small>Efectivo</small></button>
+  <!-- NAVEGACIÓN INFERIOR -->
+  <nav class="navegacion-inferior" aria-label="Navegación principal">
+
+    <button type="button" onclick="navegar('inicio')"
+            class="nav-item activo" data-pantalla="inicio"
+            aria-label="Inicio">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/>
+      </svg>
+      <small>Inicio</small>
+    </button>
+
+    <button type="button" onclick="navegar('caja')"
+            class="nav-item" data-pantalla="caja"
+            aria-label="Caja">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="9" cy="21" r="1"/>
+        <circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"/>
+        <path d="M12 7v6m-3-3h6"/>
+      </svg>
+      <small>Caja</small>
+    </button>
+
+    <button type="button" onclick="navegar('productos')"
+            class="nav-item" data-pantalla="productos"
+            aria-label="Productos">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m12 2 9 5v10l-9 5-9-5V7z"/>
+        <path d="m3 7 9 5 9-5M12 12v10"/>
+      </svg>
+      <small>Productos</small>
+    </button>
+
+    <button type="button" onclick="navegar('inventario')"
+            class="nav-item" data-pantalla="inventario"
+            aria-label="Inventario">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 7h18v14H3z"/>
+        <path d="M3 7l2-4h14l2 4M12 7v14"/>
+        <path d="M8 11h1m6 0h1"/>
+      </svg>
+      <small>Stock</small>
+    </button>
+
+    <button type="button" onclick="navegar('compraUSD')"
+            class="nav-item" data-pantalla="compraUSD"
+            aria-label="Compra de USD">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M16 8h-5a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4H8m4-10v12"/>
+      </svg>
+      <small>USD</small>
+    </button>
+
+    <button type="button" onclick="navegar('registro')"
+            class="nav-item" data-pantalla="registro"
+            aria-label="Registro">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 3h8l4 4v14H4V3z"/>
+        <path d="M8 10h8m-8 4h8m-8 4h5"/>
+      </svg>
+      <small>Registro</small>
+    </button>
+
+    <button type="button" onclick="navegar('estadisticas')"
+            class="nav-item" data-pantalla="estadisticas"
+            aria-label="Estadísticas">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 3v18h18"/>
+        <path d="M8 16v-5m5 5V5m5 11V9"/>
+      </svg>
+      <small>Estadísticas</small>
+    </button>
+
+    <button type="button" onclick="navegar('efectivo')"
+            class="nav-item" data-pantalla="efectivo"
+            aria-label="Efectivo">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M6 9h.01M18 15h.01"/>
+      </svg>
+      <small>Efectivo</small>
+    </button>
+
   </nav>
 
+  <!-- SCRIPTS -->
   <script src="./database.js"></script>
   <script src="./app.js"></script>
   <script src="./respaldo.js"></script>
