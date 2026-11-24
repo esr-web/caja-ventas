@@ -6,17 +6,19 @@ let productos = [];
 let carrito = [];          // { idProducto, idVariante, cantidad, precio }
 let ventas = [];
 let entradas = [];
+let comprasUSD = [];
 
 let productoEnEdicion = null;
 let porcentajeSalario = 5;
 let pantallaActual = "inicio";
 let monedaVenta = "CUP";
 
-// Estado de la UI de caja: qué producto está desplegado
 let productosDesplegadosCaja = new Set();
 
 const CLAVE_EFECTIVO = "caja_conteo_efectivo_v1";
 const LUGARES_VENTA = ["Almacén", "Tienda", "Casa"];
+
+const denominacionesEfectivo = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
 
 // ==========================================
 // UTILIDADES
@@ -140,6 +142,25 @@ function adaptarEntrada(e) {
   };
 }
 
+function adaptarCompraUSD(c) {
+  if (!c || typeof c !== "object") return null;
+  return {
+    ...c, id: c.id,
+    fecha: c.fecha || fechaLocal(),
+    fechaRegistro: c.fechaRegistro || new Date().toISOString(),
+    tasaCUP: Number(c.tasaCUP) || 0,
+    cantidadUSD: Number(c.cantidadUSD) || 0,
+    totalCUP: Number(c.totalCUP) || 0,
+    desglose: Array.isArray(c.desglose)
+      ? c.desglose.map(d => ({
+          denominacion: Number(d.denominacion) || 0,
+          cantidad: Number(d.cantidad) || 0,
+          subtotal: Number(d.subtotal) || 0
+        }))
+      : []
+  };
+}
+
 // ==========================================
 // PRECIOS / VARIANTES
 // ==========================================
@@ -213,8 +234,12 @@ async function iniciarAplicacion() {
   ventas = (await obtenerTodos("ventas")).map(adaptarVenta).filter(Boolean);
   try { entradas = (await obtenerTodos("entradas")).map(adaptarEntrada).filter(Boolean); }
   catch (_) { entradas = []; }
+  try { comprasUSD = (await obtenerTodos("comprasUSD")).map(adaptarCompraUSD).filter(Boolean); }
+  catch (_) { comprasUSD = []; }
+
   for (const p of productos) await guardarDato("productos", p);
   for (const v of ventas) await guardarDato("ventas", v);
+
   navegar("inicio");
   actualizarEstadoConexion();
 }
@@ -245,6 +270,7 @@ function navegar(nombre) {
     caja: "pantallaCaja",
     productos: "pantallaProductos",
     inventario: "pantallaInventario",
+    compraUSD: "pantallaCompraUSD",
     registro: "pantallaRegistro",
     estadisticas: "pantallaEstadisticas",
     efectivo: "pantallaEfectivo"
@@ -264,6 +290,7 @@ function navegar(nombre) {
   if (nombre === "caja") mostrarCaja();
   if (nombre === "productos") mostrarProductos();
   if (nombre === "inventario") mostrarInventario();
+  if (nombre === "compraUSD") mostrarCompraUSD();
   if (nombre === "registro") mostrarRegistro();
   if (nombre === "estadisticas") mostrarEstadisticas();
   if (nombre === "efectivo") mostrarEfectivo();
@@ -714,9 +741,8 @@ function exportarInventarioPDF() {
   if (!v) { alert("El navegador bloqueó la ventana."); return; }
   v.document.open(); v.document.write(documento); v.document.close();
 }
-
 // ==========================================
-// CAJA
+// CAJA - NUEVA VENTA
 // ==========================================
 
 function mostrarCaja() {
@@ -759,8 +785,6 @@ function cambiarMonedaVenta() {
   dibujarProductosCaja();
   dibujarCarrito();
 }
-
-// === CAJA: acordeón por producto ===
 
 function toggleProductoCaja(idProducto) {
   const id = Number(idProducto);
@@ -940,8 +964,6 @@ function quitarVarianteDelCarrito(idProducto, idVariante) {
   dibujarCarrito();
 }
 
-// === CARRITO ===
-
 function dibujarCarrito() {
   const cont = document.getElementById("carritoVenta");
   const resumen = document.getElementById("resumenVenta");
@@ -1055,10 +1077,6 @@ function actualizarPorcentajeSalario() {
   porcentajeSalario = valor;
   dibujarCarrito();
 }
-
-// ==========================================
-// REGISTRAR VENTA
-// ==========================================
 
 let guardandoVenta = false;
 
@@ -1176,6 +1194,356 @@ function cancelarVenta() {
 }
 
 // ==========================================
+// COMPRA USD
+// ==========================================
+
+function mostrarCompraUSD() {
+  const contDesglose = document.getElementById("compraUSD_desglose");
+  if (contDesglose && !contDesglose.dataset.inicializado) {
+    contDesglose.dataset.inicializado = "1";
+    contDesglose.innerHTML = denominacionesEfectivo.map(v => `
+      <div class="compra-desglose-fila">
+        <span class="compra-desglose-denom">${formato(v)} CUP</span>
+        <span class="compra-desglose-subtotal" id="compra-desglose-subtotal-${v}">0.00 CUP</span>
+        <input type="number" class="compra-desglose-input" id="compra-desglose-${v}"
+               min="0" step="1" inputmode="numeric" placeholder="0"
+               oninput="actualizarTotalCompraUSD()">
+      </div>
+    `).join("");
+  }
+
+  const fecha = document.getElementById("compraUSD_fecha");
+  if (fecha && !fecha.value) fecha.value = fechaLocal();
+
+  actualizarTotalCompraUSD();
+  dibujarComprasUSD();
+  dibujarResumenComprasUSD();
+}
+
+function leerDesgloseCompraUSD() {
+  const desglose = [];
+  let totalBilletesCUP = 0;
+  denominacionesEfectivo.forEach(v => {
+    const input = document.getElementById("compra-desglose-" + v);
+    const cantidad = Math.max(0, Math.floor(Number(input?.value) || 0));
+    const subtotal = v * cantidad;
+    desglose.push({ denominacion: v, cantidad, subtotal });
+    totalBilletesCUP += subtotal;
+
+    const sub = document.getElementById("compra-desglose-subtotal-" + v);
+    if (sub) sub.textContent = formato(subtotal) + " CUP";
+  });
+  return { desglose, totalBilletesCUP };
+}
+
+function actualizarTotalCompraUSD() {
+  const tasa = Number(document.getElementById("compraUSD_tasa")?.value) || 0;
+  const cantidadUSD = Number(document.getElementById("compraUSD_cantidad")?.value) || 0;
+  const { totalBilletesCUP } = leerDesgloseCompraUSD();
+
+  const totalPagado = tasa * cantidadUSD;
+
+  const cont = document.getElementById("compraUSD_totalPagado");
+  if (cont) cont.textContent = formato(totalPagado) + " CUP";
+
+  const aviso = document.getElementById("compraUSD_aviso");
+  if (aviso) {
+    if (totalBilletesCUP > 0 && Math.abs(totalBilletesCUP - totalPagado) > 0.01) {
+      aviso.textContent =
+        `⚠️ La suma de billetes (${formato(totalBilletesCUP)} CUP) no coincide con tasa × USD (${formato(totalPagado)} CUP).`;
+    } else {
+      aviso.textContent = "";
+    }
+  }
+}
+
+async function registrarCompraUSD() {
+  const fechaInput = document.getElementById("compraUSD_fecha");
+  const tasaInput = document.getElementById("compraUSD_tasa");
+  const cantidadInput = document.getElementById("compraUSD_cantidad");
+
+  if (!fechaInput || !tasaInput || !cantidadInput) return;
+
+  const fecha = fechaInput.value || fechaLocal();
+  const tasaCUP = Number(tasaInput.value) || 0;
+  const cantidadUSD = Number(cantidadInput.value) || 0;
+
+  if (tasaCUP <= 0) { alert("Introduce un precio del USD mayor que 0."); tasaInput.focus(); return; }
+  if (cantidadUSD <= 0) { alert("Introduce una cantidad de USD mayor que 0."); cantidadInput.focus(); return; }
+
+  const { desglose, totalBilletesCUP } = leerDesgloseCompraUSD();
+  const totalCUP = tasaCUP * cantidadUSD;
+
+  if (totalBilletesCUP > 0 && Math.abs(totalBilletesCUP - totalCUP) > 0.01) {
+    if (!confirm(
+      "La suma de los billetes no coincide con tasa × USD.\n\n" +
+      `Tasa × USD = ${formato(totalCUP)} CUP\n` +
+      `Billetes = ${formato(totalBilletesCUP)} CUP\n\n` +
+      "¿Registrar de todos modos?"
+    )) return;
+  }
+
+  const compra = {
+    fecha,
+    fechaRegistro: new Date().toISOString(),
+    tasaCUP,
+    cantidadUSD,
+    totalCUP,
+    desglose: desglose.filter(d => d.cantidad > 0)
+  };
+
+  try {
+    const id = await guardarDato("comprasUSD", compra);
+    compra.id = id;
+    comprasUSD.push(adaptarCompraUSD(compra));
+
+    tasaInput.value = "";
+    cantidadInput.value = "";
+    denominacionesEfectivo.forEach(v => {
+      const input = document.getElementById("compra-desglose-" + v);
+      if (input) input.value = "";
+      const sub = document.getElementById("compra-desglose-subtotal-" + v);
+      if (sub) sub.textContent = "0.00 CUP";
+    });
+    actualizarTotalCompraUSD();
+
+    dibujarComprasUSD();
+    dibujarResumenComprasUSD();
+
+    alert(
+      "Compra registrada.\n\n" +
+      "USD comprados: " + formato(cantidadUSD) + " USD\n" +
+      "Tasa: " + formato(tasaCUP) + " CUP/USD\n" +
+      "Total pagado: " + formato(totalCUP) + " CUP"
+    );
+  } catch (e) {
+    console.error(e);
+    alert("No se pudo registrar la compra.");
+  }
+}
+
+function obtenerComprasUSDFiltradas() {
+  const dia = valorFiltro("filtroCompraUSD_dia");
+  const desde = valorFiltro("filtroCompraUSD_desde");
+  const hasta = valorFiltro("filtroCompraUSD_hasta");
+  const tasaMin = valorFiltro("filtroCompraUSD_tasaMin");
+  const tasaMax = valorFiltro("filtroCompraUSD_tasaMax");
+
+  return comprasUSD.filter(c => {
+    const fecha = fechaParaComparar(c.fecha);
+    if (dia && fecha !== dia) return false;
+    if (desde && fecha < desde) return false;
+    if (hasta && fecha > hasta) return false;
+
+    const tasa = Number(c.tasaCUP) || 0;
+    if (tasaMin !== "" && tasa < Number(tasaMin)) return false;
+    if (tasaMax !== "" && tasa > Number(tasaMax)) return false;
+
+    return true;
+  });
+}
+
+function aplicarFiltrosComprasUSD() {
+  dibujarComprasUSD();
+  dibujarResumenComprasUSD();
+}
+
+function limpiarFiltrosComprasUSD() {
+  [
+    "filtroCompraUSD_dia",
+    "filtroCompraUSD_desde",
+    "filtroCompraUSD_hasta",
+    "filtroCompraUSD_tasaMin",
+    "filtroCompraUSD_tasaMax"
+  ].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) c.value = "";
+  });
+  dibujarComprasUSD();
+  dibujarResumenComprasUSD();
+}
+
+function dibujarComprasUSD() {
+  const cont = document.getElementById("listaComprasUSD");
+  if (!cont) return;
+
+  const lista = obtenerComprasUSDFiltradas().slice().sort((a, b) => {
+    const fa = a.fechaRegistro || a.fecha || "";
+    const fb = b.fechaRegistro || b.fecha || "";
+    return String(fb).localeCompare(String(fa));
+  });
+
+  if (!lista.length) {
+    cont.innerHTML = `<div class="texto-vacio">No hay compras de USD que coincidan.</div>`;
+    return;
+  }
+
+  cont.innerHTML = lista.map(c => {
+    const chips = (c.desglose || [])
+      .filter(d => d.cantidad > 0)
+      .map(d => `
+        <span class="compra-billete-chip">
+          <strong>${d.cantidad}</strong> × ${formato(d.denominacion)} CUP
+        </span>
+      `).join("");
+
+    return `
+      <div class="compra-card">
+        <div class="compra-card-header">
+          <div style="min-width:0">
+            <h3>Compra #${Number(c.id)}</h3>
+            <small>${mostrarFecha(c.fecha)} · Tasa ${formato(c.tasaCUP)} CUP/USD</small>
+          </div>
+          <div style="text-align:right">
+            <div class="compra-card-total">${formato(c.totalCUP)} CUP</div>
+            <div class="compra-card-total-usd">${formato(c.cantidadUSD)} USD</div>
+          </div>
+        </div>
+        ${chips ? `<div class="compra-card-desglose">${chips}</div>` : ""}
+        <button type="button" class="btn-peligro"
+                style="margin-top:10px;width:100%"
+                onclick="eliminarCompraUSD(${Number(c.id)})">
+          Eliminar compra
+        </button>
+      </div>
+    `;
+  }).join("");
+}
+
+function dibujarResumenComprasUSD() {
+  const cont = document.getElementById("resumenComprasUSD");
+  if (!cont) return;
+
+  const lista = obtenerComprasUSDFiltradas();
+
+  const compras = lista.length;
+  let usdTotal = 0, cupTotal = 0;
+  lista.forEach(c => {
+    usdTotal += Number(c.cantidadUSD) || 0;
+    cupTotal += Number(c.totalCUP) || 0;
+  });
+  const tasaPromedio = usdTotal > 0 ? cupTotal / usdTotal : 0;
+
+  cont.innerHTML = `
+    <div class="tarjeta resumen-filtrado">
+      <div class="resumen-filtrado-header">
+        <h3>Resumen de compras USD</h3>
+        <small>${compras} compra${compras === 1 ? "" : "s"}</small>
+      </div>
+      <div class="resumen-filtrado-grid">
+        <div class="resumen-filtrado-item">
+          <small>Compras</small>
+          <strong>${compras}</strong>
+        </div>
+        <div class="resumen-filtrado-item verde">
+          <small>USD comprados</small>
+          <strong>${formato(usdTotal)} USD</strong>
+        </div>
+        <div class="resumen-filtrado-item naranja">
+          <small>Total pagado</small>
+          <strong>${formato(cupTotal)} CUP</strong>
+        </div>
+        <div class="resumen-filtrado-item">
+          <small>Tasa promedio</small>
+          <strong>${formato(tasaPromedio)} CUP/USD</strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function eliminarCompraUSD(id) {
+  const compra = comprasUSD.find(c => Number(c.id) === Number(id));
+  if (!compra) return;
+  if (!confirm(`¿Eliminar la compra #${compra.id}?`)) return;
+
+  try {
+    await eliminarDato("comprasUSD", compra.id);
+    comprasUSD = comprasUSD.filter(c => Number(c.id) !== Number(id));
+    dibujarComprasUSD();
+    dibujarResumenComprasUSD();
+    alert("Compra eliminada.");
+  } catch (e) {
+    console.error(e);
+    alert("No se pudo eliminar la compra.");
+  }
+}
+
+function exportarComprasUSDPDF() {
+  const lista = obtenerComprasUSDFiltradas().slice().sort((a, b) =>
+    String(b.fechaRegistro || b.fecha || "").localeCompare(
+      String(a.fechaRegistro || a.fecha || "")
+    )
+  );
+
+  if (!lista.length) { alert("No hay compras para exportar."); return; }
+
+  let usdTotal = 0, cupTotal = 0;
+  lista.forEach(c => {
+    usdTotal += Number(c.cantidadUSD) || 0;
+    cupTotal += Number(c.totalCUP) || 0;
+  });
+  const tasaPromedio = usdTotal > 0 ? cupTotal / usdTotal : 0;
+
+  const filas = lista.map(c => {
+    const desgloseHtml = (c.desglose || [])
+      .filter(d => d.cantidad > 0)
+      .map(d => `${d.cantidad} × ${formato(d.denominacion)}`)
+      .join("<br>") || "—";
+
+    return `
+      <tr>
+        <td>${Number(c.id)}</td>
+        <td>${escapar(mostrarFecha(c.fecha))}</td>
+        <td class="numero">${formato(c.tasaCUP)}</td>
+        <td class="numero">${formato(c.cantidadUSD)}</td>
+        <td class="numero">${formato(c.totalCUP)} CUP</td>
+        <td>${desgloseHtml}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const doc = `
+    <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+    <title>Compras USD - CAJA</title><style>
+      *{box-sizing:border-box}
+      body{font-family:Arial,sans-serif;color:#242424;margin:25px}
+      h1{margin-bottom:5px;font-size:25px}
+      .sub{color:#777;margin-bottom:20px;font-size:13px}
+      .r{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+      .r div{border:1px solid #ddd;border-radius:8px;padding:12px;flex:1;min-width:140px}
+      .r small{display:block;font-size:10px;color:#777;text-transform:uppercase}
+      .r strong{display:block;margin-top:6px;font-size:16px}
+      table{width:100%;border-collapse:collapse;font-size:11px}
+      th,td{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}
+      th{background:#222;color:white}
+      .numero{text-align:right;white-space:nowrap}
+      tr{page-break-inside:avoid}
+      .pie{margin-top:25px;color:#777;font-size:10px;text-align:center}
+    </style></head><body>
+    <h1>CAJA | Compras de USD</h1>
+    <div class="sub">Generado el ${escapar(mostrarFechaHora(new Date().toISOString()))}</div>
+    <div class="r">
+      <div><small>Compras</small><strong>${lista.length}</strong></div>
+      <div><small>USD totales</small><strong>${formato(usdTotal)} USD</strong></div>
+      <div><small>Total pagado</small><strong>${formato(cupTotal)} CUP</strong></div>
+      <div><small>Tasa promedio</small><strong>${formato(tasaPromedio)} CUP/USD</strong></div>
+    </div>
+    <table><thead><tr>
+      <th>N.º</th><th>Fecha</th><th>Tasa (CUP/USD)</th><th>USD</th>
+      <th>Total pagado</th><th>Desglose billetes</th>
+    </tr></thead><tbody>${filas}</tbody></table>
+    <div class="pie">Sistema de gestión de ventas CAJA</div>
+    <script>window.onload=function(){window.print()};<\/script>
+    </body></html>
+  `;
+
+  const v = window.open("", "_blank");
+  if (!v) { alert("El navegador bloqueó la ventana."); return; }
+  v.document.open(); v.document.write(doc); v.document.close();
+}
+
+// ==========================================
 // REGISTRO
 // ==========================================
 
@@ -1218,14 +1586,12 @@ function obtenerVentasFiltradas() {
   const diaSemana = (inicioSemana.getDay() + 6) % 7;
   inicioSemana.setDate(inicioSemana.getDate() - diaSemana);
 
-  // Prioridad: día concreto > rango > período rápido.
   const usaDiaConcreto = !!dia;
   const usaRango = !!(fechaDesde || fechaHasta);
 
   return ventas.filter(venta => {
     const fecha = fechaParaComparar(venta.fecha);
 
-    // --- Filtrado por fecha ---
     if (usaDiaConcreto) {
       if (fecha !== dia) return false;
     } else if (usaRango) {
@@ -1245,7 +1611,6 @@ function obtenerVentasFiltradas() {
       }
     }
 
-    // --- Filtro por producto ---
     if (producto) {
       const idP = Number(producto);
       const tiene = venta.productos.some(l => {
@@ -1255,13 +1620,9 @@ function obtenerVentasFiltradas() {
       if (!tiene) return false;
     }
 
-    // --- Filtro por moneda ---
     if (moneda && venta.moneda !== moneda) return false;
-
-    // --- Filtro por lugar ---
     if (lugar && venta.lugarVenta !== lugar) return false;
 
-    // --- Filtro por importe ---
     const imp = Number(venta.total) || 0;
     if (minimo !== "" && imp < Number(minimo)) return false;
     if (maximo !== "" && imp > Number(maximo)) return false;
@@ -1618,7 +1979,6 @@ function mostrarEstadisticas() {
 // EFECTIVO
 // ==========================================
 
-const denominacionesEfectivo = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
 let conteoEfectivo = {};
 
 function cargarConteoEfectivo() {
@@ -1706,10 +2066,6 @@ function limpiarConteoEfectivo() {
   guardarConteoEfectivo();
   mostrarEfectivo();
 }
-
-// ==========================================
-// EXPORTAR CONTEO DE EFECTIVO A PDF
-// ==========================================
 
 function exportarEfectivoPDF() {
   cargarConteoEfectivo();
