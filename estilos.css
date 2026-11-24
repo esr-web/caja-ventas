@@ -1483,3 +1483,139 @@ body {
   }
 }
 
+/* ==========================================
+   CAJA - CORRECCIÓN DEFINITIVA DE ANCHO
+   Y NAVEGACIÓN INFERIOR
+   ========================================== */
+
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+/* Evitar desbordamientos de elementos */
+
+#contenido {
+  width: 100%;
+  max-width: 760px;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.pantalla {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pantalla > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Resumen de inicio */
+
+#resumenRapidoInicio {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+#resumenRapidoInicio > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Tarjetas y formularios */
+
+.tarjeta,
+.filtros,
+.contenedor-filtros,
+.producto,
+.venta,
+.tarjeta-venta {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.fila-stock {
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fila-stock > div {
+  min-width: 0;
+  width: 100%;
+}
+
+.fila-stock input,
+.fila-stock select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Navegación inferior */
+
+.navegacion-inferior {
+  position: fixed !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 99999 !important;
+
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 76px;
+
+  margin: 0 !important;
+  transform: none !important;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  background: #ffffff !important;
+  border-top: 1px solid #e5e5e5;
+  box-shadow: 0 -5px 22px rgba(0, 0, 0, 0.10);
+}
+
+/* Reservar espacio para el menú */
+
+body {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+}
+
+/* Teléfonos */
+
+@media (max-width: 500px) {
+  #contenido {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .menu-principal {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .nav-item {
+    flex: 0 0 68px;
+    min-width: 68px;
+  }
+}
+
