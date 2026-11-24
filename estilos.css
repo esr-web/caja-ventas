@@ -2,7 +2,7 @@
 /* ==========================================
    CAJA - ESTILOS GENERALES
    Sistema de caja y control de ventas
-   Diseño moderno adaptable para Android y PC
+   Diseño móvil optimizado y adaptable a PC
    ========================================== */
 
 :root {
@@ -39,7 +39,7 @@ html {
 body {
   min-height: 100vh;
   padding-bottom: calc(100px + env(safe-area-inset-bottom));
-  background: #f4f5f7;
+  background: var(--fondo);
   color: var(--texto);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 15px;
@@ -91,6 +91,7 @@ button:disabled {
 .marca-icono {
   width: 43px;
   height: 43px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,9 +136,9 @@ button:disabled {
 
 #contenido {
   width: 100%;
-  max-width: 1050px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 22px 16px 35px;
+  padding: 20px 16px 35px;
 }
 
 .pantalla {
@@ -164,7 +165,7 @@ button:disabled {
 /* BIENVENIDA */
 
 .bienvenida {
-  margin: 10px 0 24px;
+  margin: 8px 0 20px;
 }
 
 .bienvenida h2 {
@@ -180,22 +181,62 @@ button:disabled {
   margin-top: 5px;
 }
 
+/* RESUMEN PRINCIPAL DE INICIO */
+
+#resumenRapidoInicio {
+  width: 100%;
+  padding: 19px;
+  margin: 0 0 21px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px 12px;
+  background: var(--negro);
+  color: var(--blanco);
+  border-radius: 19px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+#resumenRapidoInicio .resumen-rapido-item {
+  min-width: 0;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#resumenRapidoInicio .resumen-rapido-item strong {
+  color: var(--naranja);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+#resumenRapidoInicio .resumen-rapido-item span {
+  color: #d0d0d0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* MENÚ PRINCIPAL */
 
 .menu-principal {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
 }
 
 .tarjeta-menu {
   width: 100%;
-  min-height: 94px;
-  padding: 17px;
+  min-width: 0;
+  min-height: 116px;
+  padding: 13px 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  text-align: left;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
   background: var(--blanco);
   color: var(--texto);
   border: 1px solid #e9eaed;
@@ -205,46 +246,48 @@ button:disabled {
 }
 
 .tarjeta-menu:active {
-  transform: scale(0.985);
+  transform: scale(0.97);
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.07);
 }
 
 .icono-menu {
-  width: 52px;
-  height: 52px;
+  width: 43px;
+  height: 43px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff0df;
+  background: var(--naranja-claro);
   color: #e77b16;
-  border-radius: 15px;
-  font-size: 24px;
+  border-radius: 14px;
+  font-size: 22px;
 }
 
 .texto-menu {
-  flex: 1;
+  width: 100%;
   min-width: 0;
 }
 
 .texto-menu h3 {
   color: var(--negro);
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .texto-menu p {
   color: var(--gris);
-  font-size: 12px;
-  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.3;
+  margin-top: 4px;
 }
 
 .flecha-menu {
-  color: var(--naranja);
-  font-size: 23px;
-  font-weight: bold;
+  display: none;
 }
 
-/* TARJETAS */
+/* TARJETAS GENERALES */
 
 .tarjeta {
   width: 100%;
@@ -253,7 +296,7 @@ button:disabled {
   background: var(--blanco);
   border: 1px solid #e9eaed;
   border-radius: 16px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.045);
+  box-shadow: var(--sombra);
 }
 
 .tarjeta h2,
@@ -387,7 +430,7 @@ button[type="submit"] {
 .btn-principal,
 .btn-guardar {
   width: 100%;
-  background: #f28c28;
+  background: var(--naranja);
   box-shadow: 0 3px 9px rgba(242, 140, 40, 0.16);
 }
 
@@ -475,6 +518,7 @@ button[type="submit"] {
 
 .producto {
   width: 100%;
+  min-width: 0;
   padding: 15px;
   display: flex;
   align-items: center;
@@ -483,7 +527,7 @@ button[type="submit"] {
   background: var(--blanco);
   border: 1px solid #e9eaed;
   border-radius: 14px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.045);
+  box-shadow: var(--sombra);
 }
 
 .producto-info {
@@ -597,11 +641,13 @@ button[type="submit"] {
 
 .venta,
 .tarjeta-venta {
+  width: 100%;
+  min-width: 0;
   padding: 17px;
   background: var(--blanco);
   border: 1px solid #e9eaed;
   border-radius: 16px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.045);
+  box-shadow: var(--sombra);
 }
 
 .venta h3,
@@ -685,7 +731,7 @@ button[type="submit"] {
   background: var(--blanco);
   border: 1px solid #e9eaed;
   border-radius: 16px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.045);
+  box-shadow: var(--sombra);
 }
 
 .estadistica h3,
@@ -723,15 +769,23 @@ button[type="submit"] {
 
 /* INVENTARIO */
 
+#inventarioInicio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .inventario,
 .tarjeta-inventario,
 .producto-inventario {
+  width: 100%;
+  min-width: 0;
   padding: 16px;
   margin-bottom: 11px;
   background: var(--blanco);
   border: 1px solid #e9eaed;
   border-radius: 15px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.045);
+  box-shadow: var(--sombra);
 }
 
 .inventario h3,
@@ -982,12 +1036,12 @@ th {
 }
 
 .texto-ayuda {
-  color: #777777;
+  color: var(--gris);
   font-size: 12px;
 }
 
 .aviso-compra {
-  color: #d93025;
+  color: var(--rojo);
   font-size: 12px;
   margin-top: 6px;
 }
@@ -1056,7 +1110,7 @@ th {
 
 .nav-item.activo {
   color: #ed821e;
-  background: #fff2e5;
+  background: var(--naranja-claro);
 }
 
 .nav-item.activo svg {
@@ -1101,21 +1155,38 @@ hr {
 @media (min-width: 650px) {
 
   #contenido {
+    max-width: 900px;
     padding: 28px 25px 40px;
   }
 
   .menu-principal {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .tarjeta-menu {
+    min-height: 125px;
+  }
+
+  .icono-menu {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+
+  .texto-menu h3 {
+    font-size: 14px;
+  }
+
+  #resumenRapidoInicio {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 23px;
   }
 
   #contenidoEstadisticas,
   #estadisticasContenido {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .tarjeta-menu {
-    min-height: 100px;
   }
 
   .navegacion-inferior {
@@ -1144,37 +1215,78 @@ hr {
     padding: 10px 13px;
   }
 
+  .marca {
+    gap: 8px;
+  }
+
   .marca h1 {
     font-size: 24px;
+  }
+
+  .marca p {
+    font-size: 10px;
   }
 
   .marca-icono {
     width: 39px;
     height: 39px;
+    font-size: 22px;
+  }
+
+  .estado {
+    font-size: 10px;
   }
 
   .bienvenida h2 {
     font-size: 21px;
   }
 
+  #resumenRapidoInicio {
+    padding: 15px;
+    gap: 14px 9px;
+    border-radius: 16px;
+  }
+
+  #resumenRapidoInicio .resumen-rapido-item strong {
+    font-size: 19px;
+  }
+
+  #resumenRapidoInicio .resumen-rapido-item span {
+    font-size: 10px;
+  }
+
+  .menu-principal {
+    gap: 8px;
+  }
+
   .tarjeta-menu {
-    min-height: 78px;
-    padding: 11px;
-    gap: 10px;
+    min-height: 105px;
+    padding: 9px 5px;
+    gap: 7px;
+    border-radius: 13px;
   }
 
   .icono-menu {
-    width: 42px;
-    height: 42px;
-    font-size: 21px;
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+    border-radius: 12px;
   }
 
   .texto-menu h3 {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .texto-menu p {
-    font-size: 11px;
+    font-size: 9px;
+  }
+
+  .tarjeta {
+    padding: 15px;
+  }
+
+  .titulo-seccion {
+    font-size: 21px;
   }
 
   .producto {
@@ -1202,5 +1314,50 @@ hr {
   .nav-item svg {
     width: 21px;
     height: 21px;
+  }
+}
+
+/* PANTALLAS MUY ESTRECHAS */
+
+@media (max-width: 350px) {
+
+  #contenido {
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+
+  .menu-principal {
+    gap: 6px;
+  }
+
+  .tarjeta-menu {
+    min-height: 98px;
+    padding: 7px 3px;
+  }
+
+  .texto-menu h3 {
+    font-size: 11px;
+  }
+
+  .icono-menu {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+
+  .estado {
+    font-size: 9px;
+  }
+}
+
+/* REDUCIR MOVIMIENTO SI EL DISPOSITIVO LO SOLICITA */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
