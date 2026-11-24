@@ -3,7 +3,7 @@
 // ==========================================
 
 const DB_NAME = "CajaVentasDB";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 let db;
 
@@ -27,6 +27,11 @@ function abrirBaseDatos() {
         const entradas = base.createObjectStore("entradas", { keyPath: "id", autoIncrement: true });
         entradas.createIndex("fecha", "fecha", { unique: false });
         entradas.createIndex("idProducto", "idProducto", { unique: false });
+      }
+
+      if (!base.objectStoreNames.contains("comprasUSD")) {
+        const comprasUSD = base.createObjectStore("comprasUSD", { keyPath: "id", autoIncrement: true });
+        comprasUSD.createIndex("fecha", "fecha", { unique: false });
       }
     };
 
