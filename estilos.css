@@ -1361,3 +1361,125 @@ hr {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================
+   CORRECCIÓN DE DESBORDAMIENTO Y MENÚ FIJO
+   ========================================== */
+
+/* Evitar que la página supere el ancho del teléfono */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  position: relative;
+}
+
+#contenido,
+.pantalla {
+  width: 100%;
+  min-width: 0;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pantalla,
+.tarjeta,
+.tarjeta-menu,
+.producto,
+.venta,
+.tarjeta-venta,
+.filtros,
+.contenedor-filtros {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Evitar que los campos y sus contenedores se desborden */
+
+input,
+select,
+textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Resumen: distribuir las estadísticas sin desbordamiento */
+
+#resumenRapidoInicio {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+#resumenRapidoInicio > *,
+#resumenRapidoInicio .resumen-rapido-item {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Formulario: impedir que las columnas excedan su tarjeta */
+
+.fila-stock {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fila-stock > * {
+  min-width: 0;
+}
+
+/* Menú inferior siempre visible */
+
+.navegacion-inferior {
+  position: fixed !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 76px;
+  margin: 0 !important;
+  transform: none !important;
+  background: #ffffff;
+  box-shadow: 0 -5px 22px rgba(0, 0, 0, 0.10);
+}
+
+/* Reservar espacio para que el menú no tape los formularios */
+
+body {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+}
+
+/* Ajustes para móviles */
+
+@media (max-width: 500px) {
+  #contenido {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .tarjeta {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .navegacion-inferior {
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
