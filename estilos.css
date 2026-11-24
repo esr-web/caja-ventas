@@ -2,7 +2,7 @@
 /* ==========================================
    CAJA - ESTILOS GENERALES
    Sistema de caja y control de ventas
-   Diseño móvil optimizado y adaptable a PC
+   Diseño móvil y PC
    ========================================== */
 
 :root {
@@ -20,13 +20,11 @@
   --gris-claro: #eeeeee;
   --blanco: #ffffff;
   --borde: #e5e5e5;
-  --sombra: 0 4px 18px rgba(20, 20, 20, 0.055);
+  --sombra: 0 4px 18px rgba(20,20,20,.055);
   --radio: 16px;
 }
 
-/* ==========================================
-   RESET Y CONFIGURACIÓN GENERAL
-   ========================================== */
+/* RESET */
 
 * {
   box-sizing: border-box;
@@ -47,13 +45,13 @@ body {
   max-width: 100%;
   min-width: 0;
   min-height: 100vh;
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  padding-bottom: calc(105px + env(safe-area-inset-bottom));
   background: var(--fondo);
   color: var(--texto);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 15px;
   line-height: 1.5;
-  letter-spacing: -0.1px;
+  letter-spacing: -.1px;
   overflow-x: clip;
   -webkit-tap-highlight-color: transparent;
 }
@@ -71,13 +69,18 @@ button {
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: .5;
   cursor: not-allowed;
 }
 
-/* ==========================================
-   ENCABEZADO
-   ========================================== */
+input,
+select,
+textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ENCABEZADO */
 
 .encabezado {
   position: sticky;
@@ -89,17 +92,15 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   background: var(--negro);
   color: var(--blanco);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.13);
+  box-shadow: 0 4px 16px rgba(0,0,0,.13);
 }
 
 .marca {
   display: flex;
   align-items: center;
   gap: 11px;
-  min-width: 0;
 }
 
 .marca-icono {
@@ -138,23 +139,20 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 7px;
-  flex-shrink: 0;
-  color: #dddddd;
+  color: #ddd;
   font-size: 11px;
+  white-space: nowrap;
 }
 
 #puntoConexion {
   width: 8px;
   height: 8px;
   display: inline-block;
-  flex-shrink: 0;
   border-radius: 50%;
-  background: var(--verde);
+  background: #42c889;
 }
 
-/* ==========================================
-   CONTENIDO PRINCIPAL
-   ========================================== */
+/* CONTENIDO */
 
 #contenido {
   width: 100%;
@@ -162,7 +160,6 @@ button:disabled {
   min-width: 0;
   margin: 0 auto;
   padding: 20px 16px 35px;
-  overflow-x: clip;
 }
 
 .pantalla {
@@ -170,7 +167,7 @@ button:disabled {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  animation: aparecer 0.2s ease;
+  animation: aparecer .2s ease;
 }
 
 .pantalla.activa {
@@ -187,16 +184,13 @@ button:disabled {
     opacity: 0;
     transform: translateY(5px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* ==========================================
-   BIENVENIDA
-   ========================================== */
+/* BIENVENIDA */
 
 .bienvenida {
   margin: 8px 0 20px;
@@ -206,7 +200,7 @@ button:disabled {
   color: var(--negro);
   font-size: 25px;
   font-weight: 800;
-  letter-spacing: -0.7px;
+  letter-spacing: -.7px;
 }
 
 .bienvenida p {
@@ -215,32 +209,33 @@ button:disabled {
   margin-top: 5px;
 }
 
-/* ==========================================
-   RESUMEN PRINCIPAL DE INICIO
-   ========================================== */
+/* RESUMEN PRINCIPAL */
 
 #resumenRapidoInicio {
   width: 100%;
   min-width: 0;
-  max-width: 100%;
   padding: 19px;
   margin: 0 0 21px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2,minmax(0,1fr));
   gap: 17px 12px;
   background: var(--negro);
   color: var(--blanco);
   border-radius: 19px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
   overflow: hidden;
 }
 
 #resumenRapidoInicio .resumen-rapido-item {
   min-width: 0;
-  padding: 4px 2px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 4px;
+  background: #242424;
+  border: 1px solid #343434;
+  border-radius: 12px;
 }
 
 #resumenRapidoInicio .resumen-rapido-item strong {
@@ -257,13 +252,11 @@ button:disabled {
   font-weight: 700;
 }
 
-/* ==========================================
-   MENÚ PRINCIPAL
-   ========================================== */
+/* MENÚ PRINCIPAL */
 
 .menu-principal {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3,minmax(0,1fr));
   gap: 11px;
 }
 
@@ -282,13 +275,12 @@ button:disabled {
   color: var(--texto);
   border: 1px solid #e9eaed;
   border-radius: 16px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.045);
-  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: var(--sombra);
+  transition: transform .15s,box-shadow .15s;
 }
 
 .tarjeta-menu:active {
-  transform: scale(0.97);
-  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.07);
+  transform: scale(.97);
 }
 
 .icono-menu {
@@ -328,19 +320,16 @@ button:disabled {
   display: none;
 }
 
-/* ==========================================
-   TARJETAS GENERALES
-   ========================================== */
+/* TARJETAS GENERALES */
 
 .tarjeta {
   width: 100%;
   min-width: 0;
-  max-width: 100%;
   padding: 19px;
   margin-bottom: 17px;
   background: var(--blanco);
   border: 1px solid #e9eaed;
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow: var(--sombra);
 }
 
@@ -359,16 +348,14 @@ button:disabled {
   margin-bottom: 12px;
 }
 
-/* ==========================================
-   TÍTULOS
-   ========================================== */
+/* TÍTULOS */
 
 .titulo-seccion {
   margin: 8px 0 19px;
   color: var(--negro);
   font-size: 24px;
   font-weight: 800;
-  letter-spacing: -0.6px;
+  letter-spacing: -.6px;
 }
 
 .subtitulo {
@@ -390,14 +377,12 @@ button:disabled {
   font-size: 13px;
 }
 
-/* ==========================================
-   FILAS
-   ========================================== */
+/* FILAS */
 
 .fila-stock {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2,minmax(0,1fr));
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -407,9 +392,7 @@ button:disabled {
   width: 100%;
 }
 
-/* ==========================================
-   FORMULARIOS
-   ========================================== */
+/* FORMULARIOS */
 
 .grupo-formulario,
 .form-group {
@@ -431,8 +414,6 @@ input,
 select,
 textarea {
   width: 100%;
-  min-width: 0;
-  max-width: 100%;
   min-height: 47px;
   padding: 11px 13px;
   color: var(--texto);
@@ -440,19 +421,19 @@ textarea {
   border: 1px solid #dedfe3;
   border-radius: 11px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color .2s,box-shadow .2s;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--naranja);
-  box-shadow: 0 0 0 3px rgba(242, 140, 40, 0.12);
+  box-shadow: 0 0 0 3px rgba(242,140,40,.12);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #999999;
+  color: #999;
 }
 
 input[type="checkbox"],
@@ -466,9 +447,7 @@ textarea {
   resize: vertical;
 }
 
-/* ==========================================
-   BOTONES
-   ========================================== */
+/* BOTONES */
 
 .btn,
 .btn-principal,
@@ -480,14 +459,14 @@ button[type="submit"] {
   background: var(--naranja);
   border-radius: 11px;
   font-weight: 800;
-  transition: filter 0.15s, transform 0.15s;
+  transition: filter .15s,transform .15s;
 }
 
 .btn-principal,
 .btn-guardar {
   width: 100%;
   background: var(--naranja);
-  box-shadow: 0 3px 9px rgba(242, 140, 40, 0.16);
+  box-shadow: 0 3px 9px rgba(242,140,40,.16);
 }
 
 .btn-secundario {
@@ -526,7 +505,7 @@ button[type="submit"] {
   border-radius: 12px;
   font-size: 15px;
   font-weight: 800;
-  box-shadow: 0 4px 12px rgba(22, 131, 74, 0.15);
+  box-shadow: 0 4px 12px rgba(22,131,74,.15);
 }
 
 .btn-cancelar {
@@ -563,21 +542,18 @@ button[type="submit"] {
   margin-top: 12px;
 }
 
-/* ==========================================
-   PRODUCTOS
-   ========================================== */
+/* CATÁLOGO DE PRODUCTOS */
 
 #listaCatalogo,
 #listaProductosCaja {
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 12px;
 }
 
 .producto {
   width: 100%;
   min-width: 0;
-  max-width: 100%;
   padding: 15px;
   display: flex;
   align-items: center;
@@ -623,8 +599,149 @@ button[type="submit"] {
 }
 
 /* ==========================================
-   CANTIDADES
+   CAJA - TARJETAS DE PRODUCTOS EN VENTAS
+   Clases generadas por dibujarProductosCaja()
    ========================================== */
+
+#listaProductosCaja {
+  gap: 14px;
+}
+
+.producto-caja {
+  width: 100%;
+  min-width: 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--blanco);
+  border: 1px solid #e5e7eb;
+  border-radius: 17px;
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+.producto-caja-header {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.producto-caja-header h3 {
+  min-width: 0;
+  margin: 0;
+  color: var(--negro);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.stock-linea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  color: #555;
+  background: #f5f6f7;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stock-linea.sin-stock {
+  color: var(--rojo);
+  background: var(--rojo-claro);
+}
+
+.precio-fila {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #fafafa;
+  border: 1px solid #eeeeee;
+  border-radius: 13px;
+}
+
+.precio-fila-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.precio-fila-info strong {
+  color: var(--negro);
+  font-size: 14px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.precio-fila-info span {
+  color: var(--verde);
+  font-size: 14px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.precio-fila-controles {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.precio-fila-controles .btn-cantidad {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--negro);
+  background: var(--naranja-claro);
+  border-radius: 11px;
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.precio-fila-controles .btn-cantidad:disabled {
+  color: #aaa;
+  background: #f2f2f2;
+}
+
+.precio-fila-controles .cantidad {
+  min-width: 22px;
+  color: var(--negro);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+/* ETIQUETAS DE STOCK */
+
+.sin-stock {
+  color: var(--rojo);
+  font-weight: 800;
+}
+
+.stock-linea.sin-stock {
+  color: var(--rojo);
+  background: var(--rojo-claro);
+}
+
+/* CANTIDADES Y CARRITO */
 
 .controles-cantidad {
   display: flex;
@@ -636,6 +753,8 @@ button[type="submit"] {
 .btn-cantidad {
   width: 38px;
   height: 38px;
+  min-width: 38px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -652,10 +771,6 @@ button[type="submit"] {
   font-weight: 800;
 }
 
-/* ==========================================
-   CARRITO Y RESUMEN DE VENTA
-   ========================================== */
-
 #carritoVenta {
   display: flex;
   flex-direction: column;
@@ -663,7 +778,6 @@ button[type="submit"] {
 }
 
 .resumen {
-  min-width: 0;
   padding: 18px;
   margin-top: 15px;
   background: var(--blanco);
@@ -695,13 +809,10 @@ button[type="submit"] {
   font-weight: 800;
 }
 
-/* ==========================================
-   REGISTRO DE VENTAS
-   ========================================== */
+/* REGISTRO DE VENTAS */
 
 #listaRegistro {
   width: 100%;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -738,9 +849,7 @@ button[type="submit"] {
   font-size: 17px;
 }
 
-/* ==========================================
-   FILTROS
-   ========================================== */
+/* FILTROS */
 
 .filtros,
 .contenedor-filtros {
@@ -751,6 +860,7 @@ button[type="submit"] {
   background: var(--blanco);
   border: 1px solid var(--borde);
   border-radius: 15px;
+  box-shadow: var(--sombra);
 }
 
 .filtros input,
@@ -765,117 +875,46 @@ button[type="submit"] {
   margin-top: 5px;
 }
 
-/* ==========================================
-   RESUMEN DEL REGISTRO DE VENTAS
-   CORRECCIÓN DEL DESBORDAMIENTO
-   ========================================== */
+/* RESUMEN DEL REGISTRO */
 
 #resumenRegistro {
   width: 100%;
   min-width: 0;
-  max-width: 100%;
   padding: 17px;
   margin-bottom: 15px;
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px;
   background: var(--negro);
   color: var(--blanco);
-  border-radius: 18px;
+  border-radius: 17px;
   overflow: hidden;
 }
 
-/*
-  IMPORTANTE:
-  No convertir todos los div y párrafos internos
-  en flex. Eso provocaba el desplazamiento lateral.
-*/
-
-#resumenRegistro > * {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  color: inherit;
-  overflow-wrap: anywhere;
-}
-
-/* Los contenedores internos se organizan en bloque */
-
+#resumenRegistro p,
 #resumenRegistro div {
   min-width: 0;
-  max-width: 100%;
-  display: block;
-}
-
-/* Los textos se mantienen dentro del resumen */
-
-#resumenRegistro p {
-  min-width: 0;
-  max-width: 100%;
-  display: block;
-  margin: 0 0 8px;
-  color: #dddddd;
+  margin: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: #242424;
+  border: 1px solid #343434;
+  border-radius: 11px;
   overflow-wrap: anywhere;
 }
-
-/* Encabezados del resumen */
-
-#resumenRegistro h2,
-#resumenRegistro h3,
-#resumenRegistro h4 {
-  color: var(--blanco);
-  font-size: 17px;
-  font-weight: 800;
-  margin: 0 0 12px;
-}
-
-/* Cifras destacadas */
 
 #resumenRegistro strong {
   color: var(--naranja);
+  font-size: 19px;
   font-weight: 900;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
-/* Elementos de resumen que representan cada dato */
-
-#resumenRegistro .resumen-item,
-#resumenRegistro .resumen-registro-item,
-#resumenRegistro .estadistica-resumen {
-  min-width: 0;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.09);
-  border-radius: 11px;
-}
-
-/* Si el resumen contiene un contenedor con varios indicadores */
-
-#resumenRegistro .resumen-grid,
-#resumenRegistro .resumen-contenido,
-#resumenRegistro .resumen-estadisticas {
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-/* Evitar desbordamientos de textos largos */
-
-#resumenRegistro span,
-#resumenRegistro strong,
-#resumenRegistro small {
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
-/* ==========================================
-   ESTADÍSTICAS
-   ========================================== */
+/* ESTADÍSTICAS */
 
 #contenidoEstadisticas,
 #estadisticasContenido {
@@ -887,7 +926,6 @@ button[type="submit"] {
 .estadistica,
 .tarjeta-estadistica,
 .stat-card {
-  min-width: 0;
   padding: 19px;
   background: var(--blanco);
   border: 1px solid #e9eaed;
@@ -916,7 +954,6 @@ button[type="submit"] {
 .grafico,
 .grafico-barras {
   width: 100%;
-  min-width: 0;
   padding: 15px;
   background: var(--blanco);
   border-radius: 12px;
@@ -932,25 +969,126 @@ button[type="submit"] {
 
 /* ==========================================
    INVENTARIO
+   Clases generadas por dibujarInventario()
    ========================================== */
 
 #inventarioInicio {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
+#listaInventario {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+/* Tarjetas de inventario */
+
 .inventario,
 .tarjeta-inventario,
-.producto-inventario {
+.producto-inventario,
+.inventario-fila {
   width: 100%;
   min-width: 0;
   padding: 16px;
   margin-bottom: 11px;
   background: var(--blanco);
   border: 1px solid #e9eaed;
-  border-radius: 15px;
+  border-radius: 16px;
   box-shadow: var(--sombra);
+}
+
+/* Cada producto del inventario */
+
+.inventario-fila {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.inventario-fila-con-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inventario-fila-nombre {
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 10px;
+  color: var(--negro);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--borde);
+}
+
+/* Existencias por área */
+
+.inventario-col {
+  min-width: 0;
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #f6f7f8;
+  border-radius: 10px;
+  color: var(--texto);
+  font-size: 13px;
+}
+
+.inventario-col strong,
+.inventario-col b {
+  color: var(--negro);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.inventario-col.almacen {
+  background: #f0f1f3;
+}
+
+.inventario-col.tienda {
+  background: var(--naranja-claro);
+}
+
+.inventario-col.casa {
+  background: var(--verde-claro);
+}
+
+.inventario-acciones {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-top: 4px;
+}
+
+.inventario-btn {
+  min-height: 40px;
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.inventario-btn:first-child {
+  color: #9b4d08;
+  background: var(--naranja-claro);
+}
+
+.inventario-btn:last-child {
+  color: var(--rojo);
+  background: var(--rojo-claro);
 }
 
 .inventario h3,
@@ -981,9 +1119,22 @@ button[type="submit"] {
   font-weight: 700;
 }
 
-/* ==========================================
-   CONTEO DE EFECTIVO
-   ========================================== */
+#resumenInventario {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 15px;
+}
+
+.inventario-resumen-total {
+  width: 100%;
+  min-width: 0;
+  padding: 15px;
+  background: var(--negro);
+  color: var(--blanco);
+  border-radius: 14px;
+}
+
+/* CONTEO DE EFECTIVO */
 
 .conteo-efectivo,
 .fila-efectivo {
@@ -1019,9 +1170,7 @@ button[type="submit"] {
   text-align: center;
 }
 
-/* ==========================================
-   MENSAJES
-   ========================================== */
+/* MENSAJES */
 
 .texto-vacio {
   padding: 22px 12px;
@@ -1044,13 +1193,10 @@ button[type="submit"] {
   border-radius: 9px;
 }
 
-/* ==========================================
-   TABLAS
-   ========================================== */
+/* TABLAS */
 
 .tabla-contenedor {
   width: 100%;
-  min-width: 0;
   overflow-x: auto;
   background: var(--blanco);
   border-radius: 14px;
@@ -1076,9 +1222,7 @@ th {
   font-weight: 700;
 }
 
-/* ==========================================
-   COMPRA USD
-   ========================================== */
+/* COMPRA USD */
 
 .compra-desglose-fila {
   display: flex;
@@ -1094,17 +1238,16 @@ th {
 }
 
 .compra-desglose-denom {
-  min-width: 0;
   flex: 1;
+  color: var(--negro);
   font-size: 13px;
   font-weight: bold;
-  color: var(--negro);
 }
 
 .compra-desglose-subtotal {
   min-width: 90px;
-  font-size: 12px;
   color: var(--gris);
+  font-size: 12px;
   text-align: right;
 }
 
@@ -1130,13 +1273,13 @@ th {
   align-items: flex-start;
   gap: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--borde);
   margin-bottom: 8px;
+  border-bottom: 1px solid var(--borde);
 }
 
 .compra-card-header h3 {
-  font-size: 15px;
   color: var(--negro);
+  font-size: 15px;
   margin-bottom: 3px;
 }
 
@@ -1146,15 +1289,15 @@ th {
 }
 
 .compra-card-total {
-  font-weight: bold;
   color: var(--verde);
   font-size: 15px;
+  font-weight: bold;
   white-space: nowrap;
 }
 
 .compra-card-total-usd {
-  font-size: 12px;
   color: var(--gris);
+  font-size: 12px;
   text-align: right;
   margin-top: 2px;
 }
@@ -1167,12 +1310,12 @@ th {
 }
 
 .compra-billete-chip {
+  padding: 4px 10px;
+  color: var(--texto);
   background: var(--fondo);
   border: 1px solid var(--borde);
   border-radius: 20px;
-  padding: 4px 10px;
   font-size: 11px;
-  color: var(--texto);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1180,9 +1323,7 @@ th {
   color: var(--negro);
 }
 
-/* ==========================================
-   VARIANTES DE PRODUCTOS
-   ========================================== */
+/* VARIANTES */
 
 .variantes-bloque {
   margin-top: 16px;
@@ -1223,42 +1364,33 @@ th {
   margin-top: 6px;
 }
 
-/* ==========================================
-   NAVEGACIÓN INFERIOR
-   ========================================== */
+/* NAVEGACIÓN INFERIOR */
 
 .navegacion-inferior {
   position: fixed !important;
   z-index: 99999 !important;
-  left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-
+  left: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
   min-height: 76px;
-
   margin: 0 !important;
   padding: 7px 5px calc(7px + env(safe-area-inset-bottom));
-
   display: flex !important;
   align-items: center;
   justify-content: flex-start;
-
+  gap: 0;
   overflow-x: auto;
   overflow-y: hidden;
-
   visibility: visible !important;
   opacity: 1 !important;
   transform: none !important;
-
-  background: rgba(255, 255, 255, 0.97) !important;
+  background: rgba(255,255,255,.98) !important;
   border-top: 1px solid #e9eaed;
-  box-shadow: 0 -5px 22px rgba(0, 0, 0, 0.075);
-
+  box-shadow: 0 -5px 22px rgba(0,0,0,.075);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-
   scrollbar-width: none;
 }
 
@@ -1267,23 +1399,20 @@ th {
 }
 
 .nav-item {
-  flex: 0 0 72px;
+  flex: 1 0 72px;
   min-width: 72px;
   max-width: 130px;
   min-height: 61px;
   padding: 5px 2px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-
   color: #858585;
   background: transparent;
   border-radius: 12px;
-
-  transition: color 0.2s, background 0.2s;
+  transition: color .2s,background .2s;
 }
 
 .nav-item svg {
@@ -1294,8 +1423,7 @@ th {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: transform 0.2s;
-  flex-shrink: 0;
+  transition: transform .2s;
 }
 
 .nav-item small {
@@ -1314,9 +1442,7 @@ th {
   stroke-width: 2.3;
 }
 
-/* ==========================================
-   UTILIDADES
-   ========================================== */
+/* UTILIDADES */
 
 hr {
   border: none;
@@ -1348,19 +1474,16 @@ hr {
   width: 100%;
 }
 
-/* ==========================================
-   TABLET Y COMPUTADORA
-   ========================================== */
+/* TABLET Y COMPUTADORA */
 
 @media (min-width: 650px) {
-
   #contenido {
     max-width: 900px;
     padding: 28px 25px 40px;
   }
 
   .menu-principal {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3,minmax(0,1fr));
     gap: 14px;
   }
 
@@ -1379,18 +1502,18 @@ hr {
   }
 
   #resumenRapidoInicio {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4,minmax(0,1fr));
     padding: 23px;
   }
 
   #resumenRegistro {
-    padding: 22px;
+    grid-template-columns: repeat(3,minmax(0,1fr));
   }
 
   #contenidoEstadisticas,
   #estadisticasContenido {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2,minmax(0,1fr));
   }
 
   .navegacion-inferior {
@@ -1400,40 +1523,138 @@ hr {
   .nav-item {
     flex: 0 1 105px;
   }
+
+  .inventario-fila {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(130px,.7fr);
+    align-items: center;
+  }
+
+  .inventario-fila-nombre {
+    grid-column: 1 / -1;
+  }
+
+  .inventario-acciones {
+    grid-column: 1 / -1;
+  }
 }
 
-/* ==========================================
-   TELÉFONOS PEQUEÑOS
-   ========================================== */
+/* TELÉFONOS */
 
 @media (max-width: 500px) {
-
   #contenido {
-    padding: 16px 12px 30px;
+    padding: 18px 12px 35px;
   }
 
   .encabezado {
     min-height: 76px;
-    padding: 10px 15px;
+    padding: 12px 16px;
   }
 
   .marca {
     gap: 9px;
   }
 
+  .marca-icono {
+    width: 43px;
+    height: 43px;
+  }
+
   .marca h1 {
-    font-size: 26px;
+    font-size: 27px;
   }
 
   .marca p {
     font-size: 11px;
   }
 
-  .marca-icono {
-    width: 42px;
-    height: 42px;
+  .estado {
+    font-size: 10px;
+  }
+
+  .titulo-seccion {
     font-size: 23px;
-    border-radius: 13px;
+  }
+
+  .tarjeta {
+    padding: 17px;
+  }
+
+  .producto-caja {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .precio-fila {
+    padding: 10px 8px;
+    gap: 7px;
+  }
+
+  .precio-fila-info strong,
+  .precio-fila-info span {
+    font-size: 13px;
+  }
+
+  .precio-fila-controles {
+    gap: 6px;
+  }
+
+  .precio-fila-controles .btn-cantidad {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+  }
+
+  .inventario-fila {
+    padding: 15px;
+  }
+
+  .inventario-fila-nombre {
+    font-size: 16px;
+  }
+
+  .inventario-col {
+    font-size: 13px;
+  }
+
+  .nav-item {
+    flex: 0 0 72px;
+    min-width: 72px;
+  }
+}
+
+/* TELÉFONOS PEQUEÑOS */
+
+@media (max-width: 400px) {
+  body {
+    font-size: 14px;
+  }
+
+  #contenido {
+    padding: 16px 11px 30px;
+  }
+
+  .encabezado {
+    min-height: 68px;
+    padding: 10px 13px;
+  }
+
+  .marca {
+    gap: 8px;
+  }
+
+  .marca h1 {
+    font-size: 24px;
+  }
+
+  .marca p {
+    font-size: 10px;
+  }
+
+  .marca-icono {
+    width: 39px;
+    height: 39px;
+    font-size: 22px;
   }
 
   .estado {
@@ -1441,25 +1662,42 @@ hr {
   }
 
   .bienvenida h2 {
-    font-size: 23px;
+    font-size: 21px;
   }
 
   #resumenRapidoInicio {
-    padding: 16px;
-    gap: 14px 10px;
+    padding: 14px;
+    gap: 10px;
     border-radius: 16px;
   }
 
+  #resumenRapidoInicio .resumen-rapido-item {
+    padding: 9px;
+  }
+
   #resumenRapidoInicio .resumen-rapido-item strong {
-    font-size: 20px;
+    font-size: 19px;
   }
 
   #resumenRapidoInicio .resumen-rapido-item span {
     font-size: 10px;
   }
 
+  #resumenRegistro {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  #resumenRegistro p,
+  #resumenRegistro div {
+    padding: 10px;
+  }
+
+  #resumenRegistro strong {
+    font-size: 17px;
+  }
+
   .menu-principal {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -1487,11 +1725,10 @@ hr {
 
   .tarjeta {
     padding: 15px;
-    overflow: hidden;
   }
 
   .titulo-seccion {
-    font-size: 22px;
+    font-size: 21px;
   }
 
   .producto {
@@ -1507,19 +1744,46 @@ hr {
     gap: 8px;
   }
 
-  #resumenRegistro {
-    padding: 14px;
-    border-radius: 16px;
+  .producto-caja {
+    padding: 12px;
   }
 
-  #resumenRegistro .resumen-grid,
-  #resumenRegistro .resumen-contenido,
-  #resumenRegistro .resumen-estadisticas {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .producto-caja-header h3 {
+    font-size: 15px;
+  }
+
+  .precio-fila {
+    align-items: center;
+  }
+
+  .precio-fila-info {
+    gap: 2px;
+  }
+
+  .precio-fila-info strong,
+  .precio-fila-info span {
+    font-size: 12px;
+  }
+
+  .precio-fila-controles {
+    gap: 5px;
+  }
+
+  .precio-fila-controles .btn-cantidad {
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+    border-radius: 9px;
+    font-size: 17px;
+  }
+
+  .precio-fila-controles .cantidad {
+    min-width: 18px;
+    font-size: 13px;
   }
 
   .nav-item {
-    flex: 0 0 68px;
+    flex-basis: 68px;
     min-width: 68px;
   }
 
@@ -1533,12 +1797,9 @@ hr {
   }
 }
 
-/* ==========================================
-   TELÉFONOS MUY ESTRECHOS
-   ========================================== */
+/* PANTALLAS MUY ESTRECHAS */
 
 @media (max-width: 350px) {
-
   #contenido {
     padding-right: 9px;
     padding-left: 9px;
@@ -1567,22 +1828,35 @@ hr {
     font-size: 9px;
   }
 
-  #resumenRegistro {
-    padding: 12px;
+  .precio-fila {
+    gap: 5px;
+    padding: 9px 6px;
+  }
+
+  .precio-fila-controles {
+    gap: 4px;
+  }
+
+  .precio-fila-controles .btn-cantidad {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+  }
+
+  .precio-fila-info strong,
+  .precio-fila-info span {
+    font-size: 11px;
   }
 }
 
-/* ==========================================
-   ACCESIBILIDAD
-   ========================================== */
+/* ACCESIBILIDAD: REDUCIR MOVIMIENTO */
 
 @media (prefers-reduced-motion: reduce) {
-
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
   }
 }
