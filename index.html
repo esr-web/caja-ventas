@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -115,6 +114,16 @@
           <div class="texto-menu">
             <h3>Conteo de efectivo</h3>
             <p>Calcular el dinero disponible en caja.</p>
+          </div>
+          <span class="flecha-menu">↗</span>
+        </button>
+
+        <button type="button" class="tarjeta-menu"
+                onclick="navegar('pendientes')">
+          <div class="icono-menu">📝</div>
+          <div class="texto-menu">
+            <h3>Pendientes</h3>
+            <p id="textoPendientesInicio">Notas y tareas pendientes.</p>
           </div>
           <span class="flecha-menu">↗</span>
         </button>
@@ -388,52 +397,59 @@
 
       </div>
 
-      <div class="tarjeta">
+      <div class="tarjeta filtros-tarjeta">
 
-        <h3>Filtros</h3>
-
-        <label for="filtroCompraUSD_dia">Día concreto</label>
-        <input type="date" id="filtroCompraUSD_dia"
-               onchange="aplicarFiltrosComprasUSD()">
-
-        <label>Rango de fechas</label>
-
-        <div class="fila-stock">
-          <div>
-            <label for="filtroCompraUSD_desde">Desde</label>
-            <input type="date" id="filtroCompraUSD_desde"
-                   onchange="aplicarFiltrosComprasUSD()">
-          </div>
-
-          <div>
-            <label for="filtroCompraUSD_hasta">Hasta</label>
-            <input type="date" id="filtroCompraUSD_hasta"
-                   onchange="aplicarFiltrosComprasUSD()">
-          </div>
-        </div>
-
-        <div class="fila-stock">
-          <div>
-            <label for="filtroCompraUSD_tasaMin">Tasa mínima</label>
-            <input type="number" id="filtroCompraUSD_tasaMin"
-                   min="0" step="0.01"
-                   oninput="aplicarFiltrosComprasUSD()"
-                   placeholder="0">
-          </div>
-
-          <div>
-            <label for="filtroCompraUSD_tasaMax">Tasa máxima</label>
-            <input type="number" id="filtroCompraUSD_tasaMax"
-                   min="0" step="0.01"
-                   oninput="aplicarFiltrosComprasUSD()"
-                   placeholder="∞">
-          </div>
-        </div>
-
-        <button type="button" class="btn-secundario boton-exportar"
-                onclick="limpiarFiltrosComprasUSD()">
-          LIMPIAR FILTROS
+        <button type="button" class="filtros-toggle" onclick="toggleFiltros(this)">
+          <span>Filtros</span>
+          <span class="filtros-flecha">▼</span>
         </button>
+
+        <div class="filtros-contenido oculto">
+
+          <label for="filtroCompraUSD_dia">Día concreto</label>
+          <input type="date" id="filtroCompraUSD_dia"
+                 onchange="aplicarFiltrosComprasUSD()">
+
+          <label>Rango de fechas</label>
+
+          <div class="fila-stock">
+            <div>
+              <label for="filtroCompraUSD_desde">Desde</label>
+              <input type="date" id="filtroCompraUSD_desde"
+                     onchange="aplicarFiltrosComprasUSD()">
+            </div>
+
+            <div>
+              <label for="filtroCompraUSD_hasta">Hasta</label>
+              <input type="date" id="filtroCompraUSD_hasta"
+                     onchange="aplicarFiltrosComprasUSD()">
+            </div>
+          </div>
+
+          <div class="fila-stock">
+            <div>
+              <label for="filtroCompraUSD_tasaMin">Tasa mínima</label>
+              <input type="number" id="filtroCompraUSD_tasaMin"
+                     min="0" step="0.01"
+                     oninput="aplicarFiltrosComprasUSD()"
+                     placeholder="0">
+            </div>
+
+            <div>
+              <label for="filtroCompraUSD_tasaMax">Tasa máxima</label>
+              <input type="number" id="filtroCompraUSD_tasaMax"
+                     min="0" step="0.01"
+                     oninput="aplicarFiltrosComprasUSD()"
+                     placeholder="∞">
+            </div>
+          </div>
+
+          <button type="button" class="btn-secundario boton-exportar"
+                  onclick="limpiarFiltrosComprasUSD()">
+            LIMPIAR FILTROS
+          </button>
+
+        </div>
 
       </div>
 
@@ -453,90 +469,98 @@
 
       <div id="resumenRegistro"></div>
 
-      <div class="tarjeta">
+      <button type="button" class="btn-secundario boton-exportar"
+              style="margin-top:0;margin-bottom:14px"
+              onclick="exportarRegistroPDF()">
+        📄 EXPORTAR A PDF
+      </button>
 
-        <h3>Filtros</h3>
+      <div class="tarjeta filtros-tarjeta">
 
-        <label for="filtroPeriodo">Período rápido</label>
-        <select id="filtroPeriodo" onchange="aplicarFiltrosRegistro()">
-          <option value="">Todos</option>
-          <option value="hoy">Hoy</option>
-          <option value="semana">Esta semana</option>
-          <option value="mes">Este mes</option>
-          <option value="anio">Este año</option>
-        </select>
-
-        <label for="filtroDia">Día concreto</label>
-        <input type="date" id="filtroDia"
-               onchange="aplicarFiltrosRegistro()">
-
-        <label>Rango de fechas</label>
-
-        <div class="fila-stock">
-          <div>
-            <label for="filtroFechaDesde">Desde</label>
-            <input type="date" id="filtroFechaDesde"
-                   onchange="aplicarFiltrosRegistro()">
-          </div>
-
-          <div>
-            <label for="filtroFechaHasta">Hasta</label>
-            <input type="date" id="filtroFechaHasta"
-                   onchange="aplicarFiltrosRegistro()">
-          </div>
-        </div>
-
-        <label for="filtroProducto">Producto</label>
-        <select id="filtroProducto"
-                onchange="aplicarFiltrosRegistro()"></select>
-
-        <label for="filtroMoneda">Moneda</label>
-        <select id="filtroMoneda" onchange="aplicarFiltrosRegistro()">
-          <option value="">Todas</option>
-          <option value="CUP">CUP</option>
-          <option value="USD">USD</option>
-        </select>
-
-        <label for="filtroLugar">Lugar de venta</label>
-        <select id="filtroLugar" onchange="aplicarFiltrosRegistro()">
-          <option value="">Todos</option>
-          <option value="Almacén">Almacén</option>
-          <option value="Tienda">Tienda</option>
-          <option value="Casa">Casa</option>
-          <option value="Sin especificar">Sin especificar</option>
-        </select>
-
-        <div class="fila-stock">
-          <div>
-            <label for="filtroMinimo">Importe mínimo</label>
-            <input type="number" id="filtroMinimo"
-                   min="0" step="0.01"
-                   oninput="aplicarFiltrosRegistro()"
-                   placeholder="0">
-          </div>
-
-          <div>
-            <label for="filtroMaximo">Importe máximo</label>
-            <input type="number" id="filtroMaximo"
-                   min="0" step="0.01"
-                   oninput="aplicarFiltrosRegistro()"
-                   placeholder="∞">
-          </div>
-        </div>
-
-        <button type="button" class="btn-secundario boton-exportar"
-                onclick="limpiarFiltrosRegistro()">
-          LIMPIAR FILTROS
+        <button type="button" class="filtros-toggle" onclick="toggleFiltros(this)">
+          <span>Filtros</span>
+          <span class="filtros-flecha">▼</span>
         </button>
+
+        <div class="filtros-contenido oculto">
+
+          <label for="filtroPeriodo">Período rápido</label>
+          <select id="filtroPeriodo" onchange="aplicarFiltrosRegistro()">
+            <option value="">Todos</option>
+            <option value="hoy">Hoy</option>
+            <option value="semana">Esta semana</option>
+            <option value="mes">Este mes</option>
+            <option value="anio">Este año</option>
+          </select>
+
+          <label for="filtroDia">Día concreto</label>
+          <input type="date" id="filtroDia"
+                 onchange="aplicarFiltrosRegistro()">
+
+          <label>Rango de fechas</label>
+
+          <div class="fila-stock">
+            <div>
+              <label for="filtroFechaDesde">Desde</label>
+              <input type="date" id="filtroFechaDesde"
+                     onchange="aplicarFiltrosRegistro()">
+            </div>
+
+            <div>
+              <label for="filtroFechaHasta">Hasta</label>
+              <input type="date" id="filtroFechaHasta"
+                     onchange="aplicarFiltrosRegistro()">
+            </div>
+          </div>
+
+          <label for="filtroProducto">Producto</label>
+          <select id="filtroProducto"
+                  onchange="aplicarFiltrosRegistro()"></select>
+
+          <label for="filtroMoneda">Moneda</label>
+          <select id="filtroMoneda" onchange="aplicarFiltrosRegistro()">
+            <option value="">Todas</option>
+            <option value="CUP">CUP</option>
+            <option value="USD">USD</option>
+          </select>
+
+          <label for="filtroLugar">Lugar de venta</label>
+          <select id="filtroLugar" onchange="aplicarFiltrosRegistro()">
+            <option value="">Todos</option>
+            <option value="Almacén">Almacén</option>
+            <option value="Tienda">Tienda</option>
+            <option value="Casa">Casa</option>
+            <option value="Sin especificar">Sin especificar</option>
+          </select>
+
+          <div class="fila-stock">
+            <div>
+              <label for="filtroMinimo">Importe mínimo</label>
+              <input type="number" id="filtroMinimo"
+                     min="0" step="0.01"
+                     oninput="aplicarFiltrosRegistro()"
+                     placeholder="0">
+            </div>
+
+            <div>
+              <label for="filtroMaximo">Importe máximo</label>
+              <input type="number" id="filtroMaximo"
+                     min="0" step="0.01"
+                     oninput="aplicarFiltrosRegistro()"
+                     placeholder="∞">
+            </div>
+          </div>
+
+          <button type="button" class="btn-secundario boton-exportar"
+                  onclick="limpiarFiltrosRegistro()">
+            LIMPIAR FILTROS
+          </button>
+
+        </div>
 
       </div>
 
       <div id="listaRegistro"></div>
-
-      <button type="button" class="btn-secundario boton-exportar"
-              onclick="exportarRegistroPDF()">
-        EXPORTAR A PDF
-      </button>
 
     </section>
 
@@ -550,6 +574,31 @@
     <section id="pantallaEfectivo" class="pantalla">
       <h2 class="titulo-seccion">Conteo de efectivo</h2>
       <div id="contenidoEfectivo"></div>
+    </section>
+
+    <!-- PENDIENTES -->
+    <section id="pantallaPendientes" class="pantalla">
+
+      <h2 class="titulo-seccion">Pendientes</h2>
+
+      <div class="tarjeta">
+        <label for="nuevoPendiente">Nueva nota</label>
+        <input type="text" id="nuevoPendiente"
+               placeholder="Escribe una nota..."
+               onkeydown="if(event.key==='Enter'){event.preventDefault();agregarPendiente();}">
+        <button type="button" class="btn-principal"
+                style="margin-top:10px"
+                onclick="agregarPendiente()">
+          AGREGAR NOTA
+        </button>
+      </div>
+
+      <h3 class="subtitulo">📌 Pendientes</h3>
+      <div id="listaPendientes" class="lista-pendientes"></div>
+
+      <h3 class="subtitulo">✅ Cumplidos</h3>
+      <div id="listaCumplidos" class="lista-pendientes"></div>
+
     </section>
 
   </main>
@@ -638,6 +687,16 @@
         <path d="M6 9h.01M18 15h.01"/>
       </svg>
       <small>Efectivo</small>
+    </button>
+
+    <button type="button" onclick="navegar('pendientes')"
+            class="nav-item" data-pantalla="pendientes"
+            aria-label="Pendientes">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 11l3 3 8-8"/>
+        <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>
+      </svg>
+      <small>Pendientes</small>
     </button>
 
   </nav>
