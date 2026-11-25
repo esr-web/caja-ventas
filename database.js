@@ -1,10 +1,9 @@
-
 // ==========================================
 // CAJA - BASE DE DATOS (IndexedDB)
 // ==========================================
 
 const DB_NAME = "CajaVentasDB";
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 let db;
 
@@ -59,6 +58,21 @@ function abrirBaseDatos() {
         });
 
         comprasUSD.createIndex("fecha", "fecha", {
+          unique: false
+        });
+      }
+
+      if (!base.objectStoreNames.contains("pendientes")) {
+        const pendientes = base.createObjectStore("pendientes", {
+          keyPath: "id",
+          autoIncrement: true
+        });
+
+        pendientes.createIndex("cumplida", "cumplida", {
+          unique: false
+        });
+
+        pendientes.createIndex("fechaCreacion", "fechaCreacion", {
           unique: false
         });
       }
