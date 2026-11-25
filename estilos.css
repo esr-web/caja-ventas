@@ -697,7 +697,6 @@ textarea {
   gap: 10px;
 }
 
-/* Las filas de área se convierten en tarjetas independientes */
 .inventario-fila {
   width: 100%;
   min-width: 0;
@@ -799,7 +798,6 @@ textarea {
   box-shadow: 0 6px 18px rgba(0,0,0,.10);
 }
 
-/* El encabezado ocupa todo el ancho del panel */
 #resumenCompletoVentas h2,
 #resumenCompletoVentas h3,
 #resumenCompletoVentas > p:first-child {
@@ -810,7 +808,6 @@ textarea {
   font-weight: 800;
 }
 
-/* Cada estadística se presenta como una unidad compacta */
 #resumenCompletoVentas > div {
   min-width: 0;
   max-width: 100%;
@@ -854,7 +851,6 @@ textarea {
   color: var(--naranja);
 }
 
-/* Resumen filtrado que puede aparecer dentro del listado */
 #resultadosRegistro > .resumen {
   padding: 16px;
   margin: 0 0 13px;
@@ -901,7 +897,6 @@ textarea {
   font-size: 17px;
 }
 
-/* Las ventas renderizadas como .tarjeta */
 #resultadosRegistro > .tarjeta {
   width: 100%;
   min-width: 0;
@@ -950,7 +945,6 @@ textarea {
   margin-top: 5px;
 }
 
-/* COMPATIBILIDAD CON RESUMEN DE REGISTRO ANTIGUO */
 #resumenRegistro {
   width: 100%;
   min-width: 0;
@@ -1503,11 +1497,8 @@ th {
 
 /* =====================================================
    CORRECCIONES ESPECÍFICAS DE INVENTARIO Y REGISTRO
-   Se usan las clases reales generadas por app.js.
-   El resto de los estilos se conserva sin cambios.
    ===================================================== */
 
-/* INVENTARIO: cada producto ocupa una tarjeta vertical. */
 #listaInventario .inventario-fila,
 #resumenInventario .inventario-fila,
 .inventario-fila {
@@ -1583,7 +1574,6 @@ th {
   min-height: 43px;
 }
 
-/* RESUMEN DEL REGISTRO: panel exterior y contenido interior. */
 #resumenRegistro {
   display: block;
   width: 100%;
@@ -1712,9 +1702,7 @@ th {
 }
 
 @media (max-width: 400px) {
-  #resumenRegistro {
-    padding: 13px;
-  }
+  #resumenRegistro { padding: 13px; }
 
   #resumenRegistro .resumen-filtrado-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1727,17 +1715,136 @@ th {
     padding: 10px;
   }
 
-  .inventario-fila {
-    padding: 13px;
-  }
-
-  .inventario-fila-nombre {
-    font-size: 16px;
-  }
+  .inventario-fila { padding: 13px; }
+  .inventario-fila-nombre { font-size: 16px; }
 }
 
 @media (max-width: 340px) {
   #resumenRegistro .resumen-filtrado-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ==========================================
+   PENDIENTES
+   ========================================== */
+
+.lista-pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.pendiente-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--blanco);
+  border: 1px solid #e9eaed;
+  border-radius: 13px;
+  box-shadow: var(--sombra);
+}
+
+.pendiente-check {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gris);
+  background: #f4f5f6;
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 800;
+  border: 1.5px solid #d8d9dd;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.pendiente-check:active { transform: scale(.94); }
+
+.pendiente-check.activo {
+  color: var(--blanco);
+  background: var(--verde);
+  border-color: var(--verde);
+}
+
+.pendiente-texto {
+  flex: 1;
+  min-width: 0;
+  color: var(--negro);
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.pendiente-texto .pendiente-tachado {
+  color: #888;
+  text-decoration: line-through;
+}
+
+.pendiente-fecha {
+  display: block;
+  margin-top: 3px;
+  color: var(--gris);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.pendiente-borrar {
+  flex-shrink: 0;
+  padding: 8px 11px !important;
+  font-size: 11px !important;
+}
+
+.pendiente-cumplido {
+  opacity: .85;
+}
+
+/* ==========================================
+   TARJETAS DE FILTROS COLAPSABLES
+   ========================================== */
+
+.filtros-tarjeta {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.filtros-toggle {
+  width: 100%;
+  padding: 16px 19px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: transparent;
+  color: var(--negro);
+  font-size: 16px;
+  font-weight: 800;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--borde);
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.filtros-toggle:active {
+  background: #f8f8f8;
+}
+
+.filtros-flecha {
+  color: var(--gris);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.filtros-contenido {
+  padding: 16px 19px;
+}
+
+.filtros-contenido.oculto {
+  display: none;
 }
