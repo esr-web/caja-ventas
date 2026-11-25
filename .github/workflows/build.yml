@@ -16,5 +16,17 @@ jobs:
         with:
           node-version: 20
 
-      - name: Hola
-        run: echo "Paso 1 OK"
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Verificar
+        run: |
+          node --version
+          java --version
+          echo "SDK listo"
