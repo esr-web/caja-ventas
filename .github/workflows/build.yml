@@ -40,6 +40,10 @@ jobs:
           npx cap add android
           npx cap sync
 
+      - name: Forzar versión de Kotlin
+        run: |
+          sed -i '/^android {/i configurations.all { resolutionStrategy { force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"; force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22" } }\n' android/app/build.gradle
+
       - name: Compilar APK
         run: |
           cd android
