@@ -25,9 +25,17 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
+      - name: Preparar archivos web
+        run: |
+          mkdir -p public
+          cp index.html app.js database.js respaldo.js service-worker.js manifest.json estilos.css public/
+          if [ -f icono.png ]; then cp icono.png public/; fi
+
       - name: Instalar Capacitor
         run: |
+          rm -rf node_modules package.json package-lock.json capacitor.config.json android
+          npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "Caja" "com.caja.app" --web-dir=.
+          npx cap init "Caja" "com.caja.app" --web-dir=public
           npx cap add android
           npx cap sync
