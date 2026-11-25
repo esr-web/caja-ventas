@@ -2,7 +2,7 @@
 // CAJA - SERVICE WORKER
 // ==========================================
 
-const CACHE_NAME = "caja-ventas-v8";
+const CACHE_NAME = "caja-ventas-v9";
 
 const ARCHIVOS = [
   "./",
