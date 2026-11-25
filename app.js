@@ -7,6 +7,7 @@ let carrito = [];          // { idProducto, idVariante, cantidad, precio }
 let ventas = [];
 let entradas = [];
 let comprasUSD = [];
+let pendientes = [];
 
 let productoEnEdicion = null;
 let porcentajeSalario = 5;
@@ -16,6 +17,7 @@ let monedaVenta = "CUP";
 let productosDesplegadosCaja = new Set();
 
 const CLAVE_EFECTIVO = "caja_conteo_efectivo_v1";
+const CLAVE_PANTALLA_ACTUAL = "caja_pantalla_actual";
 const LUGARES_VENTA = ["Almacén", "Tienda", "Casa"];
 
 const denominacionesEfectivo = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
@@ -161,6 +163,18 @@ function adaptarCompraUSD(c) {
   };
 }
 
+function adaptarPendiente(p) {
+  if (!p || typeof p !== "object") return null;
+  return {
+    ...p,
+    id: p.id,
+    texto: String(p.texto || ""),
+    cumplida: !!p.cumplida,
+    fechaCreacion: p.fechaCreacion || new Date().toISOString(),
+    fechaCumplimiento: p.fechaCumplimiento || null
+  };
+}
+
 // ==========================================
 // PRECIOS / VARIANTES
 // ==========================================
@@ -236,11 +250,20 @@ async function iniciarAplicacion() {
   catch (_) { entradas = []; }
   try { comprasUSD = (await obtenerTodos("comprasUSD")).map(adaptarCompraUSD).filter(Boolean); }
   catch (_) { comprasUSD = []; }
+  try { pendientes = (await obtenerTodos("pendientes")).map(adaptarPendiente).filter(Boolean); }
+  catch (_) { pendientes = []; }
 
   for (const p of productos) await guardarDato("productos", p);
   for (const v of ventas) await guardarDato("ventas", v);
 
-  navegar("inicio");
+  const pantallaGuardada = leerPantallaGuardada();
+  try {
+    history.replaceState({ pantalla: "inicio" }, "", "#inicio");
+    if (pantallaGuardada !== "inicio") {
+      history.pushState({ pantalla: pantallaGuardada }, "", "#" + pantallaGuardada);
+    }
+  } catch (_) {}
+  navegar(pantallaGuardada, true);
   actualizarEstadoConexion();
 }
 
@@ -264,7 +287,17 @@ window.addEventListener("offline", actualizarEstadoConexion);
 // NAVEGACIÓN
 // ==========================================
 
-function navegar(nombre) {
+function leerPantallaGuardada() {
+  try { return localStorage.getItem(CLAVE_PANTALLA_ACTUAL) || "inicio"; }
+  catch (_) { return "inicio"; }
+}
+
+window.addEventListener("popstate", function (e) {
+  const p = (e.state && e.state.pantalla) || leerPantallaGuardada() || "inicio";
+  navegar(p, true);
+});
+
+function navegar(nombre, desdeHistorial) {
   const pantallas = {
     inicio: "pantallaInicio",
     caja: "pantallaCaja",
@@ -273,7 +306,8 @@ function navegar(nombre) {
     compraUSD: "pantallaCompraUSD",
     registro: "pantallaRegistro",
     estadisticas: "pantallaEstadisticas",
-    efectivo: "pantallaEfectivo"
+    efectivo: "pantallaEfectivo",
+    pendientes: "pantallaPendientes"
   };
   const id = pantallas[nombre];
   if (!id) return;
@@ -282,6 +316,14 @@ function navegar(nombre) {
   document.querySelectorAll(".pantalla").forEach(p => p.classList.remove("activa"));
   destino.classList.add("activa");
   pantallaActual = nombre;
+
+  if (!desdeHistorial) {
+    try { history.pushState({ pantalla: nombre }, "", "#" + nombre); }
+    catch (_) {}
+  }
+  try { localStorage.setItem(CLAVE_PANTALLA_ACTUAL, nombre); }
+  catch (_) {}
+
   document.querySelectorAll(".nav-item").forEach(b => {
     b.classList.remove("activo");
     if (b.dataset.pantalla === nombre) b.classList.add("activo");
@@ -294,6 +336,7 @@ function navegar(nombre) {
   if (nombre === "registro") mostrarRegistro();
   if (nombre === "estadisticas") mostrarEstadisticas();
   if (nombre === "efectivo") mostrarEfectivo();
+  if (nombre === "pendientes") mostrarPendientes();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1859,7 +1902,6 @@ function exportarRegistroPDF() {
   if (!v) { alert("El navegador bloqueó la ventana."); return; }
   v.document.open(); v.document.write(doc); v.document.close();
 }
-
 // ==========================================
 // ESTADÍSTICAS
 // ==========================================
@@ -2173,6 +2215,113 @@ function exportarEfectivoPDF() {
 }
 
 // ==========================================
+// PENDIENTES
+// ==========================================
+
+function mostrarPendientes() { dibujarPendientes(); }
+
+function dibujarPendientes() {
+  const contP = document.getElementById("listaPendientes");
+  const contC = document.getElementById("listaCumplidos");
+  if (!contP || !contC) return;
+
+  const activos = pendientes.filter(p => !p.cumplida)
+    .sort((a, b) => String(b.fechaCreacion).localeCompare(String(a.fechaCreacion)));
+  const cumplidos = pendientes.filter(p => p.cumplida)
+    .sort((a, b) => String(b.fechaCumplimiento || b.fechaCreacion)
+      .localeCompare(String(a.fechaCumplimiento || a.fechaCreacion)));
+
+  contP.innerHTML = activos.length
+    ? activos.map(p => `
+        <div class="pendiente-item">
+          <button type="button" class="pendiente-check"
+                  onclick="marcarPendienteCumplida(${Number(p.id)})"
+                  title="Marcar como cumplido">○</button>
+          <div class="pendiente-texto">${escapar(p.texto)}</div>
+          <button type="button" class="btn-peligro pendiente-borrar"
+                  onclick="eliminarPendiente(${Number(p.id)})">✕</button>
+        </div>`).join("")
+    : `<div class="texto-vacio">No hay pendientes.</div>`;
+
+  contC.innerHTML = cumplidos.length
+    ? cumplidos.map(p => `
+        <div class="pendiente-item pendiente-cumplido">
+          <button type="button" class="pendiente-check activo"
+                  onclick="desmarcarPendiente(${Number(p.id)})"
+                  title="Volver a pendiente">✓</button>
+          <div class="pendiente-texto">
+            <span class="pendiente-tachado">${escapar(p.texto)}</span>
+            <small class="pendiente-fecha">${escapar(mostrarFechaHora(p.fechaCumplimiento || p.fechaCreacion))}</small>
+          </div>
+          <button type="button" class="btn-peligro pendiente-borrar"
+                  onclick="eliminarPendiente(${Number(p.id)})">✕</button>
+        </div>`).join("")
+    : `<div class="texto-vacio">Aún no hay cumplidos.</div>`;
+}
+
+async function agregarPendiente() {
+  const input = document.getElementById("nuevoPendiente");
+  if (!input) return;
+  const texto = input.value.trim();
+  if (!texto) { alert("Escribe una nota antes de agregar."); input.focus(); return; }
+  const pendiente = {
+    texto,
+    fechaCreacion: new Date().toISOString(),
+    cumplida: false,
+    fechaCumplimiento: null
+  };
+  try {
+    const id = await guardarDato("pendientes", pendiente);
+    pendiente.id = id;
+    pendientes.push(adaptarPendiente(pendiente));
+    input.value = "";
+    dibujarPendientes();
+    actualizarInicio();
+  } catch (e) {
+    console.error(e);
+    alert("No se pudo guardar el pendiente.");
+  }
+}
+
+async function marcarPendienteCumplida(id) {
+  const p = pendientes.find(x => Number(x.id) === Number(id));
+  if (!p) return;
+  p.cumplida = true;
+  p.fechaCumplimiento = new Date().toISOString();
+  try { await guardarDato("pendientes", p); dibujarPendientes(); }
+  catch (e) { console.error(e); alert("No se pudo actualizar."); }
+}
+
+async function desmarcarPendiente(id) {
+  const p = pendientes.find(x => Number(x.id) === Number(id));
+  if (!p) return;
+  p.cumplida = false;
+  p.fechaCumplimiento = null;
+  try { await guardarDato("pendientes", p); dibujarPendientes(); }
+  catch (e) { console.error(e); alert("No se pudo actualizar."); }
+}
+
+async function eliminarPendiente(id) {
+  const p = pendientes.find(x => Number(x.id) === Number(id));
+  if (!p) return;
+  if (!confirm("¿Eliminar esta nota?")) return;
+  try {
+    await eliminarDato("pendientes", p.id);
+    pendientes = pendientes.filter(x => Number(x.id) !== Number(id));
+    dibujarPendientes();
+    actualizarInicio();
+  } catch (e) { console.error(e); alert("No se pudo eliminar."); }
+}
+
+function toggleFiltros(btn) {
+  const content = btn.nextElementSibling;
+  if (!content) return;
+  content.classList.toggle("oculto");
+  const flecha = btn.querySelector(".filtros-flecha");
+  if (flecha) flecha.textContent = content.classList.contains("oculto") ? "▼" : "▲";
+}
+
+// ==========================================
 // INICIO
 // ==========================================
 
@@ -2190,6 +2339,14 @@ function actualizarInicio() {
   const t = document.getElementById("textoEstadisticasInicio");
   if (t) t.textContent = `${r.operaciones} operaciones registradas. Consulta tus estadísticas.`;
   actualizarInventarioInicio();
+
+  const pendientesActivos = pendientes.filter(p => !p.cumplida).length;
+  const txtPend = document.getElementById("textoPendientesInicio");
+  if (txtPend) {
+    txtPend.textContent = pendientesActivos > 0
+      ? `${pendientesActivos} pendiente${pendientesActivos === 1 ? "" : "s"} por hacer.`
+      : "Notas y tareas pendientes.";
+  }
 }
 
 // ==========================================
