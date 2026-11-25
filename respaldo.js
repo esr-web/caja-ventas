@@ -1,10 +1,9 @@
-
 // ==========================================
 // CAJA - COPIA DE SEGURIDAD Y RESTAURACIÓN
 // ==========================================
 
 const CLAVE_RESPALDO_EFECTIVO = "caja_conteo_efectivo_v1";
-const VERSION_RESPALDO = 4;
+const VERSION_RESPALDO = 5;
 
 // ==========================================
 // CREAR COPIA DE SEGURIDAD
@@ -16,6 +15,13 @@ async function crearCopiaSeguridad() {
     const ventasGuardadas = await obtenerTodos("ventas");
     const entradasGuardadas = await obtenerTodos("entradas");
     const comprasUSDGuardadas = await obtenerTodos("comprasUSD");
+
+    let pendientesGuardados = [];
+    try {
+      pendientesGuardados = await obtenerTodos("pendientes");
+    } catch (_) {
+      pendientesGuardados = [];
+    }
 
     let conteoGuardado = {};
 
@@ -35,6 +41,7 @@ async function crearCopiaSeguridad() {
       ventas: ventasGuardadas,
       entradas: entradasGuardadas,
       comprasUSD: comprasUSDGuardadas,
+      pendientes: pendientesGuardados,
       conteoEfectivo: conteoGuardado
     };
 
@@ -184,6 +191,14 @@ function migrarCopiaADatosActuales(datos) {
       : []
   }));
 
+  const pendientes = (datos.pendientes || []).map(p => ({
+    ...p,
+    texto: String(p.texto || ""),
+    cumplida: !!p.cumplida,
+    fechaCreacion: p.fechaCreacion || new Date().toISOString(),
+    fechaCumplimiento: p.fechaCumplimiento || null
+  }));
+
   return {
     ...datos,
     version: VERSION_RESPALDO,
@@ -191,6 +206,7 @@ function migrarCopiaADatosActuales(datos) {
     ventas,
     entradas,
     comprasUSD,
+    pendientes,
     conteoEfectivo:
       datos.conteoEfectivo &&
       typeof datos.conteoEfectivo === "object"
@@ -213,7 +229,7 @@ function validarCopiaSeguridad(datos) {
     throw new Error("No es una copia de CAJA.");
   }
 
-  if (![1, 2, 3, 4].includes(datos.version)) {
+  if (![1, 2, 3, 4, 5].includes(datos.version)) {
     throw new Error("Versión no reconocida.");
   }
 
@@ -236,6 +252,13 @@ function validarCopiaSeguridad(datos) {
     !Array.isArray(datos.comprasUSD)
   ) {
     throw new Error("Las compras USD son inválidas.");
+  }
+
+  if (
+    datos.pendientes !== undefined &&
+    !Array.isArray(datos.pendientes)
+  ) {
+    throw new Error("Los pendientes son inválidos.");
   }
 
   if (
@@ -293,6 +316,17 @@ function validarCopiaSeguridad(datos) {
     }
   }
 
+  for (const p of (datos.pendientes || [])) {
+
+    if (
+      !p ||
+      p.id === undefined ||
+      typeof p.texto !== "string"
+    ) {
+      throw new Error("Se encontraron pendientes inválidos.");
+    }
+  }
+
   return true;
 }
 
@@ -316,36 +350,30 @@ async function restaurarCopiaSeguridad(archivo) {
       datos = migrarCopiaADatosActuales(datos);
     }
 
-    // Normalizar las tablas opcionales de copias antiguas.
-
     datos.entradas = datos.entradas || [];
     datos.comprasUSD = datos.comprasUSD || [];
-
-    datos.conteoEfectivo =
-      datos.conteoEfectivo || {};
+    datos.pendientes = datos.pendientes || [];
+    datos.conteoEfectivo = datos.conteoEfectivo || {};
 
     const confirmacion = confirm(
       "¿Restaurar esta copia?\n\n" +
       "Productos: " + datos.productos.length + "\n" +
       "Ventas: " + datos.ventas.length + "\n" +
       "Entradas: " + datos.entradas.length + "\n" +
-      "Compras USD: " + datos.comprasUSD.length + "\n\n" +
+      "Compras USD: " + datos.comprasUSD.length + "\n" +
+      "Pendientes: " + datos.pendientes.length + "\n\n" +
       "Los datos actuales serán sustituidos."
     );
 
     if (!confirmacion) return;
 
-    // Todas las tablas se sustituyen en una sola transacción.
-
     await reemplazarVariasTablas({
       productos: datos.productos,
       ventas: datos.ventas,
       entradas: datos.entradas,
-      comprasUSD: datos.comprasUSD
+      comprasUSD: datos.comprasUSD,
+      pendientes: datos.pendientes
     });
-
-    // El conteo de efectivo se actualiza después
-    // de confirmar la restauración de IndexedDB.
 
     localStorage.setItem(
       CLAVE_RESPALDO_EFECTIVO,
@@ -390,7 +418,7 @@ function instalarPanelRespaldo() {
 
     <p style="font-size:13px;color:#777;margin-bottom:15px">
       Guarda tus productos, ventas, entradas,
-      compras USD y conteo de efectivo.
+      compras USD, pendientes y conteo de efectivo.
     </p>
 
     <button
